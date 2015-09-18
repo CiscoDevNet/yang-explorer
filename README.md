@@ -39,6 +39,9 @@ limitations under the License.
    - Open http://localhost:8088/static/YangExplorer.html
 
 ###4. User Guide (TBD)
+
+![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/YangExplorer.png)
+
 #####Login:
       (optional: you may create a local user account for yang explorer by clicking 'Admin' button
       Admin Login: username: admin, password: admin  (Use for admin stuffs e.g. adding user accounts)
