@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+    @author: Pravin Gohite, Cisco Systems, Inc.
+-->
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+                xmlns:mx="library://ns.adobe.com/flex/mx" 
+                xmlns:s="library://ns.adobe.com/flex/spark">
+    <fx:Style>
+        @namespace s "library://ns.adobe.com/flex/spark";
+        @namespace mx "library://ns.adobe.com/flex/mx";
+    </fx:Style>
+    <fx:Script>
+            <![CDATA[
+                protected function cbSelect_changeHandler():void
+                {
+                    data.selected = cbSelect.selected;
+                }
+            ]]>
+    </fx:Script>
+    <s:HGroup verticalCenter="0" left="2" right="2" top="2" bottom="2"  toolTip="{data.desc}">
+        <s:CheckBox id="cbSelect" selected="{data.selected}" change="cbSelect_changeHandler()"/>
+        <s:Label text="{data.name}" fontSize="14" fontWeight="bold" fontFamily="Avenir"/>
+        <s:Label text="{data.collection} @ {data.author}" fontSize="14" fontFamily="Avenir"/>
+      </s:HGroup>
+</s:ItemRenderer>

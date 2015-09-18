@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+    @author: Pravin Gohite, Cisco Systems, Inc.
+-->
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx" width="500" height="400" xmlns:components="flatspark.components.*"
+               skinClass="flatspark.skins.TitleWindowSkin"
+               close="PopUpManager.removePopUp(this);"
+               creationComplete="creationCompleteHandler(event)"
+               title="Upload Yang" xmlns:ns="http://flex.apache.org/experimental/ns">
+    <s:layout>
+        <s:VerticalLayout/>
+    </s:layout>
+    <fx:Declarations>
+        <s:HTTPService id="syncService" fault="syncService_faultHandler(event)"
+                       result="syncService_resultHandler(event)"
+                       resultFormat="e4x" showBusyCursor="true"/>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+
+            private var file:FileReference;
+            private var fileType:FileFilter;
+            private var currentIndex : int;
+            private var totalFiles : int;
+            
+            [Bindable]
+            private var dpUpload : ArrayCollection;
+
+            public var messageBox:MessageBox;
+            public var url : String;
+            /*
+             *  client   --- upload file 1 -->
+             *           <--- upload response 1  -- server
+             *  client   --- upload file 2 -->
+             *           <--- upload response 2  --  server
+             *  client   --- sync file 1  -->
+             *           <--- sync response 1 (errorlist?)  --   server
+             *  client   --- sync file 1  -->
+             *           <--- sync response 1 (errorlist?)  --   server
+             *  client   ---- commit ----
+             *           <--- commit response (modulelist)   --   server
+             */
+            
+            public function init(_url : String) : void {
+                url = _url + "/upload";
+                syncService.url = url;
+                syncService.send({mode:'init'});
+            }
+            
+            protected function showMessage(msg : XML):void
+            {
+                var text : String  = '';
+                for each (var child : XML in msg.children()) {
+                    text += child.toString() + '\n';
+                }
+                if (text.length > 0) {
+                    messageBox = MessageBox(PopUpManager.createPopUp(this, MessageBox, true)) 
+                    messageBox.setText(text)
+                    PopUpManager.centerPopUp(messageBox)
+                }
+            }
+
+            protected function updateStatus(msg : XML, status : String):void
+            {
+                var text : String  = '';
+                for each (var child : XML in msg.children()) {
+                    for each (var item : Object in dpUpload) {
+                        if (item.Name == child.toString()) {
+                            item.Status = status;
+                        }
+                    }
+                }
+                dpUpload.refresh();
+            }
+            
+            /**
+             * Event handler for the "Upload" button.
+             * Initiates file upload operation.
+             * 
+             * @param event Event object contains details of the event triggering this handler.
+             */ 
+            private function btnUpload_clickHandler():void {
+                if (totalFiles > 0) {
+                    uploadFile()
+                } else if (dpUpload.length > 0) {
+                    syncCompile()
+                }
+            }
+            
+            /**
+             * Event handler for the "Clear" button.
+             * Initiates file upload operation.
+             * 
+             * @param event Event object contains details of the event triggering this handler.
+             */ 
+            private function btnClear_clickHandler():void {
+                dpUpload.removeAll();
+                syncService.url = url
+                syncService.send({mode: 'clear'});
+                dpUpload.refresh();
+            }
+
+            private function syncCompile() : void {
+                dpUpload[currentIndex].Status = "Compiling";
+                dpUpload.refresh();
+                syncService.url = url
+                syncService.send({mode: 'sync', file : dpUpload[currentIndex].Name, index: currentIndex.toString()});
+            }
+
+            private function syncCommit() : void {
+                syncService.url = url
+                syncService.send({mode: 'commit'});
+            }
+
+            private function uploadFile() : void {
+                dpUpload.refresh()
+                var request:URLRequest = new URLRequest(url + "/upload-add");
+                request.method = URLRequestMethod.POST; 
+                file = _refAddFiles.fileList[currentIndex]
+                file.addEventListener(Event.SELECT, selectHandler);
+                file.addEventListener(IOErrorEvent.IO_ERROR, uploadIoErrorHandler);
+                file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
+                file.upload(request);
+            }
+
+            private var _refAddFiles:FileReferenceList;
+            protected function btnBrowseFile_clickHandler():void
+            {
+                totalFiles = 0;
+                currentIndex = 0;
+                _refAddFiles = new FileReferenceList();
+                _refAddFiles.addEventListener(Event.SELECT, selectHandler);
+                _refAddFiles.browse([fileType]);
+            }
+
+            /**
+             * Event handler for when the upload operation has completed.
+             * Specifically manages response data.
+             * 
+             * @param event DataEvent object contains details of the event triggering this handler.
+             */       
+            private function uploadCompleteHandler(event:DataEvent):void 
+            {
+                var response : Response = new Response(XML(event.data));
+                var target : Object = null;
+                
+                file = _refAddFiles.fileList[currentIndex];
+                for each (var child : Object in dpUpload) {
+                    if ((child.Status == 'Uploaded' && child.Name == response.xml.toString()) ||
+                         child.Name == file.name) {
+                        if (target) {
+                            dpUpload.removeItem(target);
+                        }
+                        target = child;
+                    }
+                }
+                
+                if (!target) {
+                    Alert.show('Upload reply does not match with request !!', 'Error');
+                }
+                
+                if (response.type == 'upload') {
+                    if (response.errored) {
+                        target.Status = "Failed";
+                        dpUpload.refresh();
+                        return;
+                    }
+                    target.Name = response.xml.toString();
+                } else {
+                    Alert.show('Invalid response from server' + response.toString(), 'Error');
+                    return;
+                }
+
+                
+                target.Status = "Uploaded";
+                currentIndex++;
+                dpUpload.refresh()
+
+                if (currentIndex < totalFiles) {
+                   uploadFile()
+                } else {
+                    currentIndex = 0
+                    callLater(syncCompile, null);
+                }
+            }
+            
+            private function addUploadedFiles(msg : XML):void {
+                dpUpload.removeAll();
+                for each (var child : XML in msg.children()) {
+                    dpUpload.addItem({Name : child.toString(), Status : "Uploaded"});
+                }
+                dpUpload.refresh()
+            }
+
+            /**
+             * Event handler for when the user selects a file from disk.
+             * 
+             * @param event Event object contains details of the event triggering this handler.
+             */ 
+            private function selectHandler(event:Event):void {
+                if (_refAddFiles.fileList.length >= 1) {
+                    for each (var file : FileReference in _refAddFiles.fileList) {
+                        dpUpload.addItem({Name : file.name, Status : "Ready"});
+                    }
+                }
+
+                totalFiles = _refAddFiles.fileList.length;
+                btnUpload.enabled = true;
+                btnBrowse.enabled = false;
+                dpUpload.refresh()
+            }
+
+            /**
+             * Event handler for the file upload IO error.
+             * 
+             * @param event IOErrorEvent object contains details of the event triggering this handler.
+             */  
+            private function uploadIoErrorHandler(event:IOErrorEvent):void {
+                dpUpload[currentIndex].Status = "Failed";
+                Alert.show("IO Error: " + event.toString());
+            }
+
+            protected function creationCompleteHandler(event:FlexEvent):void
+            {
+                dpUpload = new ArrayCollection();
+                currentIndex = 0;
+                totalFiles = 0;
+                fileType = new FileFilter("Yang Files (*.yang)", "*.yang;");
+            }
+            
+            protected function syncService_faultHandler(event:FaultEvent):void
+            {
+                dpUpload[currentIndex].Status = "Failed";
+                dpUpload.refresh();
+            }
+
+            protected function syncService_resultHandler(event:ResultEvent):void
+            {
+                var result:XML = event.result as XML;
+                var root:String;
+                
+                if (result == null) {
+                    dpUpload[currentIndex].Status = "Failed";
+                    dpUpload.refresh();
+                    return;
+                }
+                
+                var response : Response = new Response(result);
+                if (response.type == 'sync') {
+                    if (response.errored) {
+                        dpUpload[currentIndex].Status = "Failed";
+                        dpUpload.refresh();
+                        showMessage(response.xml);
+                        return;
+                    }
+                    
+                    // filename may be changed to include revision, update here
+                    dpUpload[currentIndex].Status = "Done"
+                    dpUpload.refresh()
+                    currentIndex++;
+                    if (currentIndex < dpUpload.length) {
+                        callLater(syncCompile, null);
+                    } else {
+                        if (dpUpload.length > 0) {
+                            callLater(syncCommit, null);
+                        }
+                        btnBrowse.enabled = false;
+                        btnUpload.enabled = false;
+                        totalFiles = 0;
+                        currentIndex = 0;
+                    }
+                } else if (response.type == 'commit') {
+                    if (!response.errored) {
+                        updateStatus(response.xml, 'Done');
+                        PopUpManager.removePopUp(this);
+                    }
+                } else if (response.type == 'init') {
+                    if (!response.errored) {
+                        addUploadedFiles(response.xml)
+                    }
+                } else if (response.type == 'clear') {
+                    PopUpManager.removePopUp(this);
+                } else {
+                    Alert.show('Invalid response from server' + result.toXMLString(), 'Error');
+                    return;
+                }
+            }
+        ]]>
+    </fx:Script>
+    
+    <s:VGroup width="100%" height="100%" paddingLeft="-5">
+        <s:Form width="100%" height="100%">
+            <s:FormItem height="80%">
+                <s:HGroup width="100%" height="85%">
+                    <s:DataGrid dataProvider="{dpUpload}" width="100%" height="100%"
+                                verticalScrollPolicy="on" fontFamily="Avenir" minHeight="250">
+                        <s:columns>
+                            <s:ArrayList>
+                                <s:GridColumn dataField="Name"   width="300"/>
+                                <s:GridColumn dataField="Status" width="150"/>
+                            </s:ArrayList>
+                        </s:columns>
+                    </s:DataGrid>
+                </s:HGroup>
+            </s:FormItem>
+            <s:FormItem direction="rtl" height="15%">
+                <s:HGroup direction="rtl" width="100%">
+                <components:ButtonIcon id="btnBrowse" label="Browse" click="btnBrowseFile_clickHandler()"
+                                           width="100"
+                                           brand="{BrandColorEnum.Success}"/>
+                <components:ButtonIcon id="btnUpload" label="Upload"
+                                       width="100" click="btnUpload_clickHandler()"
+                                       brand="{BrandColorEnum.Success}"/>
+                <components:ButtonIcon id="btnClear" label="Clear"
+                                       width="100" click="btnClear_clickHandler()"
+                                       brand="{BrandColorEnum.Success}"/>
+                </s:HGroup>
+            </s:FormItem>
+        </s:Form>
+    </s:VGroup>
+</s:TitleWindow>

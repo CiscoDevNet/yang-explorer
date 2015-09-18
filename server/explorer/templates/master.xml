@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<module>
+{% for module in modules %}
+<node name="{{module}}" type="module" path="{{module}}">
+  <node name="Loading .." type="__yang_placeholder"/>
+</node>
+{% endfor %}
+</module>
+

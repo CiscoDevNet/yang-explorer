@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<node name="ietf-inet-types" type="module" prefix="inet">
+  <namespace prefix="inet">urn:ietf:params:xml:ns:yang:ietf-inet-types</namespace>
+</node>

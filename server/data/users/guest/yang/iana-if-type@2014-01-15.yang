@@ -1,0 +1,1600 @@
+module iana-if-type {
+     namespace "urn:ietf:params:xml:ns:yang:iana-if-type";
+     prefix ianaift;
+
+     import ietf-interfaces {
+       prefix if;
+     }
+
+     organization "IANA";
+     contact
+       "        Internet Assigned Numbers Authority
+
+        Postal: ICANN
+                4676 Admiralty Way, Suite 330
+                Marina del Rey, CA 90292
+
+        Tel:      +1 310 823 9358  
+        E-Mail: iana&iana.org";
+     description
+       "This YANG module defines YANG identites for IANA-registered
+        interface types.
+
+        This YANG module is maintained by IANA, and reflects the
+        'ifType definitions' registry.
+
+        The latest revision of this YANG module can be obtained from
+        the IANA web site.
+
+        Requests for new values should be made to IANA via
+        email (iana&iana.org).
+
+        Copyright (c) 2013 IETF Trust and the persons identified as
+        authors of the code.  All rights reserved.
+
+        Redistribution and use in source and binary forms, with or
+        without modification, is permitted pursuant to, and subject
+        to the license terms contained in, the Simplified BSD License
+        set forth in Section 4.c of the IETF Trust's Legal Provisions
+        Relating to IETF Documents
+        (http://trustee.ietf.org/license-info).
+
+
+
+        The initial version of this YANG module is part of RFC XXXX;
+        see the RFC itself for full legal notices.";
+     // RFC Ed.: replace XXXX with actual RFC number and remove this
+     // note.
+       reference
+         "IANA ifType definitions registry.
+          <http://www.iana.org/assignments/smi-numbers>";
+
+     // RFC Ed.: update the date below with the date of RFC publication
+     // and remove this note.
+     revision 2014-01-15 {
+       description
+         "Initial revision. Made a temporary workaround with identity inheritance due to the xmas infrastructure issues
+         to enable development. Also updated the module-id.";
+       reference
+         "RFC XXXX: IANA Interface Type YANG Module";
+     }
+
+     identity iana-interface-type {
+       base if:interface-type;
+       description
+         "This identity is used as a base for all interface types
+          defined in the ifType definition registry.";
+     }
+
+     identity other {
+       base if:interface-type;
+     }
+     identity regular1822 {
+       base if:interface-type;
+     }
+     identity hdh1822 {
+       base if:interface-type;
+     }
+     identity ddnX25 {
+       base if:interface-type;
+     }
+     identity rfc877x25 {
+       base if:interface-type;
+       reference
+         "RFC 1382 - SNMP MIB Extension for the X.25 Packet Layer";
+     }
+     identity ethernetCsmacd {
+       base if:interface-type;
+       description
+         "For all ethernet-like interfaces, regardless of speed,
+          as per RFC3635.";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+
+
+
+
+                     Ethernet-like Interface Types.";
+     }
+     identity iso88023Csmacd {
+       base if:interface-type;
+       status deprecated;
+       description
+         "Deprecated via RFC3635.
+          Use ethernetCsmacd(6) instead.";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+                     Ethernet-like Interface Types.";
+     }
+     identity iso88024TokenBus {
+       base if:interface-type;
+     }
+     identity iso88025TokenRing {
+       base if:interface-type;
+     }
+     identity iso88026Man {
+       base if:interface-type;
+     }
+     identity starLan {
+       base if:interface-type;
+       status deprecated;
+       description
+         "Deprecated via RFC3635.
+          Use ethernetCsmacd(6) instead.";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+                     Ethernet-like Interface Types.";
+     }
+     identity proteon10Mbit {
+       base if:interface-type;
+     }
+     identity proteon80Mbit {
+       base if:interface-type;
+     }
+     identity hyperchannel {
+       base if:interface-type;
+     }
+     identity fddi {
+       base if:interface-type;
+       reference
+         "RFC 1512 - FDDI Management Information Base";
+     }
+     identity lapb {
+       base if:interface-type;
+       reference
+
+
+
+         "RFC 1381 - SNMP MIB Extension for X.25 LAPB";
+     }
+     identity sdlc {
+       base if:interface-type;
+     }
+     identity ds1 {
+       base if:interface-type;
+       description
+         "DS1-MIB";
+       reference
+         "RFC 4805 - Definitions of Managed Objects for the
+                     DS1, J1, E1, DS2, and E2 Interface Types";
+     }
+     identity e1 {
+       base if:interface-type;
+       status obsolete;
+       description
+         "Obsolete see DS1-MIB";
+       reference
+         "RFC 4805 - Definitions of Managed Objects for the
+                     DS1, J1, E1, DS2, and E2 Interface Types";
+     }
+     identity basicISDN {
+       base if:interface-type;
+       description
+         "no longer used.
+          see also RFC2127";
+     }
+     identity primaryISDN {
+       base if:interface-type;
+       description
+         "no longer used.
+          see also RFC2127";
+     }
+     identity propPointToPointSerial {
+       base if:interface-type;
+       description
+         "proprietary serial";
+     }
+     identity ppp {
+       base if:interface-type;
+     }
+     identity softwareLoopback {
+       base if:interface-type;
+     }
+     identity eon {
+       base if:interface-type;
+       description
+
+
+
+
+         "CLNP over IP";
+     }
+     identity ethernet3Mbit {
+       base if:interface-type;
+     }
+     identity nsip {
+       base if:interface-type;
+       description
+         "XNS over IP";
+     }
+     identity slip {
+       base if:interface-type;
+       description
+         "generic SLIP";
+     }
+     identity ultra {
+       base if:interface-type;
+       description
+         "ULTRA technologies";
+     }
+     identity ds3 {
+       base if:interface-type;
+       description
+         "DS3-MIB";
+       reference
+         "RFC 3896 - Definitions of Managed Objects for the
+                     DS3/E3 Interface Type";
+     }
+     identity sip {
+       base if:interface-type;
+       description
+         "SMDS, coffee";
+       reference
+         "RFC 1694 - Definitions of Managed Objects for SMDS
+                         Interfaces using SMIv2";
+     }
+     identity frameRelay {
+       base if:interface-type;
+       description
+         "DTE only.";
+       reference
+         "RFC 2115 - Management Information Base for Frame Relay
+                     DTEs Using SMIv2";
+     }
+     identity rs232 {
+       base if:interface-type;
+       reference
+         "RFC 1659 - Definitions of Managed Objects for RS-232-like
+
+
+
+
+                     Hardware Devices using SMIv2";
+     }
+     identity para {
+       base if:interface-type;
+       description
+         "parallel-port";
+       reference
+         "RFC 1660 - Definitions of Managed Objects for
+                     Parallel-printer-like Hardware Devices using
+                     SMIv2";
+     }
+     identity arcnet {
+       base if:interface-type;
+       description
+         "arcnet";
+     }
+     identity arcnetPlus {
+       base if:interface-type;
+       description
+         "arcnet plus";
+     }
+     identity atm {
+       base if:interface-type;
+       description
+         "ATM cells";
+     }
+     identity miox25 {
+       base if:interface-type;
+       reference
+         "RFC 1461 - SNMP MIB extension for Multiprotocol
+                     Interconnect over X.25";
+     }
+     identity sonet {
+       base if:interface-type;
+       description
+         "SONET or SDH";
+     }
+     identity x25ple {
+       base if:interface-type;
+       reference
+         "RFC 2127 - ISDN Management Information Base using SMIv2";
+     }
+     identity iso88022llc {
+       base if:interface-type;
+     }
+     identity localTalk {
+       base if:interface-type;
+     }
+
+
+
+     identity smdsDxi {
+       base if:interface-type;
+     }
+     identity frameRelayService {
+       base if:interface-type;
+       description
+         "FRNETSERV-MIB";
+       reference
+         "RFC 2954 - Definitions of Managed Objects for Frame
+                     Relay Service";
+     }
+     identity v35 {
+       base if:interface-type;
+     }
+     identity hssi {
+       base if:interface-type;
+     }
+     identity hippi {
+       base if:interface-type;
+     }
+     identity modem {
+       base if:interface-type;
+       description
+         "Generic modem";
+     }
+     identity aal5 {
+       base if:interface-type;
+       description
+         "AAL5 over ATM";
+     }
+     identity sonetPath {
+       base if:interface-type;
+     }
+     identity sonetVT {
+       base if:interface-type;
+     }
+     identity smdsIcip {
+       base if:interface-type;
+       description
+         "SMDS InterCarrier Interface";
+     }
+     identity propVirtual {
+       base if:interface-type;
+       description
+         "proprietary virtual/internal";
+       reference
+         "RFC 2863 - The Interfaces Group MIB";
+     }
+
+
+
+     identity propMultiplexor {
+       base if:interface-type;
+       description
+         "proprietary multiplexing";
+       reference
+         "RFC 2863 - The Interfaces Group MIB";
+     }
+     identity ieee80212 {
+       base if:interface-type;
+       description
+         "100BaseVG";
+     }
+     identity fibreChannel {
+       base if:interface-type;
+       description
+         "Fibre Channel";
+     }
+     identity hippiInterface {
+       base if:interface-type;
+       description
+         "HIPPI interfaces";
+     }
+     identity frameRelayInterconnect {
+       base if:interface-type;
+       status obsolete;
+       description
+         "Obsolete use either
+          frameRelay(32) or frameRelayService(44).";
+     }
+     identity aflane8023 {
+       base if:interface-type;
+       description
+         "ATM Emulated LAN for 802.3";
+     }
+     identity aflane8025 {
+       base if:interface-type;
+       description
+         "ATM Emulated LAN for 802.5";
+     }
+     identity cctEmul {
+       base if:interface-type;
+       description
+         "ATM Emulated circuit";
+     }
+     identity fastEther {
+       base if:interface-type;
+       status deprecated;
+       description
+
+
+         "Obsoleted via RFC3635.
+          ethernetCsmacd(6) should be used instead";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+                     Ethernet-like Interface Types.";
+     }
+     identity isdn {
+       base if:interface-type;
+       description
+         "ISDN and X.25";
+       reference
+         "RFC 1356 - Multiprotocol Interconnect on X.25 and ISDN
+                     in the Packet Mode";
+     }
+     identity v11 {
+       base if:interface-type;
+       description
+         "CCITT V.11/X.21";
+     }
+     identity v36 {
+       base if:interface-type;
+       description
+         "CCITT V.36";
+     }
+     identity g703at64k {
+       base if:interface-type;
+       description
+         "CCITT G703 at 64Kbps";
+     }
+     identity g703at2mb {
+       base if:interface-type;
+       status obsolete;
+       description
+         "Obsolete see DS1-MIB";
+     }
+     identity qllc {
+       base if:interface-type;
+       description
+         "SNA QLLC";
+     }
+     identity fastEtherFX {
+       base if:interface-type;
+       status deprecated;
+       description
+         "Obsoleted via RFC3635
+          ethernetCsmacd(6) should be used instead";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+
+
+
+                     Ethernet-like Interface Types.";
+     }
+     identity channel {
+       base if:interface-type;
+       description
+         "channel";
+     }
+     identity ieee80211 {
+       base if:interface-type;
+       description
+         "radio spread spectrum";
+     }
+     identity ibm370parChan {
+       base if:interface-type;
+       description
+         "IBM System 360/370 OEMI Channel";
+     }
+     identity escon {
+       base if:interface-type;
+       description
+         "IBM Enterprise Systems Connection";
+     }
+     identity dlsw {
+       base if:interface-type;
+       description
+         "Data Link Switching";
+     }
+     identity isdns {
+       base if:interface-type;
+       description
+         "ISDN S/T interface";
+     }
+     identity isdnu {
+       base if:interface-type;
+       description
+         "ISDN U interface";
+     }
+     identity lapd {
+       base if:interface-type;
+       description
+         "Link Access Protocol D";
+     }
+     identity ipSwitch {
+       base if:interface-type;
+       description
+         "IP Switching Objects";
+     }
+     identity rsrb {
+
+
+
+       base if:interface-type;
+       description
+         "Remote Source Route Bridging";
+     }
+     identity atmLogical {
+       base if:interface-type;
+       description
+         "ATM Logical Port";
+       reference
+         "RFC 3606 - Definitions of Supplemental Managed Objects
+                     for ATM Interface";
+     }
+     identity ds0 {
+       base if:interface-type;
+       description
+         "Digital Signal Level 0";
+       reference
+         "RFC 2494 - Definitions of Managed Objects for the DS0
+                     and DS0 Bundle Interface Type";
+     }
+     identity ds0Bundle {
+       base if:interface-type;
+       description
+         "group of ds0s on the same ds1";
+       reference
+         "RFC 2494 - Definitions of Managed Objects for the DS0
+                     and DS0 Bundle Interface Type";
+     }
+     identity bsc {
+       base if:interface-type;
+       description
+         "Bisynchronous Protocol";
+     }
+     identity async {
+       base if:interface-type;
+       description
+         "Asynchronous Protocol";
+     }
+     identity cnr {
+       base if:interface-type;
+       description
+         "Combat Net Radio";
+     }
+     identity iso88025Dtr {
+       base if:interface-type;
+       description
+         "ISO 802.5r DTR";
+     }
+
+
+
+     identity eplrs {
+       base if:interface-type;
+       description
+         "Ext Pos Loc Report Sys";
+     }
+     identity arap {
+       base if:interface-type;
+       description
+         "Appletalk Remote Access Protocol";
+     }
+     identity propCnls {
+       base if:interface-type;
+       description
+         "Proprietary Connectionless Protocol";
+     }
+     identity hostPad {
+       base if:interface-type;
+       description
+         "CCITT-ITU X.29 PAD Protocol";
+     }
+     identity termPad {
+       base if:interface-type;
+       description
+         "CCITT-ITU X.3 PAD Facility";
+     }
+     identity frameRelayMPI {
+       base if:interface-type;
+       description
+         "Multiproto Interconnect over FR";
+     }
+     identity x213 {
+       base if:interface-type;
+       description
+         "CCITT-ITU X213";
+     }
+     identity adsl {
+       base if:interface-type;
+       description
+         "Asymmetric Digital Subscriber Loop";
+     }
+     identity radsl {
+       base if:interface-type;
+       description
+         "Rate-Adapt. Digital Subscriber Loop";
+     }
+     identity sdsl {
+       base if:interface-type;
+       description
+
+
+
+         "Symmetric Digital Subscriber Loop";
+     }
+     identity vdsl {
+       base if:interface-type;
+       description
+         "Very H-Speed Digital Subscrib. Loop";
+     }
+     identity iso88025CRFPInt {
+       base if:interface-type;
+       description
+         "ISO 802.5 CRFP";
+     }
+     identity myrinet {
+       base if:interface-type;
+       description
+         "Myricom Myrinet";
+     }
+     identity voiceEM {
+       base if:interface-type;
+       description
+         "voice recEive and transMit";
+     }
+     identity voiceFXO {
+       base if:interface-type;
+       description
+         "voice Foreign Exchange Office";
+     }
+     identity voiceFXS {
+       base if:interface-type;
+       description
+         "voice Foreign Exchange Station";
+     }
+     identity voiceEncap {
+       base if:interface-type;
+       description
+         "voice encapsulation";
+     }
+     identity voiceOverIp {
+       base if:interface-type;
+       description
+         "voice over IP encapsulation";
+     }
+     identity atmDxi {
+       base if:interface-type;
+       description
+         "ATM DXI";
+     }
+     identity atmFuni {
+
+
+
+       base if:interface-type;
+       description
+         "ATM FUNI";
+     }
+     identity atmIma {
+       base if:interface-type;
+       description
+         "ATM IMA";
+     }
+     identity pppMultilinkBundle {
+       base if:interface-type;
+       description
+         "PPP Multilink Bundle";
+     }
+     identity ipOverCdlc {
+       base if:interface-type;
+       description
+         "IBM ipOverCdlc";
+     }
+     identity ipOverClaw {
+       base if:interface-type;
+       description
+         "IBM Common Link Access to Workstn";
+     }
+     identity stackToStack {
+       base if:interface-type;
+       description
+         "IBM stackToStack";
+     }
+     identity virtualIpAddress {
+       base if:interface-type;
+       description
+         "IBM VIPA";
+     }
+     identity mpc {
+       base if:interface-type;
+       description
+         "IBM multi-protocol channel support";
+     }
+     identity ipOverAtm {
+       base if:interface-type;
+       description
+         "IBM ipOverAtm";
+       reference
+         "RFC 2320 - Definitions of Managed Objects for Classical IP
+                     and ARP Over ATM Using SMIv2 (IPOA-MIB)";
+     }
+     identity iso88025Fiber {
+
+
+
+       base if:interface-type;
+       description
+         "ISO 802.5j Fiber Token Ring";
+     }
+     identity tdlc {
+       base if:interface-type;
+       description
+         "IBM twinaxial data link control";
+     }
+     identity gigabitEthernet {
+       base if:interface-type;
+       status deprecated;
+       description
+         "Obsoleted via RFC3635
+          ethernetCsmacd(6) should be used instead";
+       reference
+         "RFC 3635 - Definitions of Managed Objects for the
+                     Ethernet-like Interface Types.";
+     }
+     identity hdlc {
+       base if:interface-type;
+       description
+         "HDLC";
+     }
+     identity lapf {
+       base if:interface-type;
+       description
+         "LAP F";
+     }
+     identity v37 {
+       base if:interface-type;
+       description
+         "V.37";
+     }
+     identity x25mlp {
+       base if:interface-type;
+       description
+         "Multi-Link Protocol";
+     }
+     identity x25huntGroup {
+       base if:interface-type;
+       description
+         "X25 Hunt Group";
+     }
+     identity transpHdlc {
+       base if:interface-type;
+       description
+         "Transp HDLC";
+
+
+     }
+     identity interleave {
+       base if:interface-type;
+       description
+         "Interleave channel";
+     }
+     identity fast {
+       base if:interface-type;
+       description
+         "Fast channel";
+     }
+     identity ip {
+       base if:interface-type;
+       description
+         "IP (for APPN HPR in IP networks)";
+     }
+     identity docsCableMaclayer {
+       base if:interface-type;
+       description
+         "CATV Mac Layer";
+     }
+     identity docsCableDownstream {
+       base if:interface-type;
+       description
+         "CATV Downstream interface";
+     }
+     identity docsCableUpstream {
+       base if:interface-type;
+       description
+         "CATV Upstream interface";
+     }
+     identity a12MppSwitch {
+       base if:interface-type;
+       description
+         "Avalon Parallel Processor";
+     }
+     identity tunnel {
+       base if:interface-type;
+       description
+         "Encapsulation interface";
+     }
+     identity coffee {
+       base if:interface-type;
+       description
+         "coffee pot";
+       reference
+         "RFC 2325 - Coffee MIB";
+     }
+
+
+
+     identity ces {
+       base if:interface-type;
+       description
+         "Circuit Emulation Service";
+     }
+     identity atmSubInterface {
+       base if:interface-type;
+       description
+         "ATM Sub Interface";
+     }
+     identity l2vlan {
+       base if:interface-type;
+       description
+         "Layer 2 Virtual LAN using 802.1Q";
+     }
+     identity l3ipvlan {
+       base if:interface-type;
+       description
+         "Layer 3 Virtual LAN using IP";
+     }
+     identity l3ipxvlan {
+       base if:interface-type;
+       description
+         "Layer 3 Virtual LAN using IPX";
+     }
+     identity digitalPowerline {
+       base if:interface-type;
+       description
+         "IP over Power Lines";
+     }
+     identity mediaMailOverIp {
+       base if:interface-type;
+       description
+         "Multimedia Mail over IP";
+     }
+     identity dtm {
+       base if:interface-type;
+       description
+         "Dynamic syncronous Transfer Mode";
+     }
+     identity dcn {
+       base if:interface-type;
+       description
+         "Data Communications Network";
+     }
+     identity ipForward {
+       base if:interface-type;
+       description
+
+
+
+         "IP Forwarding Interface";
+     }
+     identity msdsl {
+       base if:interface-type;
+       description
+         "Multi-rate Symmetric DSL";
+     }
+     identity ieee1394 {
+       base if:interface-type;
+       description
+         "IEEE1394 High Performance Serial Bus";
+     }
+     identity if-gsn {
+       base if:interface-type;
+       description
+         "HIPPI-6400";
+     }
+     identity dvbRccMacLayer {
+       base if:interface-type;
+       description
+         "DVB-RCC MAC Layer";
+     }
+     identity dvbRccDownstream {
+       base if:interface-type;
+       description
+         "DVB-RCC Downstream Channel";
+     }
+     identity dvbRccUpstream {
+       base if:interface-type;
+       description
+         "DVB-RCC Upstream Channel";
+     }
+     identity atmVirtual {
+       base if:interface-type;
+       description
+         "ATM Virtual Interface";
+     }
+     identity mplsTunnel {
+       base if:interface-type;
+       description
+         "MPLS Tunnel Virtual Interface";
+     }
+     identity srp {
+       base if:interface-type;
+       description
+         "Spatial Reuse Protocol";
+     }
+     identity voiceOverAtm {
+
+
+
+       base if:interface-type;
+       description
+         "Voice Over ATM";
+     }
+     identity voiceOverFrameRelay {
+       base if:interface-type;
+       description
+         "Voice Over Frame Relay";
+     }
+     identity idsl {
+       base if:interface-type;
+       description
+         "Digital Subscriber Loop over ISDN";
+     }
+     identity compositeLink {
+       base if:interface-type;
+       description
+         "Avici Composite Link Interface";
+     }
+     identity ss7SigLink {
+       base if:interface-type;
+       description
+         "SS7 Signaling Link";
+     }
+     identity propWirelessP2P {
+       base if:interface-type;
+       description
+         "Prop. P2P wireless interface";
+     }
+     identity frForward {
+       base if:interface-type;
+       description
+         "Frame Forward Interface";
+     }
+     identity rfc1483 {
+       base if:interface-type;
+       description
+         "Multiprotocol over ATM AAL5";
+       reference
+         "RFC 1483 - Multiprotocol Encapsulation over ATM
+                     Adaptation Layer 5";
+     }
+     identity usb {
+       base if:interface-type;
+       description
+         "USB Interface";
+     }
+     identity ieee8023adLag {
+
+
+
+       base if:interface-type;
+       description
+         "IEEE 802.3ad Link Aggregate";
+     }
+     identity bgppolicyaccounting {
+       base if:interface-type;
+       description
+         "BGP Policy Accounting";
+     }
+     identity frf16MfrBundle {
+       base if:interface-type;
+       description
+         "FRF .16 Multilink Frame Relay";
+     }
+     identity h323Gatekeeper {
+       base if:interface-type;
+       description
+         "H323 Gatekeeper";
+     }
+     identity h323Proxy {
+       base if:interface-type;
+       description
+         "H323 Voice and Video Proxy";
+     }
+     identity mpls {
+       base if:interface-type;
+       description
+         "MPLS";
+     }
+     identity mfSigLink {
+       base if:interface-type;
+       description
+         "Multi-frequency signaling link";
+     }
+     identity hdsl2 {
+       base if:interface-type;
+       description
+         "High Bit-Rate DSL - 2nd generation";
+     }
+     identity shdsl {
+       base if:interface-type;
+       description
+         "Multirate HDSL2";
+     }
+     identity ds1FDL {
+       base if:interface-type;
+       description
+         "Facility Data Link 4Kbps on a DS1";
+
+
+
+     }
+     identity pos {
+       base if:interface-type;
+       description
+         "Packet over SONET/SDH Interface";
+     }
+     identity dvbAsiIn {
+       base if:interface-type;
+       description
+         "DVB-ASI Input";
+     }
+     identity dvbAsiOut {
+       base if:interface-type;
+       description
+         "DVB-ASI Output";
+     }
+     identity plc {
+       base if:interface-type;
+       description
+         "Power Line Communtications";
+     }
+     identity nfas {
+       base if:interface-type;
+       description
+         "Non Facility Associated Signaling";
+     }
+     identity tr008 {
+       base if:interface-type;
+       description
+         "TR008";
+     }
+     identity gr303RDT {
+       base if:interface-type;
+       description
+         "Remote Digital Terminal";
+     }
+     identity gr303IDT {
+       base if:interface-type;
+       description
+         "Integrated Digital Terminal";
+     }
+     identity isup {
+       base if:interface-type;
+       description
+         "ISUP";
+     }
+     identity propDocsWirelessMaclayer {
+       base if:interface-type;
+
+
+       description
+         "Cisco proprietary Maclayer";
+     }
+     identity propDocsWirelessDownstream {
+       base if:interface-type;
+       description
+         "Cisco proprietary Downstream";
+     }
+     identity propDocsWirelessUpstream {
+       base if:interface-type;
+       description
+         "Cisco proprietary Upstream";
+     }
+     identity hiperlan2 {
+       base if:interface-type;
+       description
+         "HIPERLAN Type 2 Radio Interface";
+     }
+     identity propBWAp2Mp {
+       base if:interface-type;
+       description
+         "PropBroadbandWirelessAccesspt2multipt use of this value
+          for IEEE 802.16 WMAN interfaces as per IEEE Std 802.16f
+          is deprecated and ieee80216WMAN(237) should be used
+          instead.";
+     }
+     identity sonetOverheadChannel {
+       base if:interface-type;
+       description
+         "SONET Overhead Channel";
+     }
+     identity digitalWrapperOverheadChannel {
+       base if:interface-type;
+       description
+         "Digital Wrapper";
+     }
+     identity aal2 {
+       base if:interface-type;
+       description
+         "ATM adaptation layer 2";
+     }
+     identity radioMAC {
+       base if:interface-type;
+       description
+         "MAC layer over radio links";
+     }
+     identity atmRadio {
+       base if:interface-type;
+
+
+
+       description
+         "ATM over radio links";
+     }
+     identity imt {
+       base if:interface-type;
+       description
+         "Inter Machine Trunks";
+     }
+     identity mvl {
+       base if:interface-type;
+       description
+         "Multiple Virtual Lines DSL";
+     }
+     identity reachDSL {
+       base if:interface-type;
+       description
+         "Long Reach DSL";
+     }
+     identity frDlciEndPt {
+       base if:interface-type;
+       description
+         "Frame Relay DLCI End Point";
+     }
+     identity atmVciEndPt {
+       base if:interface-type;
+       description
+         "ATM VCI End Point";
+     }
+     identity opticalChannel {
+       base if:interface-type;
+       description
+         "Optical Channel";
+     }
+     identity opticalTransport {
+       base if:interface-type;
+       description
+         "Optical Transport";
+     }
+     identity propAtm {
+       base if:interface-type;
+       description
+         "Proprietary ATM";
+     }
+     identity voiceOverCable {
+       base if:interface-type;
+       description
+         "Voice Over Cable Interface";
+     }
+
+
+     identity infiniband {
+       base if:interface-type;
+       description
+         "Infiniband";
+     }
+     identity teLink {
+       base if:interface-type;
+       description
+         "TE Link";
+     }
+     identity q2931 {
+       base if:interface-type;
+       description
+         "Q.2931";
+     }
+     identity virtualTg {
+       base if:interface-type;
+       description
+         "Virtual Trunk Group";
+     }
+     identity sipTg {
+       base if:interface-type;
+       description
+         "SIP Trunk Group";
+     }
+     identity sipSig {
+       base if:interface-type;
+       description
+         "SIP Signaling";
+     }
+     identity docsCableUpstreamChannel {
+       base if:interface-type;
+       description
+         "CATV Upstream Channel";
+     }
+     identity econet {
+       base if:interface-type;
+       description
+         "Acorn Econet";
+     }
+     identity pon155 {
+       base if:interface-type;
+       description
+         "FSAN 155Mb Symetrical PON interface";
+     }
+     identity pon622 {
+       base if:interface-type;
+       description
+
+
+         "FSAN622Mb Symetrical PON interface";
+     }
+     identity bridge {
+       base if:interface-type;
+       description
+         "Transparent bridge interface";
+     }
+     identity linegroup {
+       base if:interface-type;
+       description
+         "Interface common to multiple lines";
+     }
+     identity voiceEMFGD {
+       base if:interface-type;
+       description
+         "voice E&M Feature Group D";
+     }
+     identity voiceFGDEANA {
+       base if:interface-type;
+       description
+         "voice FGD Exchange Access North American";
+     }
+     identity voiceDID {
+       base if:interface-type;
+       description
+         "voice Direct Inward Dialing";
+     }
+     identity mpegTransport {
+       base if:interface-type;
+       description
+         "MPEG transport interface";
+     }
+     identity sixToFour {
+       base if:interface-type;
+       status deprecated;
+       description
+         "6to4 interface (DEPRECATED)";
+       reference
+         "RFC 4087 - IP Tunnel MIB";
+     }
+     identity gtp {
+       base if:interface-type;
+       description
+         "GTP (GPRS Tunneling Protocol)";
+     }
+     identity pdnEtherLoop1 {
+       base if:interface-type;
+       description
+
+
+         "Paradyne EtherLoop 1";
+     }
+     identity pdnEtherLoop2 {
+       base if:interface-type;
+       description
+         "Paradyne EtherLoop 2";
+     }
+     identity opticalChannelGroup {
+       base if:interface-type;
+       description
+         "Optical Channel Group";
+     }
+     identity homepna {
+       base if:interface-type;
+       description
+         "HomePNA ITU-T G.989";
+     }
+     identity gfp {
+       base if:interface-type;
+       description
+         "Generic Framing Procedure (GFP)";
+     }
+     identity ciscoISLvlan {
+       base if:interface-type;
+       description
+         "Layer 2 Virtual LAN using Cisco ISL";
+     }
+     identity actelisMetaLOOP {
+       base if:interface-type;
+       description
+         "Acteleis proprietary MetaLOOP High Speed Link";
+     }
+     identity fcipLink {
+       base if:interface-type;
+       description
+         "FCIP Link";
+     }
+     identity rpr {
+       base if:interface-type;
+       description
+         "Resilient Packet Ring Interface Type";
+     }
+     identity qam {
+       base if:interface-type;
+       description
+         "RF Qam Interface";
+     }
+     identity lmp {
+
+
+
+       base if:interface-type;
+       description
+         "Link Management Protocol";
+       reference
+         "RFC 4327 - Link Management Protocol (LMP) Management
+                     Information Base (MIB)";
+     }
+     identity cblVectaStar {
+       base if:interface-type;
+       description
+         "Cambridge Broadband Networks Limited VectaStar";
+     }
+     identity docsCableMCmtsDownstream {
+       base if:interface-type;
+       description
+         "CATV Modular CMTS Downstream Interface";
+     }
+     identity adsl2 {
+       base if:interface-type;
+       status deprecated;
+       description
+         "Asymmetric Digital Subscriber Loop Version 2
+          (DEPRECATED/OBSOLETED - please use adsl2plus(238)
+          instead)";
+       reference
+         "RFC 4706 - Definitions of Managed Objects for Asymmetric
+                     Digital Subscriber Line 2 (ADSL2)";
+     }
+     identity macSecControlledIF {
+       base if:interface-type;
+       description
+         "MACSecControlled";
+     }
+     identity macSecUncontrolledIF {
+       base if:interface-type;
+       description
+         "MACSecUncontrolled";
+     }
+     identity aviciOpticalEther {
+       base if:interface-type;
+       description
+         "Avici Optical Ethernet Aggregate";
+     }
+     identity atmbond {
+       base if:interface-type;
+       description
+         "atmbond";
+     }
+
+
+     identity voiceFGDOS {
+       base if:interface-type;
+       description
+         "voice FGD Operator Services";
+     }
+     identity mocaVersion1 {
+       base if:interface-type;
+       description
+         "MultiMedia over Coax Alliance (MoCA) Interface
+          as documented in information provided privately to IANA";
+     }
+     identity ieee80216WMAN {
+       base if:interface-type;
+       description
+         "IEEE 802.16 WMAN interface";
+     }
+     identity adsl2plus {
+       base if:interface-type;
+       description
+         "Asymmetric Digital Subscriber Loop Version 2,
+          Version 2 Plus and all variants";
+     }
+     identity dvbRcsMacLayer {
+       base if:interface-type;
+       description
+         "DVB-RCS MAC Layer";
+       reference
+         "RFC 5728 - The SatLabs Group DVB-RCS MIB";
+     }
+     identity dvbTdm {
+       base if:interface-type;
+       description
+         "DVB Satellite TDM";
+       reference
+         "RFC 5728 - The SatLabs Group DVB-RCS MIB";
+     }
+     identity dvbRcsTdma {
+       base if:interface-type;
+       description
+         "DVB-RCS TDMA";
+       reference
+         "RFC 5728 - The SatLabs Group DVB-RCS MIB";
+     }
+     identity x86Laps {
+       base if:interface-type;
+       description
+         "LAPS based on ITU-T X.86/Y.1323";
+     }
+
+
+
+     identity wwanPP {
+       base if:interface-type;
+       description
+         "3GPP WWAN";
+     }
+     identity wwanPP2 {
+       base if:interface-type;
+       description
+         "3GPP2 WWAN";
+     }
+     identity voiceEBS {
+       base if:interface-type;
+       description
+         "voice P-phone EBS physical interface";
+     }
+     identity ifPwType {
+       base if:interface-type;
+       description
+         "Pseudowire interface type";
+       reference
+         "RFC 5601 - Pseudowire (PW) Management Information Base";
+     }
+     identity ilan {
+       base if:interface-type;
+       description
+         "Internal LAN on a bridge per IEEE 802.1ap";
+     }
+     identity pip {
+       base if:interface-type;
+       description
+         "Provider Instance Port on a bridge per IEEE 802.1ah PBB";
+     }
+     identity aluELP {
+       base if:interface-type;
+       description
+         "Alcatel-Lucent Ethernet Link Protection";
+     }
+     identity gpon {
+       base if:interface-type;
+       description
+         "Gigabit-capable passive optical networks (G-PON) as per
+              ITU-T G.948";
+     }
+     identity vdsl2 {
+       base if:interface-type;
+       description
+         "Very high speed digital subscriber line Version 2
+          (as per ITU-T Recommendation G.993.2)";
+
+
+       reference
+         "RFC 5650 - Definitions of Managed Objects for Very High
+                     Speed Digital Subscriber Line 2 (VDSL2)";
+     }
+     identity capwapDot11Profile {
+       base if:interface-type;
+       description
+         "WLAN Profile Interface";
+       reference
+         "RFC 5834 - Control and Provisioning of Wireless Access
+                     Points (CAPWAP) Protocol Binding MIB for
+                     IEEE 802.11";
+     }
+     identity capwapDot11Bss {
+       base if:interface-type;
+       description
+         "WLAN BSS Interface";
+       reference
+         "RFC 5834 - Control and Provisioning of Wireless Access
+                     Points (CAPWAP) Protocol Binding MIB for
+                     IEEE 802.11";
+     }
+     identity capwapWtpVirtualRadio {
+       base if:interface-type;
+       description
+         "WTP Virtual Radio Interface";
+       reference
+         "RFC 5833 - Control and Provisioning of Wireless Access
+                     Points (CAPWAP) Protocol Base MIB";
+     }
+     identity bits {
+       base if:interface-type;
+       description
+         "bitsport";
+     }
+     identity docsCableUpstreamRfPort {
+       base if:interface-type;
+       description
+         "DOCSIS CATV Upstream RF Port";
+     }
+     identity cableDownstreamRfPort {
+       base if:interface-type;
+       description
+         "CATV downstream RF port";
+     }
+     identity vmwareVirtualNic {
+       base if:interface-type;
+       description
+
+
+         "VMware Virtual Network Interface";
+     }
+     identity ieee802154 {
+       base if:interface-type;
+       description
+         "IEEE 802.15.4 WPAN interface";
+       reference
+         "IEEE 802.15.4-2006";
+     }
+     identity otnOdu {
+       base if:interface-type;
+       description
+         "OTN Optical Data Unit";
+     }
+     identity otnOtu {
+       base if:interface-type;
+       description
+         "OTN Optical channel Transport Unit";
+     }
+     identity ifVfiType {
+       base if:interface-type;
+       description
+         "VPLS Forwarding Instance Interface Type";
+     }
+     identity g9981 {
+       base if:interface-type;
+       description
+         "G.998.1 bonded interface";
+     }
+     identity g9982 {
+       base if:interface-type;
+       description
+         "G.998.2 bonded interface";
+     }
+     identity g9983 {
+       base if:interface-type;
+       description
+         "G.998.3 bonded interface";
+     }
+     identity aluEpon {
+       base if:interface-type;
+       description
+         "Ethernet Passive Optical Networks (E-PON)";
+     }
+     identity aluEponOnu {
+       base if:interface-type;
+       description
+         "EPON Optical Network Unit";
+
+     }
+     identity aluEponPhysicalUni {
+       base if:interface-type;
+       description
+         "EPON physical User to Network interface";
+     }
+     identity aluEponLogicalLink {
+       base if:interface-type;
+       description
+         "The emulation of a point-to-point link over the EPON
+          layer";
+     }
+     identity aluGponOnu {
+       base if:interface-type;
+       description
+         "GPON Optical Network Unit";
+       reference
+         "ITU-T G.984.2";
+     }
+     identity aluGponPhysicalUni {
+       base if:interface-type;
+       description
+         "GPON physical User to Network interface";
+       reference
+         "ITU-T G.984.2";
+     }
+     identity vmwareNicTeam {
+       base if:interface-type;
+       description
+         "VMware NIC Team";
+     }
+
+   }
+

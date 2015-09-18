@@ -1,0 +1,10 @@
+<properties>
+   <property>
+       <name>UploadHandler</name>
+       <value>http://localhost:8088/explorer/uploadfile</value>
+   </property>
+   <property>
+       <name>UploadFolder</name>
+       <value>http://localhost:8088/explorer/uploaddir</value>
+   </property>
+</properties>

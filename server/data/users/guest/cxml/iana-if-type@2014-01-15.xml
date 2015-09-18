@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<node name="iana-if-type" type="module" prefix="ianaift">
+  <namespace prefix="ianaift">urn:ietf:params:xml:ns:yang:iana-if-type</namespace>
+</node>

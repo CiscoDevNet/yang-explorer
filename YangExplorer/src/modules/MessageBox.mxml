@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
+-->
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+               xmlns:mx="library://ns.adobe.com/flex/mx" 
+               xmlns:s="library://ns.adobe.com/flex/spark"
+               close="handleCloseEvent();"
+               skinClass="flatspark.skins.TitleWindowSkin" xmlns:components="flatspark.components.*"
+               fontFamily="Avenir"
+               title="Log"
+               width="400" height="300">
+    <s:layout>
+        <s:VerticalLayout/>
+    </s:layout>
+    <fx:Script>
+        <![CDATA[
+            import mx.managers.PopUpManager;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
+            // Handle the close button and Cancel button.
+            private function handleCloseEvent():void {
+                PopUpManager.removePopUp(this);
+            }
+            public function setText(msg : String) : void {
+                txtLog.text = msg;
+            }
+        ]]>
+    </fx:Script>
+    <s:VGroup width="100%" height="100%" fontSize="14" padding="10">
+        <s:TextArea id='txtLog' width="100%" height="90%"/>
+        <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
+                               label="Copy"
+                               brand="{BrandColorEnum.Success}"
+                               click="System.setClipboard(txtLog.text);"/>
+    </s:VGroup>
+</s:TitleWindow>

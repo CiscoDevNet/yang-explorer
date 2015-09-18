@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+    @author: Pravin Gohite, Cisco Systems, Inc.
+-->
+
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+         xmlns:s="library://ns.adobe.com/flex/spark" 
+         xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="flatspark.components.*"
+         creationComplete="creationCompleteHandler(event)">
+    <fx:Declarations>
+        <s:HTTPService id="adminService" fault="adminService_faultHandler(event)"
+                       result="adminService_resultHandler(event)"
+                       resultFormat="e4x" showBusyCursor="true"/>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+            import mx.events.CloseEvent;
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.utils.AwesomeUtils;
+
+            private var url:String;
+            private var base_url:String;
+
+            [Bindable]
+            private var dpModuleList : ArrayCollection;
+            
+            public var uploadWindow:UploadWindow;
+            
+            public function update(_url : String) : void {
+                url = _url + '/admin';
+                base_url = _url;
+            }
+
+            public function refresh() : void {
+                if (!url) {
+                    return;
+                }
+                
+                if (!dpModuleList) {
+                    dpModuleList = new ArrayCollection()
+                }
+                adminService.url = url;
+                adminService.method = URLRequestMethod.GET;
+                adminService.send({action:'modulelist'});
+                enable(true);
+            }
+            
+            public function reset() : void {
+                if (dpModuleList) {
+                    dpModuleList.removeAll()
+                    dpModuleList = null;
+                }
+                enable(false);
+            }
+            
+            public function enable (enalble : Boolean) : void {
+                btnAdd.enabled = enalble;
+                btnDel.enabled = enalble;
+                btnSub.enabled = enalble;
+                btnUnSub.enabled = enalble;
+            }
+            
+            protected function creationCompleteHandler(event:FlexEvent):void
+            {
+                url = null;
+                dpModuleList = null;
+                reset();
+            }
+            
+            protected function btnUpload_clickHandler():void
+            {
+                if (!base_url) {
+                    return;
+                }
+
+                uploadWindow = UploadWindow(PopUpManager.createPopUp(this, UploadWindow, true))
+                uploadWindow.init(base_url);
+                PopUpManager.centerPopUp(uploadWindow)
+            }
+           
+            private function get_selected() : XML {
+                var str : String = '<modules>';
+                var count:int = 0;
+                
+                for each (var item : Object in dpModuleList) {
+                    if (item.selected) {
+                        str +=  '<module>' + item.module + '</module>';
+                        count++;
+                    }
+                }
+                if (count == 0) {
+                    return null
+                }
+                str += '</modules>';
+                return new XML(str);
+            }
+            
+            protected function btnSub_clickHandler(subscribe : Boolean) : void
+            {
+               var payload_xml : XML = get_selected();
+               if (payload_xml) {
+                   adminService.url = url;
+                   adminService.method = URLRequestMethod.GET;
+                   var act : String = subscribe ? 'subscribe' : 'unsubscribe';
+                   adminService.send({action: act, payload:payload_xml});
+               }
+            }
+            
+            private function alertListener(eventObj:CloseEvent):void {
+                if (eventObj.detail==Alert.OK) {
+                    var payload_xml : XML = get_selected();
+                    if (payload_xml) {
+                        adminService.url = url;
+                        adminService.method = URLRequestMethod.GET;
+                        adminService.send({action:'delete', payload:payload_xml});
+                    }
+                }
+            }
+            
+            protected function btnDel_clickHandler(event:MouseEvent):void
+            {
+                var str : String = '';
+                for each (var item : Object in dpModuleList) {
+                    if (item.selected) {
+                        str +=  '- ' + item.module + '\n';
+                    }
+                }
+                
+                if (str != '') {
+                    str = 'Following Modules will be deleted: \n' + str;
+                    Alert.show(str, "Confirm", Alert.OK | Alert.CANCEL, this, alertListener, null, Alert.OK);
+                }
+            }
+            
+            protected function adminService_faultHandler(event:FaultEvent):void
+            {
+                Alert.show('Something went wrong, returned null response', 'Http Error');
+            }
+            
+            protected function adminService_resultHandler(event:ResultEvent):void
+            {
+                var result : XML = event.result as XML;
+                if (result == null) {
+                    Alert.show('Something went wrong, admin request', 'Http Error');
+                    return;
+                }
+               
+                var response : Response = new Response(result);
+                var label : String = '';
+                
+                if (response.type == 'modulelist' && !response.errored && response.xml) {
+                    dpModuleList.removeAll()
+                    for each (var module : XML in response.xml.children()) {
+                        var name : String = module.toString();
+                        label = module.hasOwnProperty('@subscribed') ? '[subscribed]' : '';
+                        dpModuleList.addItem({selected: false, module: name, subscribe: label});
+                    }
+                }
+                dpModuleList.refresh();
+                enable(true);
+            }
+
+            private function listFilter(item:Object):Boolean {
+                var target : String;
+                if(item.hasOwnProperty("module")) {
+                    target = item["module"].toString().toLowerCase() 
+                    return target.indexOf(txtFilter.text.toLowerCase()) != -1;
+                }
+                return false;
+            }
+            
+            protected function btnFilter_clickHandler():void
+            {
+                dpModuleList.filterFunction = listFilter;
+                dpModuleList.refresh();
+            }
+            
+            protected function cbSelAll_changeHandler():void
+            {
+                for each (var item : Object in lstModule.dataProvider) {
+                    item.selected = cbSelAll.selected;
+                }
+                dpModuleList.filterFunction = listFilter;
+                dpModuleList.refresh();
+            }
+        ]]>
+    </fx:Script>
+    <s:VGroup width="100%" height="100%" padding="2">
+        <s:HGroup padding="5" width="100%">
+            <s:CheckBox id="cbSelAll" label="Select All" selected="false" change="cbSelAll_changeHandler()"/>
+            <s:Spacer width="100%"/>
+            <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
+        </s:HGroup>
+        <s:List id="lstModule" dataProvider="{dpModuleList}" width="100%" height="100%"
+                itemRenderer="itemrenderers.ModulelistRenderer" borderVisible="false">
+        </s:List>
+        <s:HGroup direction="rtl" padding="10" width="100%">
+            <components:ButtonIcon id="btnAdd" width="100"
+                                   label="Add" brand="{BrandColorEnum.Success}"
+                                   click="btnUpload_clickHandler()"
+                                   iconFont="{AwesomeUtils.fa_upload}"/>
+            <components:ButtonIcon id="btnSub" label="Subscribe"
+                                   click="btnSub_clickHandler(true)"
+                                   width="100"
+                                   brand="{BrandColorEnum.Success}"/>
+            <components:ButtonIcon id="btnUnSub" label="Un-Subscribe"
+                                   click="btnSub_clickHandler(false)"
+                                   width="100"
+                                   brand="{BrandColorEnum.Success}"/>
+            <components:ButtonIcon id="btnDel" label="Delete"
+                                   click="btnDel_clickHandler(event)"
+                                   width="100"
+                                   brand="{BrandColorEnum.Success}"/>
+        </s:HGroup>
+    </s:VGroup>
+</s:Group>

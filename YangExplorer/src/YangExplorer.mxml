@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
+-->
+
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+               xmlns:s="library://ns.adobe.com/flex/spark"
+               xmlns:mx="library://ns.adobe.com/flex/mx"
+               xmlns:local="*"
+               xmlns:modules="modules.*"
+               xmlns:components="flatspark.components.*"
+               minWidth="955" minHeight="600" creationComplete="onCreationComplete();"
+               initialize="init();">
+    <fx:Style source="../assets/Custom.css"/>
+    <fx:Declarations>
+        <!-- Place non-visual elements (e.g., services, value objects) here -->
+        <s:HTTPService id="moduleService" fault="httpService_fault(event);"
+                       result="onServiceResult(event)" resultFormat="e4x" showBusyCursor="true"/>
+        <s:HTTPService id="profileService" fault="httpService_fault(event);"
+                       result="onServiceResult(event)" resultFormat="e4x" showBusyCursor="true"/>
+        <s:HTTPService id="scriptService" fault="httpService_fault(event);"
+                       result="onScriptServiceResult(event)" resultFormat="text"
+                       showBusyCursor="true"/>
+        <s:HTTPService id="runService" fault="httpService_fault(event);"
+                       result="onRunServiceResult(event)" resultFormat="text" showBusyCursor="true"/>
+        <mx:ArrayCollection id="devicePlatforms">
+            <fx:String>csr</fx:String>
+        </mx:ArrayCollection>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+            import mx.core.FlexGlobals;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            import spark.events.IndexChangeEvent;
+            
+            import classes.Globals;
+            import classes.RequestPayload;
+            import classes.Response;
+            import classes.YangUtil;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
+            import flatspark.enums.TextInputSizeEnum;
+            import flatspark.utils.AwesomeUtils;
+            
+            import modules.LoginWindow;
+            import modules.SaveWindow;
+
+            
+            public var YTOOL_HOST:String = 'localhost:8088';
+            
+            /* Tab navigator views for workflow */
+            public static const TAB_BUILD_VIEW:int = 0;
+            public static const TAB_EXECUTE_VIEW:int = 1;
+            public static const TAB_ADMIN_VIEW:int = 1;
+            
+            /* Tab navigator views for test builder */
+            public static const TAB_OPERATION_VIEW:int = 0;
+            public static const TAB_SETTING_VIEW:int = 1;
+            
+            /* Tab navigator views for encoding & result windows */
+            public static const TAB_SCRIPT_VIEW:int = 0;
+            public static const TAB_CONSOLE_VIEW:int = 1;
+            
+            /* Default ports */
+            public static const SSH_PORT:String = '22';
+            public static const NETCONF_PORT:String = '830';
+            public static const RESTCONF_PORT:String = '8008';
+            
+            /* Global settings */
+            public var global : Globals;
+
+            /* Base URLs for HTTP services */
+            public var TREE_URL:String;
+            public var NC_URL:String;
+            public var DEVICE_URL:String; 
+            public var LOGIN_URL:String;
+            public var ADMIN_URL:String;
+            
+            /* Components */
+            public var loginWindow:LoginWindow;
+            public var saveWindow:SaveWindow;
+            
+            /* Version string */
+            [Bindable]
+            public var VERSION : String = '0.0.2 (Beta)';
+            
+            /* Version string */
+            [Bindable]
+            public var LOGIN_INFO:ArrayCollection = new ArrayCollection(["Login",""]);
+
+            [Bindable]
+            public var netconfEditOp:ArrayCollection = new ArrayCollection(
+                ["", "merge","create","replace","delete", "remove"]);
+            
+            [Bindable]
+            public var netconfDataSrc:ArrayCollection = new ArrayCollection
+                (["Running","Startup","Candidate"]);
+            
+            [Bindable]
+            public var deviceProfiles:ArrayCollection =  new ArrayCollection([]);
+
+            private var ncReq : RequestPayload
+            private var selectedNode:XML;
+            private var deviceProfilesXML:XML = null;
+            
+            [Bindable]                
+            private var dpCollection:XML;
+            
+            /* HTTP response handler */
+            private function httpService_fault(evt:FaultEvent):void {
+                tnResults.selectedIndex = 1
+                txtConsole.text = evt.fault.faultString;
+                updateStatus("Error : Recieved HTTP fault " + evt.fault.faultString);
+            }
+            
+            private function onScriptServiceResult(event:ResultEvent):void {
+                txtScript.text = event.result.toString()
+                updateStatus('Recieved HTTP Result for netconf script')
+            }
+            
+            private function onRunServiceResult(event:ResultEvent):void {
+                tnResults.selectedIndex = 1
+                var response : Response = new Response(XML(event.result));
+                if (response.errored) {
+                    txtConsole.text = 'Errored';
+                    return;
+                }
+                txtConsole.text = response.xml.children()[0].toXMLString();
+                txtConsole.scroller.verticalScrollBar.maximum
+                updateStatus('Recieved HTTP Result for script run')
+            }
+            
+            private function onServiceResult(event:ResultEvent):void
+            {
+                var response : Response = new Response(XML(event.result));
+                
+                updateStatus('Recieved HTTP Result for request type ' + response.type);
+                
+                switch(response.type) {
+                    case 'run-rpc':
+                    case 'get-cap':
+                        if (!response.errored) {
+                            txtScript.text = response.xml.toString();
+                        }
+                        break;
+                    case 'session':
+                        if (!response.errored) {
+                            if (response.type == 'session') {
+                                global.user = response.xml.toString();
+                                loadUserProfile();
+                            }
+                        }
+                        break;
+                    case 'profile':
+                        updateUserProfiles(response.xml)
+                        break;
+
+                    default:
+                        updateStatus('Recieved HTTP Result for unknown netconf: ' + response.type);
+                        break;
+                }
+            }
+            
+            public function updateUserProfiles(profiles:XML) : void
+            {
+                deviceProfiles.removeAll()
+                deviceProfiles.addItem("")
+                for each (var item : XML in profiles.profile) {
+                    if (item.@type == 'device') {
+                        deviceProfiles.addItem(String(item.@name))
+                    }
+                }
+                deviceProfiles.refresh()
+                deviceProfilesXML = profiles
+            }
+            
+            public function updateForm():void
+            {
+                switch(adg.getMode()) {
+                    case YangUtil.EDIT_CONFIG:
+                        cbSrcDs.enabled = false;
+                        cbSrcDs.selectedIndex = -1;
+                        cbTgtDs.enabled = true;
+                        adgOp.editable = true;
+                        
+                        // for ios-xe default target datastore is 'running'
+                        if (lstDevPlatform.selectedIndex == 1) {
+                            cbTgtDs.selectedIndex = 0;
+                        } else {
+                            cbTgtDs.selectedIndex = 2;
+                        }
+                        break;
+                    case YangUtil.GET_CONFIG:
+                        cbSrcDs.enabled = true;
+                        cbSrcDs.selectedIndex = 0;
+                        cbTgtDs.enabled = false;
+                        cbTgtDs.selectedIndex = -1;
+                        adgOp.editable = false;
+                        break;
+                    default:
+                        cbSrcDs.enabled = false;
+                        cbSrcDs.selectedIndex = -1;
+                        cbTgtDs.enabled = false;
+                        cbTgtDs.selectedIndex = -1;
+                        adgOp.editable = false;
+                }
+            }
+            
+            public function updateProperty(node:XML) : void {
+                adgProp.updateProperty(node)
+            }
+            
+            private function updateDevicePlatform(plat : String) : void {
+                for (var i:int = 0; i < devicePlatforms.length; i++) {
+                    if (plat == devicePlatforms.getItemAt(i) as String) {
+                        lstDevPlatform.setSelectedIndex(i)
+                        updateForm()
+                        break;
+                    }
+                }
+            }
+            
+            public function loadTestCasePayload(payload:XML) : void
+            {
+                resetTreeView();
+                for each (var child : XML in payload.children()) {
+                    /* Restore config from saved testcase payload */
+                    switch (child.localName() as String) {
+                        case 'device-auth':
+                            if (child.hasOwnProperty('@user')) {
+                                txtUser.text = child.@user
+                            }
+                            
+                            if (child.hasOwnProperty('@passwd')) {
+                                txtPwd.text = child.@passwd
+                            }
+                            
+                            if (child.hasOwnProperty('@port')) {
+                                txtPort.text = child.@port
+                            }
+                            
+                            if (child.hasOwnProperty('@host')) {
+                                txtIpAddr.text = child.@host
+                            }
+                            
+                            if (child.hasOwnProperty('@platform')) {
+                                updateDevicePlatform(child.@platform)
+                            }
+                            break
+                        
+                        case 'netconf-auth':
+                            if (child.hasOwnProperty('@user')) {
+                                txtNCUser.text = child.@user
+                                if (txtNCUser.text != '') {
+                                    reset_netconfSettings(false)
+                                }
+                            }
+                            
+                            if (child.hasOwnProperty('@passwd')) {
+                                txtNCPwd.text = child.@passwd
+                            }
+                            
+                            if (child.hasOwnProperty('@port')) {
+                                txtNCPort.text = child.@port
+                            }
+                            
+                            if (child.hasOwnProperty('@host')) {
+                                txtNCIpAddr.text = child.@host
+                            }
+                            break
+                        
+                        case 'module-tree':
+                            // Load test case tree
+                            adg.treeXml = XML(child.module.toString())
+                            adg.setOpenNodes()
+                            adg.processXML(null)
+                            updateForm()
+                            break
+                        
+                        case 'keyvalue':
+                            tnWorkflow.selectedIndex = 0
+                            break
+                    }
+                }
+            }
+            
+            private function updateTreeNode(tree:XMLList, path:Array, value:String) : void 
+            {
+                var tag:String = path.shift()
+                var terminal:Boolean = (path.length == 0)
+                statusBar.text = ''
+                for each (var node:XML in tree) {
+                    if (node.@name == tag) {
+                        if (terminal) {
+                            if (value == 'get' || value == 'get-config') {
+                                node.@value = '<' + value + '>'
+                            } else {
+                                node.@value = value
+                            }
+                            
+                            Alert.show(node.toString())
+                            return
+                        }
+                        statusBar.text += 'Compare ' + node.@name + ':' + tag
+                        updateTreeNode(node.children(), path, value)
+                        break
+                    }
+                    statusBar.text += 'Compare ' + node.@name + ':' + tag
+                }
+            }
+            
+            private function setDeviceSettings() : Boolean 
+            {
+                if (txtIpAddr.text == '' || txtUser.text == '' || txtPwd.text == '' ||
+                    lstDevPlatform.selectedIndex == -1) {
+                    Alert.show('Device credentials are not provided or invalid', 'Error')
+                    return false;
+                } else {
+                    ncReq.setDeviceSettings(
+                        lstDevPlatform.selectedItem as String,
+                        txtIpAddr.text, txtPort.text, 
+                        txtUser.text, txtPwd.text)	
+                }
+                
+                if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '') {
+                    Alert.show('Protocol credentials are not provided', 'Error')
+                    return false;
+                } else {
+                    ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
+                        txtNCUser.text, txtNCPwd.text)	
+                }
+                return true
+            }
+            
+            public function getRequestCapPayload() : XML
+            {
+                if (!setDeviceSettings()) {
+                    return null;
+                }
+                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+                var strPayload: String = ncReq.toCapString();
+                if (strPayload == '') {
+                    return null;
+                }
+                return new XML(strPayload);
+            }
+            
+            public function getRequestPayload(runnable : Boolean) : XML 
+            { 
+                ncReq.reset()
+                var src:String =  (cbSrcDs.selectedIndex >= 0) ? netconfDataSrc[cbSrcDs.selectedIndex] : '';
+                var tgt:String =  (cbTgtDs.selectedIndex >= 0) ? netconfDataSrc[cbTgtDs.selectedIndex] : '';
+                var strPayload : String = ''
+                
+                if (runnable && !setDeviceSettings()) {
+                    return null;
+                }
+
+                if (cbEdit.selected) {
+                    if (txtScript.text != '') {
+                        strPayload = txtScript.text;
+                    } else {
+                        Alert.show('Custom RPC text is empty !!', 'RPC');
+                        return null;
+                    }
+                } else {
+                    strPayload = adg.getNetConfEncoding(src, tgt);
+                    if (!strPayload || strPayload == '') {
+                        return null;
+                    } else {
+                        txtScript.text = strPayload;
+                    }
+                }
+                ncReq.setRPC(strPayload);
+                return XML(ncReq.toString());
+            }
+            
+            private function runScript(mode:String) : void {
+                var req : XML = null
+                
+                if (mode == 'get-cap') {
+                    req = getRequestCapPayload()
+                } else {
+                    req = getRequestPayload(true)
+                }
+                
+                if (req != null) {
+                    runService.url = NC_URL
+                    runService.send({payload:req, mode:mode})
+                    tnResults.selectedIndex = TAB_CONSOLE_VIEW
+                    txtConsole.text = 'Waiting for result ... '
+                    updateStatus('Run request sent to server. please wait ..')
+                } 
+            }
+            
+            public function loadUserSession() : void
+            {
+                profileService.url = 'http://' + YTOOL_HOST + '/explorer/session';
+                profileService.send();
+            }
+            
+            public function loadUserProfile() : void
+            {
+                adg.url = TREE_URL;
+                resetTreeView();
+                if (global.user != '') {
+                    btnLogin.label = global.user;
+                    btnLogin.toolTip = 'Click to Logout'
+                    profileService.url = DEVICE_URL
+                    profileService.send()
+                    adg.refresh();
+                    collections.update(global.get_url())
+                    collections.refresh()
+                    mgmt.update(global.get_url())
+                    mgmt.refresh()
+                    enableAllButtons(true)
+                } else {
+                    adg.reset()
+                    mgmt.reset()
+                    collections.reset()
+                    enableAllButtons(false)
+                }
+            }
+            
+            public function onCreationComplete():void {
+                var host:String = FlexGlobals.topLevelApplication.parameters.host;
+                var port:String = FlexGlobals.topLevelApplication.parameters.port;
+                
+                global = new Globals();
+                
+                if (host && port) {
+                    global.host = host
+                    global.port = port
+                    YTOOL_HOST = host + ':' + port
+                }
+                
+                TREE_URL = 'http://' + YTOOL_HOST + '/explorer/modules?';
+                NC_URL = 'http://' + YTOOL_HOST + '/explorer/netconf?';
+                DEVICE_URL = 'http://' + YTOOL_HOST + '/explorer/userprofiles';
+                LOGIN_URL = 'http://' + YTOOL_HOST + '/explorer/login'
+                ADMIN_URL = 'http://' + YTOOL_HOST + '/admin'
+                loadUserSession()
+            }
+            
+            public function init(): void 
+            {
+                ncReq = new RequestPayload()
+            }
+            
+            private function enableAllButtons(enable:Boolean) : void
+            {
+                btnGenRPC.enabled = enable
+                btnRefresh.enabled = enable
+                btnReset.enabled = enable
+                btnSave.enabled = enable
+                btnCap.enabled = enable
+                btnRPC.enabled = enable
+            }
+            
+            public function updateStatus(msg : String) : void
+            {
+                statusBar.text = 'Status : ' + msg
+            }
+            
+            
+            protected function btnGenRPC_clickHandler(event:MouseEvent):void
+            {
+                if (cbEdit.selected) {
+                    Alert.show('Please uncheck Custom RPC checkbox to use generated RPCs', 'RPC');
+                    return;
+                }
+                getRequestPayload(false)
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW
+            }
+            
+            private function reset_deviceSettings():void
+            {
+                lstDevPlatform.selectedIndex = -1
+                txtIpAddr.text = txtUser.text = txtPwd.text = ''
+                lstDevProfile.selectedIndex = -1
+                txtPort.text = '22'				
+            }
+            
+            private function reset_netconfSettings(default_settings: Boolean):void
+            {
+                txtNCIpAddr.text = '';
+                txtNCUser.text = '';
+                txtNCPwd.text = '';
+                txtNCPort.text = rbtnNetConf.selected ? NETCONF_PORT : RESTCONF_PORT;
+            }
+            
+            protected function btnClear_clickHandler(event:MouseEvent):void
+            {
+                txtScript.text = '';
+                txtConsole.text = '';
+                txtScript.editable = false;
+                txtConsole.editable = false;
+                updateStatus('Clear completed')
+            }
+            
+            protected function btnCopy_clickHandler(event:MouseEvent):void
+            {
+                if (tnResults.selectedIndex == TAB_SCRIPT_VIEW) {
+                    System.setClipboard(txtScript.text);
+                    updateStatus('Netconf encoding / script copied to clipboard')
+                } else {
+                    System.setClipboard(txtConsole.text);
+                    updateStatus('Console log copied to clipboard')
+                }
+            }
+
+            protected function btnSave_clickHandler(event:MouseEvent):void
+            {
+                saveWindow = SaveWindow(PopUpManager.createPopUp(this, SaveWindow, true)) 
+                /* ArrayList with data for the custom control ComboBox control. */
+                var collection:ArrayCollection = new ArrayCollection();
+                
+                for each (var item : XML in deviceProfilesXML.profile) {
+                    if (item.@type == 'collection') {
+                        collection.addItem(String(item.@name))
+                    }
+                }
+                
+                collection.refresh()
+                saveWindow.cbCollection.dataProvider = collection
+                saveWindow.txtOwner.text = btnLogin.label
+                PopUpManager.centerPopUp(saveWindow)
+            }
+            
+            protected function btnLogin_clickHandler(event:MouseEvent):void
+            {
+                // Create a non-modal TitleWindow container.
+                var user : String = btnLogin.label
+                
+                loginWindow = LoginWindow(PopUpManager.createPopUp(this, LoginWindow, true))
+                loginWindow.targetComponent = btnLogin
+                PopUpManager.centerPopUp(loginWindow)
+                
+                if (user == 'Login') {
+                    loginWindow.title = 'Login'
+                    loginWindow.currentState = 'Login'
+                } else {
+                    loginWindow.title = user
+                    loginWindow.currentState ='Logout'
+                    loginWindow.x = btnLogin.x - 70
+                    loginWindow.y = btnLogin.y + 30
+                }
+            }
+            
+            protected function lstDevProfile_changeHandler(event:IndexChangeEvent):void
+            {
+                if (deviceProfilesXML == null) {
+                    return
+                }
+                
+                if (lstDevProfile.selectedIndex <= 0) {
+                    reset_deviceSettings()
+                    reset_netconfSettings(true)
+                    return
+                }
+                
+                var profilename:String = deviceProfiles.getItemAt(lstDevProfile.selectedIndex).toString()
+                
+                for each (var item : XML in deviceProfilesXML.profile) {
+                    if (item.@type == 'device' && profilename == item.@name) {
+                        updateDevicePlatform(item.platform.toString())
+                        for each (var t : XML in item.transports.transport) {
+                           switch (String(t.@type)) {
+                            case "ssh":
+                                txtIpAddr.text = t.address.toString();
+                                txtPort.text = t.port.toString();
+                                txtUser.text = t.username.toString();
+                                txtPwd.text  = t.password.toString();
+                                break;
+                            case "netconf":
+                                if (rbtnNetConf.selected) {
+                                    txtNCIpAddr.text = t.address.toString();
+                                    txtNCPort.text = t.port.toString();
+                                    txtNCUser.text = t.username.toString();
+                                    txtNCPwd.text  = t.password.toString();
+                                }
+                                break;
+                            case "restconf":
+                                if (rbtnRestConf.selected) {
+                                    txtNCIpAddr.text = t.address.toString();
+                                    txtNCPort.text = t.port.toString();
+                                    txtNCUser.text = t.username.toString();
+                                    txtNCPwd.text  = t.password.toString();
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            protected function btnRefresh_clickHandler(event:MouseEvent):void
+            {
+                loadUserProfile()
+                updateStatus('Request to refresh content sent to server')
+            }
+
+            public function resetTreeView():void
+            {
+                adg.resetTree();
+                updateForm();
+                updateStatus('Reset completed')
+            }
+            
+            public function setEncodingText(text : String) : void {
+                txtScript.text = text;
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+            }
+            
+            protected function cbEdit_changeHandler(event:Event):void
+            {
+                txtScript.editable = cbEdit.selected;
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+            }
+            
+        ]]>
+    </fx:Script>
+    
+    <mx:Canvas width="100%" height="100%">	
+        <s:VGroup width="100%" height="100%">
+            <mx:ApplicationControlBar width="100%">
+                <components:ButtonIcon width="200" label="Yang Explorer {VERSION}"
+                                       brand="{BrandColorEnum.Inverse}" enabled="false"
+                                       fontFamily="Avenir" fontWeight="bold"/>
+                <s:Spacer width="95%"/>
+                <components:ButtonIcon id="btnAdmin" width="100" height="{ButtonSizeEnum.Small}"
+                                       label="Admin" brand="{BrandColorEnum.Success}"
+                                       click="navigateToURL(new URLRequest(ADMIN_URL))"
+                                       iconFont="{AwesomeUtils.fa_users}"/>
+                <components:ButtonIcon id="btnRefresh" width="80" height="{ButtonSizeEnum.Small}"
+                                       label="Refresh" brand="{BrandColorEnum.Success}"
+                                       click="btnRefresh_clickHandler(event)"
+                                       iconFont="{AwesomeUtils.fa_refresh}"
+                                       toolTip="Reload content from server"/>
+                <components:ButtonIcon id="btnReset" width="80" height="{ButtonSizeEnum.Small}"
+                                       label="Reset" brand="{BrandColorEnum.Success}"
+                                       click="resetTreeView()"
+                                       iconFont="{AwesomeUtils.fa_repeat}"
+                                       toolTip="Reset user data from explorer windows."/>	
+                <components:ButtonIcon id="btnLogin" width="100" height="{ButtonSizeEnum.Small}"
+                                       label="Login" brand="{BrandColorEnum.Success}"
+                                       click="btnLogin_clickHandler(event)"
+                                       iconFont="{AwesomeUtils.fa_user}"/>
+            </mx:ApplicationControlBar>
+            <mx:HDividedBox width="100%" height="100%">
+                <mx:Canvas id="cnvTree" width="32%" height="100%" label="Canvas 3">
+                    <modules:YangDataGrid id="adg" width="100%" height="100%"
+                                          defaultLeafIcon="@Embed(source='assets/leaf.png')"
+                                          doubleClickEnabled="true" editable="item"
+                                          sortableColumns="false"
+                                          styleName="myStyle"
+                                          sortItemRenderer="{null}"
+                                          horizontalScrollPolicy="off"
+                                          >
+                        <modules:columns>
+                            <mx:AdvancedDataGridColumn width="300" dataField="@name" editable="false"
+                                                       headerText="Explorer"/>
+                            <mx:AdvancedDataGridColumn id="adgVal" width="125" dataField="@value"
+                                                       editable="true" editorDataField="_selectedItem"
+                                                       editorUsesEnterKey="true" headerText="Values">
+                                <mx:itemEditor>
+                                    <fx:Component>
+                                        <modules:ComboBoxEditor dpList="{outerDocument.adg.dataProv}" editable="true"/>
+                                    </fx:Component>
+                                </mx:itemEditor>
+                            </mx:AdvancedDataGridColumn>
+                            <mx:AdvancedDataGridColumn id="adgOp" width="100" dataField="@ncop"
+                                                       editable="true" editorDataField="_selectedItem"
+                                                       editorUsesEnterKey="true" headerText="Operation">
+                                <mx:itemEditor>
+                                    <fx:Component>
+                                        <modules:ComboBoxEditor dpList="{outerDocument.netconfEditOp}" editable="false"/>
+                                    </fx:Component>
+                                </mx:itemEditor>
+                            </mx:AdvancedDataGridColumn>
+                        </modules:columns>
+                    </modules:YangDataGrid>
+                </mx:Canvas>
+                <mx:Canvas id="cnvNetconf" width="40%" height="100%" label="Canvas 3">
+                    <mx:TabNavigator id="tnWorkflow" width="100%" height="100%" creationPolicy="all" fontFamily="Avenir">
+                        <mx:VBox width="100%" height="100%" label="  Build  ">
+                            <mx:TabNavigator id="tnSettings" width="100%" height="40%"
+                                             creationPolicy="all" fontFamily="Avenir">
+                                <mx:VBox width="100%" height="100%" label="Operations">
+                                    <s:Form id="formReq" width="100%" height="100%"
+                                            fontFamily="Avenir">
+                                        <s:layout>
+                                            <s:FormLayout gap="-5"/>
+                                        </s:layout> 
+                                        <s:FormItem id="fSourceDS" label="Source Datastore">
+                                            <s:ComboBox id="cbSrcDs" width="120"
+                                                        height="{TextInputSizeEnum.Small}"
+                                                        dataProvider="{netconfDataSrc}"
+                                                        fontFamily="Avenir"/>
+                                        </s:FormItem>
+                                        <s:FormItem id="fTargetDS" label="Target Datastore">
+                                            <s:ComboBox id="cbTgtDs" width="120"
+                                                        height="{TextInputSizeEnum.Small}"
+                                                        dataProvider="{netconfDataSrc}"/>
+                                        </s:FormItem>
+                                    </s:Form>
+                                </mx:VBox>
+                                <mx:VBox width="100%" height="100%" label="Device Settings">
+                                    <s:Form id="formDev" width="100%" height="100%"
+                                            fontFamily="Avenir">
+                                        <s:layout>
+                                            <s:FormLayout gap="-5"/>
+                                        </s:layout> 
+                                        <s:FormItem label="    Profile">
+                                            <s:DropDownList id="lstDevProfile" width="120"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            change="lstDevProfile_changeHandler(event)"
+                                                            dataProvider="{deviceProfiles}"/>
+                                        </s:FormItem>
+                                        <s:FormItem label="   Platform">
+                                            <s:DropDownList id="lstDevPlatform" width="120"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            dataProvider="{devicePlatforms}"/>
+                                        </s:FormItem>
+                                        <s:HGroup>
+                                            <s:FormItem label="IP Address">
+                                                <s:TextInput id="txtIpAddr" width="120"
+                                                             height="{TextInputSizeEnum.Small}"/>
+                                            </s:FormItem>
+                                            <s:FormItem label="        Port">
+                                                <s:TextInput id="txtPort" width="50"
+                                                             height="{TextInputSizeEnum.Small}"
+                                                             text="22"/>
+                                            </s:FormItem>	
+                                        </s:HGroup>
+                                        <s:HGroup>	
+                                            <s:FormItem label="Username">
+                                                <s:TextInput id="txtUser" width="120"
+                                                             height="{TextInputSizeEnum.Small}"/>
+                                            </s:FormItem>
+                                            <s:FormItem label="Password">
+                                                <s:TextInput id="txtPwd" width="120"
+                                                             height="{TextInputSizeEnum.Small}"/>
+                                            </s:FormItem>
+                                        </s:HGroup>	
+                                    </s:Form>
+                                </mx:VBox>
+                                <mx:VBox width="100%" height="100%" label="Protocol Settings">
+                                    <s:Form id="formNC" width="100%" height="100%"
+                                            fontFamily="Avenir">
+                                        <s:layout>
+                                            <s:FormLayout gap="-5"/>
+                                        </s:layout>
+                                        <s:HGroup>
+                                            <s:FormItem label="IP Address">
+                                                <s:TextInput id="txtNCIpAddr" width="120"
+                                                             height="{TextInputSizeEnum.Small}"
+                                                             fontFamily="Avenir"/>
+                                            </s:FormItem>
+                                            <s:FormItem label="Port">
+                                                <s:TextInput id="txtNCPort" width="50"
+                                                             height="{TextInputSizeEnum.Small}"
+                                                             fontFamily="Avenir" text="830"/>
+                                            </s:FormItem>	
+                                        </s:HGroup>
+                                        <s:FormItem label="Username">
+                                            <s:TextInput id="txtNCUser" width="120"
+                                                         height="{TextInputSizeEnum.Small}"
+                                                         fontFamily="Avenir"/>
+                                        </s:FormItem>
+                                        <s:FormItem label="Password">
+                                            <s:TextInput id="txtNCPwd" width="120"
+                                                         height="{TextInputSizeEnum.Small}"
+                                                         fontFamily="Avenir"/>
+                                        </s:FormItem>
+                                    </s:Form>
+                                </mx:VBox>
+                            </mx:TabNavigator>
+                            <mx:VBox width="100%" height="60%" label="Encoding">
+                                <s:HGroup width="100%" height="10%" horizontalAlign="right"
+                                          paddingLeft="10" paddingRight="10">
+                                    <s:RadioButton id="rbtnNetConf" groupName="protocolType"
+                                                   label="NetConf"
+                                                   selected="true"
+                                                   change="lstDevProfile_changeHandler(null)"/>
+                                    <s:RadioButton id="rbtnRestConf"  groupName="protocolType"
+                                                   label="RestConf" enabled="false"
+                                                   change="lstDevProfile_changeHandler(null)"/>
+                                    <s:Spacer width="100%"/>
+                                    <components:ButtonIcon id="btnGenRPC" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="RPC"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="btnGenRPC_clickHandler(event)"/>
+                                    <components:ButtonIcon id="btnCap" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="Capabilities"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="runScript('get-cap')"/>
+                                </s:HGroup>
+                                <mx:TabNavigator id="tnResults" width="100%" height="100%"
+                                                 creationPolicy="all" fontFamily="Avenir">
+                                    <mx:VBox width="100%" height="100%" label="Encoding">
+                                        <s:TextArea id="txtScript" width="100%" height="100%"
+                                                    editable="false" fontFamily="Avenir"
+                                                    fontSize="12" fontStyle="italic"
+                                                    lineBreak="explicit"/>
+                                    </mx:VBox>
+                                    <mx:VBox width="100%" height="100%" label="Console">
+                                        <s:TextArea id="txtConsole" width="100%" height="100%"
+                                                    editable="false" fontFamily="Avenir"
+                                                    fontSize="12" fontStyle="italic"
+                                                    lineBreak="explicit"/>
+                                    </mx:VBox>
+                                </mx:TabNavigator>
+                                <s:HGroup width="100%" height="10%" paddingBottom="10"
+                                          paddingLeft="10" paddingRight="10">
+                                    <s:CheckBox id="cbEdit" label="Custom RPC" selected="false" change="cbEdit_changeHandler(event)"/>
+                                    <s:Spacer width="100%"/>
+                                    <components:ButtonIcon id="btnRPC" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="Run"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="runScript('run-rpc')"/>
+                                    <components:ButtonIcon id="btnSave" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="Save"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="btnSave_clickHandler(event)"/>
+                                    <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
+                                                           label="Clear"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="btnClear_clickHandler(event)"/>
+                                    <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
+                                                           label="Copy"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="btnCopy_clickHandler(event)"/>
+                                </s:HGroup>
+                            </mx:VBox>
+                        </mx:VBox>	
+                        <mx:VBox width="100%" height="100%" label=" Collections ">
+                            <modules:Collections id="collections" width="100%" height="100%"/>
+                        </mx:VBox>
+                        <mx:VBox width="100%" height="100%" label=" Manage ">
+                            <modules:Admin id="mgmt" width="100%" height="100%"/>
+                        </mx:VBox>
+                    </mx:TabNavigator>
+                </mx:Canvas>
+                <mx:Canvas id="cnvComp" width="28%" height="100%" label="Canvas 2">
+                    <modules:YangProperties id="adgProp" width="100%" height="100%"/>
+                </mx:Canvas>
+            </mx:HDividedBox>
+            <mx:ApplicationControlBar width="100%" paddingBottom="10" paddingLeft="10"
+                                      paddingRight="10" paddingTop="10">
+                <s:Label id="statusBar" fontFamily="Avenir" text="Yang Browser"/>
+                <s:Spacer width="100%"/>
+                <s:Label fontFamily="Avenir"
+                         text="IETF 93"/>
+            </mx:ApplicationControlBar>
+        </s:VGroup>
+    </mx:Canvas>
+</s:Application>

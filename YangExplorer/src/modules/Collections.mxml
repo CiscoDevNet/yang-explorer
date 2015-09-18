@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+         xmlns:s="library://ns.adobe.com/flex/spark" 
+         xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="flatspark.components.*">
+    <fx:Declarations>
+        <s:HTTPService id="collectionService" fault="collectionService_faultHandler(event)"
+                       result="collectionService_resultHandler(event)" resultFormat="e4x" showBusyCursor="true"/>
+     </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+            import mx.events.CloseEvent;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
+
+            private var url:String;
+
+            [Bindable]
+            public var dpListCollection : ArrayCollection;
+            
+            
+            public function update(_url : String) : void {
+                url = _url + '/netconf';
+            }
+
+            public function refresh() : void
+            {
+                if (url) {
+                    collectionService.url = url;
+                    collectionService.send({mode:'get-collection-list'});
+                }
+            }
+            
+            public function reset() : void {
+                if (dpListCollection) {
+                    dpListCollection.removeAll();
+                    dpListCollection = null;
+                    btnDelete.enabled = false;
+                    btnLoad.enabled = false;
+                }
+            }
+
+            protected function updateCollection(xml : XML) : void {
+                if (!dpListCollection) {
+                    dpListCollection = new ArrayCollection();
+                }
+                dpListCollection.removeAll();
+                for each (var child : XML in xml.children()) {
+                    dpListCollection.addItem({name: child.name.toString(),
+                        author: child.author.toString(),
+                        collection: child.collection.toString(),
+                        desc: child.desc.toString(),
+                        selected: false});
+                }
+                btnDelete.enabled = true;
+                btnLoad.enabled = true;
+            }
+
+            protected function collectionService_faultHandler(event:FaultEvent):void
+            {
+                Alert.show('Somthing went wront in collection request !!', 'Http Error');
+            }
+
+            protected function collectionService_resultHandler(event:ResultEvent):void
+            {
+                var response : Response = new Response(XML(event.result));
+                if (response.errored) {
+                    Alert.show(response.toString(), 'Error');
+                    return;
+                }
+
+                if (response.type == 'get-collection-list') {
+                    updateCollection(response.xml)
+                } else if (response.type == 'load-collection') {
+                    for each (var child : XML in response.xml.children()) {
+                        if (child.localName() == 'rpc') {
+                            parentApplication.resetTreeView()
+                            parentApplication.setEncodingText(child.toXMLString());
+                        }
+                    }
+                } else {
+                    Alert.show('Invalid response from server' + response.toString(), 'Error');
+                }
+            }
+
+            protected function btnLoad_clickHandler(event:Event):void
+            {
+                var req: XML = _loadTestcasesXML();
+                if (req != null) {
+                    collectionService.url = url
+                    collectionService.send({metadata:req, mode:'load-collection'})
+                }
+            } 
+            
+            
+            private function _loadTestcasesXML() : XML {
+                var str : String = '<?xml version="1.0" encoding="UTF-8"?>\n';
+                var count: int = 0;
+                str += '<metadata>\n'
+                for each (var item : Object in dpListCollection) {
+                    if (item.selected) {
+                        str += '<collection>' +  String(item.collection) + '</collection>'
+                        str += '<name>' +  String(item.name) + '</name>'
+                        str += '<author>' + String(item.name) + '</author>'
+                        count++;
+                        break;
+                    }
+                }
+                str += '</metadata>'
+                    
+                if (count > 0) {
+                    return new XML(str);
+                }
+                return null;
+            }
+
+            private function deleteAlertListener(eventObj:CloseEvent):void 
+            {
+                var req: XML = _loadTestcasesXML();
+                if (req != null) {
+                    collectionService.url = url
+                    collectionService.send({metadata:req, mode:'delete-collection'})
+                }
+            
+            }
+            
+            protected function btnDelete_clickHandler(event:MouseEvent):void
+            {
+                Alert.show("Are you sure ?", "Deleting Collection",
+                    Alert.OK | Alert.CANCEL, this,
+                    deleteAlertListener, null, Alert.OK)
+            }
+            
+            protected function lstCollection_doubleClickHandler(event:MouseEvent):void
+            {
+               var index : int = event.currentTarget.selectedIndex;
+               if (index >= 0) {
+                  var item : Object = dpListCollection;
+                  if (item)
+                    Alert.show(item.name)
+                  btnLoad_clickHandler(null);
+               }
+            }
+            
+            private function listFilter(item:Object):Boolean {
+                var target : String;
+                if(item.hasOwnProperty("name")) {
+                    target = item["name"].toString().toLowerCase() + ' ' +
+                             item["author"].toString().toLowerCase() + ' ' +
+                             item["collection"].toString().toLowerCase() 
+                    return target.indexOf(txtFilter.text.toLowerCase()) != -1;
+                }
+                return false;
+            }
+            
+            protected function btnFilter_clickHandler():void
+            {
+                dpListCollection.filterFunction = listFilter;
+                dpListCollection.refresh();
+            }
+        ]]>
+    </fx:Script>
+    <s:VGroup height="100%" width="100%" padding="10">
+        <s:HGroup padding="5" width="100%">
+            <s:Spacer width="100%"/>
+            <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
+        </s:HGroup>
+       <s:List id="lstCollection" dataProvider="{dpListCollection}" width="100%" height="100%"
+               itemRenderer="itemrenderers.CollectionRenderer" borderVisible="false"
+               doubleClickEnabled="true" doubleClick="lstCollection_doubleClickHandler(event)">
+        </s:List>
+        <s:HGroup width="100%" layoutDirection="rtl" padding="10">
+            <components:ButtonIcon id="btnDelete" width="15%"
+                                   height="{ButtonSizeEnum.Small}"
+                                   label="Delete" enabled="false"
+                                   brand="{BrandColorEnum.Success}"
+                                   click="btnDelete_clickHandler(event)"/>
+            <components:ButtonIcon id="btnLoad" width="15%"
+                                   height="{ButtonSizeEnum.Small}" label="Load" enabled="false"
+                                   brand="{BrandColorEnum.Success}"
+                                   click="btnLoad_clickHandler(event)"/>
+        </s:HGroup>
+    </s:VGroup>
+</s:Group>

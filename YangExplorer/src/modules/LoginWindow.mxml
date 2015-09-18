@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+               xmlns:mx="library://ns.adobe.com/flex/mx" 
+               xmlns:s="library://ns.adobe.com/flex/spark"
+               close="handleCloseEvent();"
+               skinClass="flatspark.skins.TitleWindowSkin" xmlns:components="flatspark.components.*"
+               fontFamily="Avenir">
+    <s:layout>
+        <s:VerticalLayout/>
+    </s:layout>
+    <fx:Declarations>
+        <s:HTTPService id="loginService" useProxy="false"
+                       resultFormat="e4x" method="POST"
+                       result="loginService_resultHandler(event)"
+                       fault="loginService_faultHandler(event)" showBusyCursor="true"/>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            import spark.components.Button;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
+            import flatspark.utils.AwesomeUtils;
+
+            public var targetComponent:spark.components.Button;
+            
+            // Handle the close button and Cancel button.
+            private function handleCloseEvent():void {
+                PopUpManager.removePopUp(this);
+            }
+            
+            protected function loginService_resultHandler(event:ResultEvent): void
+            {
+                PopUpManager.removePopUp(this);
+                
+                var response : Response = new Response(XML(event.result));
+                if (!response.errored) {
+                    if (response.type == 'login') {
+                        targetComponent.label = response.xml.toString();
+                        parentApplication.global.user = response.xml.toString();
+                        targetComponent.toolTip = 'Click to Logout'
+                    } else {
+                        targetComponent.label = 'Login'
+                        targetComponent.toolTip = 'Click to Login'
+                        parentApplication.global.user = '';
+                    }
+                    parentApplication.loadUserProfile();
+                } else {
+                    if (response.type == 'login') {
+                        Alert.show('User authentication failed!!')
+                    } else {
+                        targetComponent.label = 'Login'
+                        targetComponent.toolTip = 'Click to Login'
+                    }
+                    parentApplication.global.user = ''
+                    parentApplication.loadUserProfile();
+                }
+                btnLogin.enabled = true
+            }
+            
+            protected function loginService_faultHandler(event:FaultEvent):void
+            {
+                Alert.show('Server is not running.', 'Error !!')
+                btnLogin.enabled = true
+            }
+            
+            protected function btnLogin_clickHandler(event:MouseEvent):void
+            {
+                var request:Object
+                
+                if (currentState == 'Login') {
+                    request = {action:'login', username:txtUsername.text, password:txtPassword.text};
+                } else {
+                    request = {action:'logout'};
+                }
+                loginService.url = parentApplication.LOGIN_URL
+                loginService.send(request)
+                btnLogin.enabled = false
+            }
+        ]]>
+    </fx:Script>
+    
+    <!-- The Application class states property defines the view states.-->
+    <s:states>
+        <s:State name="Login" />
+        <s:State name="Logout" />
+    </s:states>
+    <s:Form id="loginForm" fontFamily="Avenir" fontSize="14">
+        <s:FormItem label="Username:" includeIn="Login">
+            <components:TextInputIcon id='txtUsername' text="guest"
+                                      iconFont="{AwesomeUtils.fa_user}"
+                                      />
+        </s:FormItem>
+        <s:FormItem label="Password:" includeIn="Login">
+            <components:TextInputIcon id='txtPassword' displayAsPassword="true" text='guest'
+                                      enter="btnLogin_clickHandler(null)"
+                                      iconFont="{AwesomeUtils.fa_key}"
+                                      />
+        </s:FormItem>
+        <s:FormItem direction="rtl">
+            <!-- Set label of the control based on the view state.-->
+            <components:ButtonIcon id='btnLogin' label.Login = "Login" label.Logout="Logout"
+                                   width="100" click="btnLogin_clickHandler(event)"
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Success}" direction="rtl"/>
+        </s:FormItem>
+    </s:Form> 
+</s:TitleWindow>

@@ -1,0 +1,19 @@
+/* CSS file */
+@namespace ns "http://flex.apache.org/experimental/ns";
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace components "flatspark.components.*";
+
+.myStyle {
+    fontFamily: Avenir;
+    fontLookup: embeddedCFF;
+    fontSize: 14;
+}
+
+s|RadioButton {
+    skinClass: ClassReference("flatspark.skins.RadioButtonSkin");
+}
+
+ns|Alert {
+    skinClass: ClassReference("flatspark.skins.AlertSkin");
+}

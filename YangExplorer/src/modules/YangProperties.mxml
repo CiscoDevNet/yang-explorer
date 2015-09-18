@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+    @author: Pravin Gohite, Cisco Systems, Inc.
+-->
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+         xmlns:s="library://ns.adobe.com/flex/spark" 
+         xmlns:mx="library://ns.adobe.com/flex/mx"
+         initialize="init()">
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+
+            /* data provider for property data grid */
+            [Bindable] 
+            public var dpDgProperty:ArrayCollection; 
+
+            private var dgArray:Array = [ 
+                {Property:'Name', Value:''},
+                {Property:'Node Type', Value:''},
+                {Property:'Data Type', Value:''},
+                {Property:'Access', Value:''},
+                {Property:'Presence', Value:''},
+                {Property:'Key', Value:''},
+                {Property:'Mandatory', Value:''},
+                {Property:'Default', Value:''},
+                {Property:'Path', Value:''},
+                {Property:'Description', Value:''}, 
+            ];
+
+            public function updateProperty(node:XML): void
+            {
+                /* Update propery datagrid */
+                if (node != null) {
+                    dpDgProperty[0].Value = node.attribute('name');
+                    dpDgProperty[1].Value = node.attribute('type');
+                    dpDgProperty[2].Value = node.attribute('datatype');
+                    dpDgProperty[3].Value = node.attribute('access');
+                    dpDgProperty[4].Value = node.attribute('presence');
+                    dpDgProperty[5].Value = node.attribute('is_key');
+                    dpDgProperty[6].Value = node.attribute('mandatory');
+                    dpDgProperty[7].Value = node.attribute('default');
+                    dpDgProperty[8].Value = node.attribute('path');
+                    dpDgProperty[9].Value = node.attribute('description');
+                } else {
+                    for (var i : int = 0; i < dpDgProperty.length; i++) {
+                        dpDgProperty[i].Value = '';
+                        dgProperty.selectedItem = null;
+                    }
+                }
+                
+                /* Refresh disaply */
+                (dgProperty.dataProvider as ArrayCollection).refresh();
+            }
+            
+            protected function init():void
+            {
+                dpDgProperty = new ArrayCollection(dgArray);
+            }
+            
+        ]]>
+    </fx:Script>
+    <s:DataGrid id="dgProperty" width="100%" height="100%"
+                dataProvider="{dpDgProperty}" fontSize="14"
+                sortableColumns="false" variableRowHeight="true"
+                fontFamily="Avenir"> 
+        <s:columns>
+            <s:ArrayList>
+                <s:GridColumn width="100" dataField="Property"
+                              headerText="Property"/>
+                <s:GridColumn dataField="Value" headerText="Value"/>
+            </s:ArrayList>
+        </s:columns>
+    </s:DataGrid>
+</s:VGroup>
