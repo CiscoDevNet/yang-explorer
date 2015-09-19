@@ -32,7 +32,7 @@ limitations under the License.
 
 ###3. Running YangExplorer
 #####Start Server:
-   - cd <install-root>/yangx
+   - cd <install-root>/yang-explorer
    - ./start.sh
 
 #####Start Explorer:
