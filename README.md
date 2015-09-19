@@ -40,17 +40,11 @@ limitations under the License.
 
 ###4. User Guide (TBD)
 
-![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/YangExplorer.png)
+![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
+![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
+![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
 
 #####Login:
       (optional: you may create a local user account for yang explorer by clicking 'Admin' button
       Admin Login: username: admin, password: admin  (Use for admin stuffs e.g. adding user accounts)
       Guest Login: username: guest, password: guest  (Default user)
-
-#####UI Description:
-   **Buttons:**
-   - 'Admin' -> Opens admin page, which allows you to create user accounts, device profiles
-   - 'Refresh' -> Refresh YangExplorer content without reloading page
-   - 'Reset' -> Clears explorer tree content
-   - 'Login' -> User Logins
-      
