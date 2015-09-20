@@ -38,7 +38,10 @@ limitations under the License.
 #####Start Explorer:
    - Open http://localhost:8088/static/YangExplorer.html
 
-###4. User Guide (TBD)
+###4. Caveats
+   - Yang Model upload fails, Workaround: please use Google Chrome.
+
+###5. User Guide (TBD)
 
 ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
