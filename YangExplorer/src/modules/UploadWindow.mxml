@@ -299,6 +299,7 @@
                 } else if (response.type == 'commit') {
                     if (!response.errored) {
                         updateStatus(response.xml, 'Done');
+                        parentApplication.refresh_mgmtArea();
                         PopUpManager.removePopUp(this);
                     }
                 } else if (response.type == 'init') {

@@ -179,6 +179,7 @@
                         label = module.hasOwnProperty('@subscribed') ? '[subscribed]' : '';
                         dpModuleList.addItem({selected: false, module: name, subscribe: label});
                     }
+                    parentApplication.refresh_explorerArea();
                 }
                 dpModuleList.refresh();
                 enable(true);

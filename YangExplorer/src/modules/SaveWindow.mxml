@@ -90,6 +90,7 @@
             {
                 var response : Response = new Response(event.result as XML);
                 if (!response.errored) {
+                    parentApplication.refresh_collectionArea();
                     PopUpManager.removePopUp(this);
                 } else {
                     Alert.show('Something went wrong, Failed to Save', 'Error');

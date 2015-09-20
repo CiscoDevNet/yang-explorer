@@ -419,6 +419,22 @@
                 profileService.send();
             }
             
+            public function refresh_explorerArea() : void {
+                adg.refresh();
+            }
+            
+            public function refresh_collectionArea() : void
+            {
+                collections.update(global.get_url())
+                collections.refresh()
+            }
+            
+            public function refresh_mgmtArea() : void
+            {
+                mgmt.update(global.get_url())
+                mgmt.refresh()
+            }
+            
             public function loadUserProfile() : void
             {
                 adg.url = TREE_URL;
@@ -428,11 +444,9 @@
                     btnLogin.toolTip = 'Click to Logout'
                     profileService.url = DEVICE_URL
                     profileService.send()
-                    adg.refresh();
-                    collections.update(global.get_url())
-                    collections.refresh()
-                    mgmt.update(global.get_url())
-                    mgmt.refresh()
+                    refresh_explorerArea();
+                    refresh_collectionArea();
+                    refresh_mgmtArea();
                     enableAllButtons(true)
                 } else {
                     adg.reset()
