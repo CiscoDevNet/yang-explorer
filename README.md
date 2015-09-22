@@ -21,30 +21,48 @@ limitations under the License.
    - python 2.7
    - pip package manager (https://pip.pypa.io/en/stable/installing/)
    - pyang (https://github.com/mbj4668/pyang)
-   - (optional, recommended) virtualenv
+```bash
+   git clone https://github.com/mbj4668/pyang.git
+   cd pyang
+   [sudo] python setup.py install
+```
+   - virtualenv (optional, recommended)
+```bash
+   sudo apt-get install virtualenv
+```
    - Browser with latest flash plugin (tested with google chrome)
 
 #####Download and install:
-   - (optional, recommended) Create and Activate virtual env
-   - git clone https://github.com/CiscoDevNet/yang-explorer.git
-   - cd yang-explorer
-   - pip install -r requirements.txt
+```bash
+   git clone https://github.com/CiscoDevNet/yang-explorer.git
+   cd yang-explorer
+   bash setup.sh
+```
 
 ###3. Running YangExplorer
 #####Start Server:
-   - cd <install-root>/yang-explorer
-   - ./start.sh
+```bash
+   cd <install-root>/yang-explorer
+   ./start.sh
+```
 
 #####Start Explorer:
-   - Open http://localhost:8088/static/YangExplorer.html
+```bash
+   Open http://localhost:8088/static/YangExplorer.html
+```
 
 ###4. Caveats
    - Yang Model upload fails, Workaround: please use Google Chrome.
 
 ###5. User Guide (TBD)
 
+######Main Page:
 ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
+
+######Model Explorer:
 ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
+
+######Model Inventory:
 ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
 
 #####Login:
