@@ -1,0 +1,4 @@
+v/
+*.py[co]
+*~
+server/data/

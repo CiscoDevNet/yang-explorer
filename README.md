@@ -21,6 +21,7 @@ limitations under the License.
    - python 2.7
    - pip package manager (https://pip.pypa.io/en/stable/installing/)
    - pyang (https://github.com/mbj4668/pyang)
+
 ```bash
    git clone https://github.com/mbj4668/pyang.git
    cd pyang
@@ -37,6 +38,13 @@ limitations under the License.
    git clone https://github.com/CiscoDevNet/yang-explorer.git
    cd yang-explorer
    bash setup.sh
+```
+
+```bash
+   If you get installation error for missing python.h or xmlversion.h try installing
+   dependency packages:
+   
+   Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev
 ```
 
 ###3. Running YangExplorer
@@ -56,16 +64,53 @@ limitations under the License.
 
 ###5. User Guide (TBD)
 
-######Main Page:
-![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
+####5.2 Workflow
 
-######Model Explorer:
-![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
+#####5.2.1 Creating User Account (optional):
+   - Click *Admin* button (top right)
+   - Login as admin (user: admin, password: admin)
+   - On admin page, click *Users* link
+   - On User Profiles page, click *Add user* link (top-right)
+   - Add user account info and click *Save* (Warning: passwords are transmitted in plaintext)
 
-######Model Inventory:
-![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
+#####5.2.2 Creating Device Profiles:
+   *Note: You can use default user login (guest/guest)*
+   - Click *Admin* button (top right)
+   - Login login as guest or your your own login
+   - On admin page, click *Device profiles* link
+   - On User Profiles page, click *Add device profiles* link (top-right)
+   - Add device credentials (device login info is not secured)
+      - Add device ssh info (Not used currently but required, you may add dummy info)
+      - Add netconf credentials (Required for connecting to netconf server)
+      - Add restconf credentials (Not used currently)
+   - click *Save*
+   
+#####5.2.2 Login:
+   YangExplorer uses user accounts to manage workspaces. You can create a user account using admin
+   page (See 5.2.1 Creating User Account)
 
-#####Login:
-      (optional: you may create a local user account for yang explorer by clicking 'Admin' button
-      Admin Login: username: admin, password: admin  (Use for admin stuffs e.g. adding user accounts)
-      Guest Login: username: guest, password: guest  (Default user)
+   You can use guest login (guest/guest) or newly created account.
+
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
+
+#####5.2.2 Exploring Models:
+
+   You can explore yang models in explorer area (left pane) using tree navigation:
+   
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
+   
+#####5.2.3 Adding Yang Models:
+   - Click *Manage* tab
+   
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
+
+#####5.2.4 Creating RPCs (TBD):
+   - Value and Operation coloumns in explorer area are editable.
+   - Explorer a model
+   - Click value cell next to data node (leaf, container etc)
+   - Edit values
+   - Click *RPC* button
+
+#####5.2.5 Executing RPCs (TBD):
+
+#####5.2.6 Managing Collections (TBD):
