@@ -78,6 +78,9 @@ class NCClient(object):
 
         return self.handle != None
 
+    def _unknown_host_cb(self, host, fp):
+        return True
+
     def connect(self):
         """ Establish netconf session """
 
@@ -87,6 +90,8 @@ class NCClient(object):
                                           username=self.username,
                                           password=self.password,
                                           device_params=self.params,
+                                          unknown_host_cb=self._unknown_host_cb,
+                                          look_for_keys=False,
                                           timeout=30)
         except:
             logging.error("Failed to create netconf session: %s" % sys.exc_info()[0])
@@ -156,21 +161,3 @@ class NCClient(object):
             self.handle.close_session()
             logging.debug("Disconnected: %s" % self.__str__())
 
-
-RPC = """
-<rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-<get-config>
-<source><running/></source>
-<filter>
-<interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
-<interface/>
-</interfaces>
-</filter>
-</get-config>
-</rpc>
-"""
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    session = NCClient('10.22.52.246', 2022, 'admin', 'admin', {'name': "csr"})
-    print session.get_capability()

@@ -97,7 +97,6 @@
                 } else if (response.type == 'load-collection') {
                     for each (var child : XML in response.xml.children()) {
                         if (child.localName() == 'rpc') {
-                            parentApplication.resetTreeView()
                             parentApplication.setEncodingText(child.toXMLString());
                         }
                     }
@@ -108,7 +107,20 @@
 
             protected function btnLoad_clickHandler(event:Event):void
             {
-                var req: XML = _loadTestcasesXML();
+                if (lstCollection.selectedIndex < 0) {
+                    return;
+                }
+                
+                var item : Object = dpListCollection[lstCollection.selectedIndex];
+                var str : String = '<?xml version="1.0" encoding="UTF-8"?>\n';
+                
+                str += '<metadata>\n'
+                str += '<collection>' +  String(item.collection) + '</collection>'
+                str += '<name>' +  String(item.name) + '</name>'
+                str += '<author>' + String(item.name) + '</author>'
+                str += '</metadata>'
+                
+                var req: XML = new XML(str);
                 if (req != null) {
                     collectionService.url = url
                     collectionService.send({metadata:req, mode:'load-collection'})
@@ -156,13 +168,7 @@
             
             protected function lstCollection_doubleClickHandler(event:MouseEvent):void
             {
-               var index : int = event.currentTarget.selectedIndex;
-               if (index >= 0) {
-                  var item : Object = dpListCollection;
-                  if (item)
-                    Alert.show(item.name)
-                  btnLoad_clickHandler(null);
-               }
+                btnLoad_clickHandler(null);
             }
             
             private function listFilter(item:Object):Boolean {

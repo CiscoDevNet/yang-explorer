@@ -39,6 +39,8 @@
                        result="onRunServiceResult(event)" resultFormat="text" showBusyCursor="true"/>
         <mx:ArrayCollection id="devicePlatforms">
             <fx:String>csr</fx:String>
+            <fx:String>nexus</fx:String>
+            <fx:String>other</fx:String>
         </mx:ArrayCollection>
     </fx:Declarations>
     <fx:Script>
@@ -102,7 +104,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.2 (Beta)';
+            public var VERSION : String = '0.0.3 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -247,7 +249,7 @@
                     /* Restore config from saved testcase payload */
                     switch (child.localName() as String) {
                         case 'device-auth':
-                            if (child.hasOwnProperty('@user')) {
+                            /*if (child.hasOwnProperty('@user')) {
                                 txtUser.text = child.@user
                             }
                             
@@ -261,7 +263,7 @@
                             
                             if (child.hasOwnProperty('@host')) {
                                 txtIpAddr.text = child.@host
-                            }
+                            }*/
                             
                             if (child.hasOwnProperty('@platform')) {
                                 updateDevicePlatform(child.@platform)
@@ -331,7 +333,7 @@
             
             private function setDeviceSettings() : Boolean 
             {
-                if (txtIpAddr.text == '' || txtUser.text == '' || txtPwd.text == '' ||
+/*                if (txtIpAddr.text == '' || txtUser.text == '' || txtPwd.text == '' ||
                     lstDevPlatform.selectedIndex == -1) {
                     Alert.show('Device credentials are not provided or invalid', 'Error')
                     return false;
@@ -340,10 +342,10 @@
                         lstDevPlatform.selectedItem as String,
                         txtIpAddr.text, txtPort.text, 
                         txtUser.text, txtPwd.text)	
-                }
+                }*/
                 
                 if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '') {
-                    Alert.show('Protocol credentials are not provided', 'Error')
+                    Alert.show('Server credentials are not provided', 'Error')
                     return false;
                 } else {
                     ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
@@ -507,13 +509,13 @@
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW
             }
             
-            private function reset_deviceSettings():void
+/*            private function reset_deviceSettings():void
             {
                 lstDevPlatform.selectedIndex = -1
                 txtIpAddr.text = txtUser.text = txtPwd.text = ''
                 lstDevProfile.selectedIndex = -1
                 txtPort.text = '22'				
-            }
+            }*/
             
             private function reset_netconfSettings(default_settings: Boolean):void
             {
@@ -588,7 +590,7 @@
                 }
                 
                 if (lstDevProfile.selectedIndex <= 0) {
-                    reset_deviceSettings()
+                    //reset_deviceSettings()
                     reset_netconfSettings(true)
                     return
                 }
@@ -601,10 +603,10 @@
                         for each (var t : XML in item.transports.transport) {
                            switch (String(t.@type)) {
                             case "ssh":
-                                txtIpAddr.text = t.address.toString();
+/*                                txtIpAddr.text = t.address.toString();
                                 txtPort.text = t.port.toString();
                                 txtUser.text = t.username.toString();
-                                txtPwd.text  = t.password.toString();
+                                txtPwd.text  = t.password.toString();*/
                                 break;
                             case "netconf":
                                 if (rbtnNetConf.selected) {
@@ -642,9 +644,13 @@
             }
             
             public function setEncodingText(text : String) : void {
+                resetTreeView()
                 txtScript.text = text;
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW;
                 tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+                if (text && text != '') {
+                    cbEdit.selected = true;
+                }
             }
             
             protected function cbEdit_changeHandler(event:Event):void
@@ -729,13 +735,11 @@
                                         </s:layout> 
                                         <s:FormItem id="fSourceDS" label="Source Datastore">
                                             <s:ComboBox id="cbSrcDs" width="120"
-                                                        height="{TextInputSizeEnum.Small}"
                                                         dataProvider="{netconfDataSrc}"
                                                         fontFamily="Avenir"/>
                                         </s:FormItem>
                                         <s:FormItem id="fTargetDS" label="Target Datastore">
                                             <s:ComboBox id="cbTgtDs" width="120"
-                                                        height="{TextInputSizeEnum.Small}"
                                                         dataProvider="{netconfDataSrc}"/>
                                         </s:FormItem>
                                     </s:Form>
@@ -748,39 +752,33 @@
                                         </s:layout> 
                                         <s:FormItem label="    Profile">
                                             <s:DropDownList id="lstDevProfile" width="120"
-                                                            height="{TextInputSizeEnum.Small}"
                                                             change="lstDevProfile_changeHandler(event)"
                                                             dataProvider="{deviceProfiles}"/>
                                         </s:FormItem>
                                         <s:FormItem label="   Platform">
                                             <s:DropDownList id="lstDevPlatform" width="120"
-                                                            height="{TextInputSizeEnum.Small}"
                                                             dataProvider="{devicePlatforms}"/>
                                         </s:FormItem>
                                         <s:HGroup>
                                             <s:FormItem label="IP Address">
-                                                <s:TextInput id="txtIpAddr" width="120"
-                                                             height="{TextInputSizeEnum.Small}"/>
+                                                <s:TextInput id="txtNCIpAddr" width="120"
+                                                            />
                                             </s:FormItem>
                                             <s:FormItem label="        Port">
-                                                <s:TextInput id="txtPort" width="50"
-                                                             height="{TextInputSizeEnum.Small}"
-                                                             text="22"/>
-                                            </s:FormItem>	
+                                                <s:TextInput id="txtNCPort" width="50" text="22"/>
+                                            </s:FormItem>
                                         </s:HGroup>
-                                        <s:HGroup>	
-                                            <s:FormItem label="Username">
-                                                <s:TextInput id="txtUser" width="120"
-                                                             height="{TextInputSizeEnum.Small}"/>
+                                        <s:HGroup>
+                                            <s:FormItem label=" Username ">
+                                                <s:TextInput id="txtNCUser" width="120"/>
                                             </s:FormItem>
                                             <s:FormItem label="Password">
-                                                <s:TextInput id="txtPwd" width="120"
-                                                             height="{TextInputSizeEnum.Small}"/>
+                                                <s:TextInput id="txtNCPwd" width="120"/>
                                             </s:FormItem>
                                         </s:HGroup>	
                                     </s:Form>
                                 </mx:VBox>
-                                <mx:VBox width="100%" height="100%" label="Protocol Settings">
+                                <!--<mx:VBox width="100%" height="100%" label="Protocol Settings">
                                     <s:Form id="formNC" width="100%" height="100%"
                                             fontFamily="Avenir">
                                         <s:layout>
@@ -789,27 +787,23 @@
                                         <s:HGroup>
                                             <s:FormItem label="IP Address">
                                                 <s:TextInput id="txtNCIpAddr" width="120"
-                                                             height="{TextInputSizeEnum.Small}"
                                                              fontFamily="Avenir"/>
                                             </s:FormItem>
                                             <s:FormItem label="Port">
                                                 <s:TextInput id="txtNCPort" width="50"
-                                                             height="{TextInputSizeEnum.Small}"
                                                              fontFamily="Avenir" text="830"/>
                                             </s:FormItem>	
                                         </s:HGroup>
                                         <s:FormItem label="Username">
                                             <s:TextInput id="txtNCUser" width="120"
-                                                         height="{TextInputSizeEnum.Small}"
                                                          fontFamily="Avenir"/>
                                         </s:FormItem>
                                         <s:FormItem label="Password">
                                             <s:TextInput id="txtNCPwd" width="120"
-                                                         height="{TextInputSizeEnum.Small}"
                                                          fontFamily="Avenir"/>
                                         </s:FormItem>
                                     </s:Form>
-                                </mx:VBox>
+                                </mx:VBox>-->
                             </mx:TabNavigator>
                             <mx:VBox width="100%" height="60%" label="Encoding">
                                 <s:HGroup width="100%" height="10%" horizontalAlign="right"

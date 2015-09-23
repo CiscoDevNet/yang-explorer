@@ -29,7 +29,8 @@ limitations under the License.
 ```
    - virtualenv (optional, recommended)
 ```bash
-   sudo apt-get install virtualenv
+   Ubuntu: sudo apt-get install virtualenv
+   MAC: sudo pip install virtualenv
 ```
    - Browser with latest flash plugin (tested with google chrome)
 
@@ -80,7 +81,7 @@ limitations under the License.
    - On admin page, click *Device profiles* link
    - On User Profiles page, click *Add device profiles* link (top-right)
    - Add device credentials (device login info is not secured)
-      - Add device ssh info (Not used currently but required, you may add dummy info)
+      - Add device ssh info (Not used currently)
       - Add netconf credentials (Required for connecting to netconf server)
       - Add restconf credentials (Not used currently)
    - click *Save*

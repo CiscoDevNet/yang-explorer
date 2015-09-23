@@ -33,7 +33,7 @@
     </fx:Script>
     <s:HGroup verticalCenter="0" left="2" right="2" top="2" bottom="2"  toolTip="{data.desc}">
         <s:CheckBox id="cbSelect" selected="{data.selected}" change="cbSelect_changeHandler()"/>
-        <s:Label text="{data.name}" fontSize="14" fontWeight="bold" fontFamily="Avenir"/>
+        <s:Label text="{data.name}" fontSize="14" fontWeight="bold" fontFamily="Avenir" doubleClickEnabled="true"/>
         <s:Label text="{data.collection} @ {data.author}" fontSize="14" fontFamily="Avenir"/>
       </s:HGroup>
 </s:ItemRenderer>
