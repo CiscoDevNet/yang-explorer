@@ -77,7 +77,7 @@ limitations under the License.
 #####5.2.2 Creating Device Profiles:
    *Note: You can use default user login (guest/guest)*
    - Click *Admin* button (top right)
-   - Login login as guest or your your own login
+   - Login login as guest or your own login
    - On admin page, click *Device profiles* link
    - On User Profiles page, click *Add device profiles* link (top-right)
    - Add device credentials (device login info is not secured)
