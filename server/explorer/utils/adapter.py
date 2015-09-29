@@ -42,7 +42,7 @@ class Adapter(object):
                 user = auth.get('user', None)
                 passwd = auth.get('passwd', None)
                 dev = child.find('device-auth')
-                device = dev.get('platform', None)
+                device = auth.get('platform', None)
             elif tag == 'rpc':
                 rpc = child
 
@@ -64,5 +64,5 @@ class Adapter(object):
             return session.get_capability()
 
         logging.debug("RPC: " + ET.tostring(rpc))
-        session = NCClient(host, port, user, passwd, {'name': "csr"})
+        session = NCClient(host, port, user, passwd, params)
         return session.run(ET.tostring(rpc))

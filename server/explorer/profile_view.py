@@ -58,14 +58,12 @@ def _build_device_profile(e):
     elem.text = e.device
     profile.append(elem)
 
-    ssh = _build_proto('ssh', e.address, e.port, e.username, e.password)
     netconf = _build_proto('netconf', e.nc_address, e.nc_port, e.nc_username,
                            e.nc_password)
     restconf = _build_proto('restconf', e.rest_address, e.rest_port, e.rest_username,
                             e.rest_password)
 
     elem = ET.Element('transports')
-    elem.append(ssh)
     elem.append(netconf)
     elem.append(restconf)
     profile.append(elem)

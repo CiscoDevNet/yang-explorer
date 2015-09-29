@@ -37,7 +37,9 @@ package classes
             var str : String = '<metadata>'
             str += '<device-auth'
             if (host != '') {
-                str += ' platform="' + platform + '"'
+                if (platform != '') {
+                    str += ' platform="' + platform + '"'
+                }
                 str += ' host="' + host + '"'
                 str += ' port="' + port + '"'
                 str += ' user="' + user + '"'
@@ -46,6 +48,7 @@ package classes
             str += '/>\n'
             str += '<netconf-auth'
             if (nc_host != '') {
+                str += ' platform="' + platform + '"'
                 str += ' host="' + nc_host + '"'
                 str += ' port="' + nc_port + '"'
                 str += ' user="' + nc_user + '"'
@@ -116,10 +119,10 @@ package classes
         public function setDeviceSettings(plat: String, host: String, port : String,
                                           user : String, pwd : String) : void {
             this.platform = plat
-            this.host = host
+/*            this.host = host
             this.port = port
             this.user = user
-            this.passwd = pwd
+            this.passwd = pwd*/
         }
         
         public function setNetconfSettings(host: String, port : String, user : String, pwd : String) : void {

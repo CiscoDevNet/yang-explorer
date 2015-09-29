@@ -104,7 +104,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.3 (Beta)';
+            public var VERSION : String = '0.0.4 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -348,8 +348,9 @@
                     Alert.show('Server credentials are not provided', 'Error')
                     return false;
                 } else {
+                    ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, null, null, null, null);
                     ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
-                        txtNCUser.text, txtNCPwd.text)	
+                        txtNCUser.text, txtNCPwd.text)
                 }
                 return true
             }
@@ -765,7 +766,7 @@
                                                             />
                                             </s:FormItem>
                                             <s:FormItem label="        Port">
-                                                <s:TextInput id="txtNCPort" width="50" text="22"/>
+                                                <s:TextInput id="txtNCPort" width="50" text="830"/>
                                             </s:FormItem>
                                         </s:HGroup>
                                         <s:HGroup>

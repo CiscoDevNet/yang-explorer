@@ -58,11 +58,6 @@ class DeviceProfile(models.Model):
     profile = models.CharField(max_length=128, primary_key=True)
     device = models.CharField(max_length=32, choices=CHOICES, default='csr')
     user = models.ForeignKey(User)
-    
-    address = models.CharField(max_length=15, blank=True, verbose_name='Device IP')
-    port = models.CharField(max_length=5, blank=True, default='22', verbose_name='SSH Port')
-    username = models.CharField(max_length=32, blank=True)
-    password = models.CharField(max_length=32, blank=True)
 
     nc_address = models.CharField(max_length=15, blank=True, default='', verbose_name='NetConf IP',
                                   help_text='Optional NetConf IP')
