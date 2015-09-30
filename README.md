@@ -61,13 +61,17 @@ limitations under the License.
 ```
 
 ###4. Caveats
-   - Yang Model upload fails, Workaround: please use Google Chrome.
+   - Yang Model upload fails, Workaround: Use Google Chrome.
 
 ###5. User Guide (TBD)
 
-####5.2 Workflow
+####5.2 Admin Tasks
 
 #####5.2.1 Creating User Account (optional):
+
+   Creating user account is optional as you can use default guest/guest login, however creating user account can be userful
+   if you have a shared yang-explorer installtion.
+   
    - Click *Admin* button (top right)
    - Login as admin (user: admin, password: admin)
    - On admin page, click *Users* link
@@ -75,43 +79,80 @@ limitations under the License.
    - Add user account info and click *Save* (Warning: passwords are transmitted in plaintext)
 
 #####5.2.2 Creating Device Profiles:
+
+Device profiles can be created to quickly populate device info from drop-down list in yang-explorer.
+
    *Note: You can use default user login (guest/guest)*
    - Click *Admin* button (top right)
    - Login login as guest or your own login
    - On admin page, click *Device profiles* link
    - On User Profiles page, click *Add device profiles* link (top-right)
    - Add device credentials (device login info is not secured)
-      - Add device ssh info (Not used currently)
       - Add netconf credentials (Required for connecting to netconf server)
       - Add restconf credentials (Not used currently)
    - click *Save*
+
+#####5.2.3 Creating Collection:
+
+Collections can be used to save user generated RPCs on the server so that saved RPCs can be re-used.
+
+   *Note: You can use default user login (guest/guest)*
+   - Click *Admin* button (top right)
+   - Login login as guest or your own login
+   - On admin page, click *Collections* link
+   - On User Profiles page, click *Add collection* link (top-right)
+      - Provide collection name
+      - Select User from drop-down box
+      - Provide description for this collection
+   - click *Save*
    
-#####5.2.2 Login:
+####5.3 Work Flow
+
+#####5.3.1 Login:
    YangExplorer uses user accounts to manage workspaces. You can create a user account using admin
    page (See 5.2.1 Creating User Account)
 
    You can use guest login (guest/guest) or newly created account.
-
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 
-#####5.2.2 Exploring Models:
+#####5.3.2 Exploring Models:
+
+
+   
+#####5.3.3 Adding/Deleing Yang Models:
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
+   - Click *Manage* tab
+   - Click *Upload* button
+      - Click *Browse* and select models to upload
+      - Click *Upload*
+      - *Clear* button can be used clear models in upload window
+   - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in exploerer area
+   - Click Delete button to delete selected models from user account
+
+#####5.3.4 Creating RPCs:
 
    You can explore yang models in explorer area (left pane) using tree navigation:
-   
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
    
-#####5.2.3 Adding Yang Models:
-   - Click *Manage* tab
-   
-   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
-
-#####5.2.4 Creating RPCs (TBD):
-   - Value and Operation coloumns in explorer area are editable.
-   - Explorer a model
+   - Value and Operation columns in explorer area are editable.
+   - Explore model in explorer area by navigating model tree
    - Click value cell next to data node (leaf, container etc)
    - Edit values
+      - Select <get>, <get-config> for get, get-config netconf operations
+      - Select <rpc> for RPCs
+      - Enter data values for edit-config operation
+      - Use *Reset* button on top-right bar to reset data in the model tree
    - Click *RPC* button
 
-#####5.2.5 Executing RPCs (TBD):
+#####5.3.5 Executing RPCs:
+   - Create RPC using *5.3.4*
+   - Populate Device info in Device Settings Tab
+   - Click *Run*
 
-#####5.2.6 Managing Collections (TBD):
+#####5.3.6 Saving RPCs to Collection:
+   - Create RPC using *5.3.4*
+   - Click *Save*
+
+#####5.3.7 Loading saved RPC:
+   - Click *Collections* Tab
+   - Double click on the RPCs title you want to load.
