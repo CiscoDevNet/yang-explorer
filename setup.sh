@@ -7,7 +7,7 @@ command -v pyang >/dev/null 2>&1 || {
 	exit 1;
 }
 
-command -v pyang >/dev/null 2>&1 || {
+command -v pip >/dev/null 2>&1 || {
 	echo "pip not found.. please install python pip before continuing !!" >&2;
 	exit 1;
 }
