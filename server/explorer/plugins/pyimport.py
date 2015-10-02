@@ -12,6 +12,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
 """
 
 import optparse
@@ -63,10 +65,6 @@ class PyImportPlugin(plugin.PyangPlugin):
             xmodule = self.emit_imports(module)
             if xmodule is not None:
                 xmodules.append(xmodule)
-        
-        # emit XML
-        with open('dependancies.xml', 'w') as f:
-            f.write(ET.tostring(xmodules))
 
         fd.write(ET.tostring(xmodules))
     

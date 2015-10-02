@@ -4,14 +4,14 @@ Copyright 2015, Cisco Systems, Inc
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
 http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
 """
 
 import optparse
@@ -76,30 +76,29 @@ class Cxml:
 
         if not self.modules[-1].search_one('prefix'):
             return
-                
+
         for module in self.modules[0].i_ctx.modules.values():
             if module.keyword == "module":
                 uri = module.search_one("namespace").arg
-                prefix = module.search_one("prefix").arg
                 self.module_namespaces[module.arg] = uri
                 imports = module.search('import')
-                
+
                 related = False
                 #build prefix to import modulename map
                 i_prefixes = {}
                 for i in imports:
+                    #indirect dependancies
                     if i.arg == self.name:
                         related = True
                     pfx = i.search_one('prefix')
                     if pfx is not None:
                         i_prefixes[pfx.arg] = i.arg + ':'
+                        # direct imports
+                        if module.arg == self.name:
+                            self.add_prefix(i, True)
 
-                if module.arg != self.name and not related:
-                    continue
+                self.add_prefix(module, False)
 
-                if prefix is not None:
-                    self.module_prefixes[module.arg] = prefix
-                
                 for idn in module.i_identities.values():
                     curr_idn = module.arg + ':' + idn.arg
                     base_idn = idn.search_one("base")
@@ -109,16 +108,6 @@ class Cxml:
                         if len(base_idns) > 1:
                             #base is located in other modules
                             b_idn = i_prefixes.get(base_idns[0], '') + base_idns[1]
-                            # check for nested identity:
-                            # if curr_idn is the base itself, replace its children's
-                            # base_idn to the grandparent
-                            values = self.identity_deps.get(curr_idn, None)
-                            if values is not None:
-                                self.identity_deps.pop(curr_idn, None)
-                                for value in values:
-                                    if self.identity_deps.get(b_idn, None) is None:
-                                        self.identity_deps.setdefault(b_idn, [])
-                                    self.identity_deps[b_idn].append(value)
                         else:
                             b_idn = module.arg + ':' + base_idn.arg
 
@@ -129,12 +118,22 @@ class Cxml:
                     else:
                         self.identity_deps.setdefault(curr_idn, [])
 
-    def emit_cxml(self): 
+    def add_prefix(self, module, direct):
+        name = module.arg
+        pfx  = module.search_one('prefix')
+        if pfx is None:
+            return
+        pfx_str = pfx.arg
+        prefix = self.module_prefixes.get(name, None)
+        if prefix is None or direct:
+            self.module_prefixes[module.arg] = (pfx_str, direct)
+
+    def emit_cxml(self):
         fd = self.fd
         path = self.path
 
         fd.write('<?xml version="1.0" encoding="UTF-8" ?>\n')
-        
+
         module = self.modules[-1]
         chs = [ch for ch in module.i_children
                if ch.keyword in statements.data_definition_keywords]
@@ -145,13 +144,15 @@ class Cxml:
         prefix = module.search_one('prefix')
         if not prefix:
             return
-        
+
         fd.write('<node name="%s" type="module" prefix="%s">\n' % (module.arg, prefix.arg))
-        
+
         for name in self.module_prefixes:
-            fd.write('  <namespace prefix="%s">%s</namespace>\n' % 
-                (self.module_prefixes[name], self.module_namespaces[name]))
-        
+            (pfx, direct) = self.module_prefixes[name]
+            fd.write('  <namespace prefix="%s" module="%s"' % (pfx, name))
+            fd.write(' import="%s"' % (str(direct)).lower())
+            fd.write('>%s</namespace>\n' % (self.module_namespaces[name]))
+
         if len(chs) > 0:
             self.print_children(chs, module, fd, ' ', path, 'data')
 
@@ -235,7 +236,7 @@ class Cxml:
 
         description = self.get_description(s)
         close_tag = False
-        
+
         if s.keyword == 'list':
             fd.write(" type=\"list\"")
             if s.search_one('key') is not None:
@@ -253,42 +254,46 @@ class Cxml:
             m = s.search_one('mandatory')
             if m is None or m.arg == 'false':
                 fd.write(' mandatory="true"')
+
+            d = s.search_one('default')
+            if d is not None:
+                fd.write(" default=\"" + d.arg + "\"")
+
+            # add possible cases as value
+            values = self.type_choice_values(s)
+            if values:
+                fd.write(' values=\"' + values + '\"')
+
             fd.write('>')
         elif s.keyword == 'case':
             fd.write(" type=\"case\">")
         elif s.keyword in ['leaf', 'leaf-list']:
             typename = self.get_typename(s)
             fd.write(' type="' + s.keyword + '" datatype="' + typename + '"')
-
-            if 'identityref' in typename:
-                values = self.get_identityref_values(s)
-                if values != '':
-                    fd.write(' values=\"' + values + '\"')
-            
             m = s.search_one('mandatory')
             if m is not None and m.arg == 'true' or hasattr(s, 'i_is_key'):
                 fd.write(" mandatory=\"true\"")
             if hasattr(s, 'i_is_key'):
                 fd.write(" is_key=\"true\"")
-            
+
             d = s.search_one('default')
             if d is not None:
                 fd.write(" default=\"" + d.arg + "\"")
-            
+
             t = s.search_one('type')
             if t is not None:
-                tv = self.type_enums(t)
+                tv = self.type_values(t)
                 if tv != '':
                   fd.write(' values=\"' + tv + '\"')
-            
+
             if description != '':
                 close_tag = True
                 fd.write('>')
             else:
                 fd.write('/>')
-        elif s.keyword == 'rpc' or s.keyword == 'notification' or s.keyword == 'input' or s.keyword == 'output':
+        elif s.keyword in ['rpc','notification', 'input','output']:
             fd.write(' type="' + s.keyword + '">')
-        else: 
+        else:
             close_tag = True
 
         if description != '':
@@ -297,7 +302,7 @@ class Cxml:
             description.replace('>', '&gt')
             fd.write(description)
             fd.write(']]>\n%s  </description>' %  prefix[0:-1])
-        
+
         if close_tag:
             fd.write("\n%s</node>" % (prefix[0:-1]))
 
@@ -321,12 +326,10 @@ class Cxml:
 
     def get_status_str(self, s):
         status = s.search_one('status')
-        if status is None or status.arg == 'current':
+        if status is None or status.arg == '':
             return 'status="current"'
-        elif status.arg == 'deprecated':
-            return 'status="current"'
-        elif status.arg == 'obsolete':
-            return 'status="obsolete"'
+        elif status.arg in ['current', 'deprecated', 'obsolete']:
+            return 'status="' + status.arg  + '"'
 
     def get_description(self, s):
         desc = s.search_one('description')
@@ -381,42 +384,68 @@ class Cxml:
         else:
             return ''
 
-    def get_identityref_values(self, leaf):
-        _type = leaf.search_one('type')
-        if _type and _type.arg == 'identityref':
-            base_idn = _type.search_one('base')
-            if base_idn:
-                #identity has a base
-                idn_key = None
-                base_idns = base_idn.arg.split(':')
-                if len(base_idns) > 1:
-                    for module in self.module_prefixes:
-                        if base_idns[0] == self.module_prefixes[module]:
-                            idn_key = module + ':' + base_idns[1]
-                            break
-                else:
-                    idn_key = self.name + ':' + base_idn.arg
-
-                if idn_key is None:
-                    return ''
-
-                value_stmts = []
-                stmts = self.identity_deps.get(idn_key, [])
-                for value in stmts:
-                    ids = value.split(':')
-                    value_stmts.append(self.module_prefixes[ids[0]] + ':' + ids[1])
-                return '|'.join(value_stmts)
-            else:
-                return ''
-        return ''
-
     def type_enums(self, t):
         tv = ''
-        if t.i_is_derived == False and t.i_typedef != None:
-            return self.type_enums(t.i_typedef.search_one('type'))
         enum = t.search('enum')
         if enum != []:
             tv = '|'.join([e.arg for e in enum])
-        elif statements.has_type(t, ['boolean']) != None:
-            tv = 'true|false'
         return tv
+
+    def type_values(self, t):
+        if t is None:
+            return ''
+        if t.i_is_derived == False and t.i_typedef != None:
+            return self.type_values(t.i_typedef.search_one('type'))
+        if t.arg == 'boolean':
+            return 'true|false'
+        if t.arg == 'union':
+            return self.type_union_values(t)
+        if t.arg == 'enumeration':
+            return self.type_enums(t)
+        if t.arg == 'identityref':
+            return self.type_identityref_values(t)
+        return ''
+
+    def type_union_values(self, t):
+        vlist = []
+        membertypes = t.search('type')
+        for types in membertypes:
+            v = self.type_values(types)
+            if v != '':
+                vlist.append(v)
+        return '|'.join(vlist)
+
+    def type_identityref_values(self, t):
+        base_idn = t.search_one('base')
+        if base_idn:
+            #identity has a base
+            idn_key = None
+            base_idns = base_idn.arg.split(':')
+            if len(base_idns) > 1:
+                for module in self.module_prefixes:
+                    if base_idns[0] == self.module_prefixes[module][0]:
+                        idn_key = module + ':' + base_idns[1]
+                        break
+            else:
+                idn_key = self.name + ':' + base_idn.arg
+
+            if idn_key is None:
+                return ''
+
+            value_stmts = []
+            stmts = self.identity_deps.get(idn_key, [])
+            for value in stmts:
+                ids = value.split(':')
+                value_stmts.append(self.module_prefixes[ids[0]][0] + ':' + ids[1])
+            if stmts:
+                return '|'.join(value_stmts)
+        return ''
+
+    def type_choice_values(self, s):
+        cases = s.search('case')
+        values = ''
+        if cases:
+            clist = [c.arg for c in cases]
+            values = '|'.join(clist)
+        return values
+
