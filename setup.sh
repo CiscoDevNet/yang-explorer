@@ -32,4 +32,30 @@ if [[ $rc != 0 ]]; then
 	echo "Installation failed !! aborted !!"
 	exit $rc
 fi
+
+echo "Setting up initial database .."
+
+if [ -f "server/data/db.sqlite3" ]; then
+	echo "Database already exist .. skipping"
+else
+	cd server
+	echo "Creating database .."
+	python manage.py migrate
+	echo "Creating default users .."
+	python manage.py setupdb
+	cd ..
+fi
+
+if [ -d "server/data/users/guest/yang" ]; then
+	echo "Copying default models .."
+	cp default-models/* server/data/users/guest/yang/
+	cd server
+	GUESTPATH=data/users/guest
+	DEFAULT_YANG=$GUESTPATH/yang/ietf-interfaces@2013-12-23.yang
+	DEFAULT_CXML=$GUESTPATH/cxml/ietf-interfaces@2013-12-23.xml
+	pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f cxml  $GUESTPATH/yang/*.yang $DEFAULT_YANG > $DEFAULT_CXML
+	cd ..
+fi
+
 echo "Setup completed.. "
+echo "Use start.sh to start yang-explorer server"

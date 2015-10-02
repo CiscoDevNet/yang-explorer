@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<node name="ietf-yang-types" type="module" prefix="yang">
-  <namespace prefix="yang">urn:ietf:params:xml:ns:yang:ietf-yang-types</namespace>
-  <namespace prefix="if">urn:ietf:params:xml:ns:yang:ietf-interfaces</namespace>
-</node>

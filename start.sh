@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 
+HOST='localhost'
+PORT='8088'
+
+if [ ! -f "server/data/db.sqlite3" ]; then
+    echo "Yang-Explorer database is not initialized .. please run start.sh first !!"
+    exit -1
+fi
+
 echo ""
-echo "Starting YangExplorer server .."
+
 if [ -f "v/bin/activate" ]; then
 	echo "Activating virtualenv .."
 	source v/bin/activate
 fi
 
-HOST='localhost'
-PORT='8088'
-
+echo "Starting YangExplorer server .."
 echo "Use http://$HOST:$PORT/static/YangExplorer.html"
 echo ""
 

@@ -1,4 +1,4 @@
 v/
 *.py[co]
 *~
-server/data/
+server/data/db.sqlite3
