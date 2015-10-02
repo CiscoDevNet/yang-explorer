@@ -39,6 +39,17 @@ if [ -f "server/data/db.sqlite3" ]; then
 	echo "Database already exist .. skipping"
 else
 	cd server
+	echo "Creating data directories .."
+	mkdir -p data/users
+	mkdir -p data/session
+	mkdir -p data/collections
+
+	if [ ! -d "data/users" ]; then
+		echo "Failed to create data directories !!"
+		echo "Setup failed !!"
+		exit -1
+	fi
+
 	echo "Creating database .."
 	python manage.py migrate
 	echo "Creating default users .."
