@@ -13,16 +13,26 @@ command -v pip >/dev/null 2>&1 || {
 }
 
 command -v virtualenv >/dev/null 2>&1 || {
-	echo "virtualenv not found.. please install virtualenv before continuing !!" >&2;
-	exit 1;
+    NOVENV=1
+	echo "virtualenv not found.. do you want to continue? (y/Y)" >&2;
+    read response
+
+    if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
+    then
+        break;
+    else
+        exit 1;
+    fi
 }
 
-echo "Creating / Activating virtualenv .."
-if [ -f "v/bin/activate" ]; then
-	source v/bin/activate
-else
-	virtualenv v
-	source v/bin/activate
+if [[ $NOVENV != 1 ]]; then
+    echo "Creating / Activating virtualenv .."
+    if [ -f "v/bin/activate" ]; then
+        source v/bin/activate
+    else
+        virtualenv v
+        source v/bin/activate
+    fi
 fi
 
 echo "Installing dependencies .."

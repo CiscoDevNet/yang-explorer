@@ -38,7 +38,7 @@ limitations under the License.
 ```bash
    git clone https://github.com/CiscoDevNet/yang-explorer.git
    cd yang-explorer
-   bash setup.sh
+   [sudo] bash setup.sh
 ```
 
 ```bash
