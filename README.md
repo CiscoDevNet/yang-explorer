@@ -39,6 +39,8 @@ limitations under the License.
    git clone https://github.com/CiscoDevNet/yang-explorer.git
    cd yang-explorer
    [sudo] bash setup.sh
+
+   Note: sudo may be required if you do not use virtualenv.
 ```
 
 ```bash
@@ -52,7 +54,9 @@ limitations under the License.
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
-   ./start.sh
+   [sudo] ./start.sh
+
+   Note: sudo may be required if you did not use virtualenv during installation.
 ```
 
 #####Start Explorer:
