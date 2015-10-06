@@ -59,6 +59,7 @@ def login_handler(request):
             except Exception as ex:
                 print(ex.__doc__)
                 print(ex.message)
+        logging.debug('Login success')
         return HttpResponse(Response.success(action, 'ok', session))
     return HttpResponse(Response.error(action, 'Invalid Request'))
 

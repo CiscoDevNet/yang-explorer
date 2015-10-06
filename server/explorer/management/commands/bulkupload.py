@@ -131,7 +131,8 @@ class Command(BaseCommand):
             tempdir = self.dir_clone(dir_path)
 
             # remove git repo
-            shutil.rmtree(dir_path)
+            self.stdout.write("Cleaning up " + git_clone_path)
+            shutil.rmtree(git_clone_path)
         elif dir_path is not None and dir_path != '':
             self.stdout.write("Local upload .. ")
             # local path, just create a fake session and copy all yang files
@@ -142,6 +143,7 @@ class Command(BaseCommand):
             self.upload_dir(user, tempdir)
 
             # cleanup
+            self.stdout.write("Cleaning up " + tempdir)
             shutil.rmtree(tempdir)
 
     def handle(self, *args, **options):
