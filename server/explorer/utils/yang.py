@@ -99,8 +99,10 @@ class Compiler(object):
             lines = stderr.split('\n')
             logging.debug('Pyang Compile Errors: ' + str(lines))
             rmfile = os.path.join(_base, os.path.splitext(_file)[0] + '.xml')
-            logging.debug('Deleting %s' % rmfile)
-            os.remove(rmfile)
+
+            if os.path.exists(rmfile):
+                logging.debug('Deleting %s' % rmfile)
+                os.remove(rmfile)
             rc = False
         else:
             rc = True
