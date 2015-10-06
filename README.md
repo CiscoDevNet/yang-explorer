@@ -121,9 +121,8 @@ Collections can be used to save user generated RPCs on the server so that saved 
 
 #####5.3.2 Exploring Models:
 
-
-   
 #####5.3.3 Adding/Deleing Yang Models:
+###### Upload using yang-explorer user interface
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
    - Click **Manage** tab
    - Click **Upload** button
@@ -133,6 +132,22 @@ Collections can be used to save user generated RPCs on the server so that saved 
    - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in exploerer area
    - Click Delete button to delete selected models from user account
 
+###### Upload using server console
+
+```bash
+   cd <install-root>/yang-explorer
+   source v/bin/activate
+   cd server
+   python manage.py --user <username> --git <git-url> --dir <path/to/yang/models>
+   
+   example: local upload (assumes models are already available at dir path)
+   python manage.py bulkupload --user guest --dir /users/prgohite/git/yang/vendor/cisco/xr/531
+   
+   example: git upload
+   python manage.py bulkupload --user guest --git https://github.com/YangModels/yang.git --dir vendor/cisco/xr/531
+```
+   All models must be compiled successfully, in case of any error none of the models will be uploaded to yang-explorer.
+   
 #####5.3.4 Creating RPCs:
 
    You can explore yang models in explorer area (left pane) using tree navigation:
