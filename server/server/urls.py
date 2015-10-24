@@ -17,9 +17,11 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
+from django.views.generic import RedirectView
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^explorer/', include('explorer.urls')),
     url(r'^crossdomain.xml$', 'security.policy_handler', name='policy_handler'),
+    url(r'^$', RedirectView.as_view(url='/static/YangExplorer.html')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

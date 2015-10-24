@@ -182,7 +182,7 @@ package classes
             } else {
                 var access:String = node.attribute('access');
                 /* Don't set to edit config mode for oper data filter values */
-                if (access == 'read-write' && this.mode != GET_CONFIG) {
+                if (access == 'read-write' && this.mode == DEFAULT) {
                     this.mode = EDIT_CONFIG;
                 } else if (access == 'read-only') {
                     this.mode = GET;

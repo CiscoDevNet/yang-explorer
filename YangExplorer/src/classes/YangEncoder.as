@@ -188,16 +188,13 @@ package classes
                 if (value == '') {
                     return null;
                 }
-                if (node.hasOwnProperty('@is_key') || mode == 'edit-config' || mode == 'rpc') {
-                    if (value == '<empty>') {
-                        value = '';
-                    } else {
-                        ns += get_namespace(value);
-                    }
-                    xml = new XML('<' + name + ns + op +'>' + value + '</' + name + '>')
+
+                if (value == '<empty>') {
+                    value = '';
                 } else {
-                    xml = new XML('<' + name + ns + op + '></' + name + '>');
+                    ns += get_namespace(value);
                 }
+                xml = new XML('<' + name + ns + op +'>' + value + '</' + name + '>')
                 return xml;
             }
             trace(' process_terminal: no match')

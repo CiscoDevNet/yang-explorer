@@ -19,7 +19,12 @@
 		<link>
 			<name>bin-debug</name>
 			<type>2</type>
-			<location>/Users/prgohite/GitHub/yang-explorer/server/static</location>
+			<location>/Users/prgohite/git/GitHub/yang-explorer/server/static</location>
+		</link>
+		<link>
+			<name>bin-release</name>
+			<type>2</type>
+			<location>/Users/prgohite/GitHub/yang-explorer/server/static/YangExplorer</location>
 		</link>
 	</linkedResources>
 </projectDescription>

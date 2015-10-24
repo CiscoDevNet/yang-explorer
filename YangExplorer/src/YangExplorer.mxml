@@ -104,7 +104,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.4 (Beta)';
+            public var VERSION : String = '0.0.5 (Beta)';
             
             /* Version string */
             [Bindable]

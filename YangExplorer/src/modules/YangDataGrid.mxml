@@ -342,10 +342,18 @@
                 }
                 
                 if (access == 'read-write') {
-                    if (mode == YangUtil.DEFAULT || mode == YangUtil.EDIT_CONFIG ) {
+                    switch (mode) {
+                    case YangUtil.GET:
+                        addNodeOptions('<get>');
+                        break;
+                    case YangUtil.GET_CONFIG:
+                        addNodeOptions('<get-config>');
+                        break;
+                    case YangUtil.EDIT_CONFIG:
                         addNodeOptions('');
-                    }
-                    if (mode == YangUtil.DEFAULT || mode == YangUtil.GET_CONFIG ) {
+                        break;
+                    default:
+                        addNodeOptions('');
                         addNodeOptions('<get>');
                         addNodeOptions('<get-config>');
                     }
