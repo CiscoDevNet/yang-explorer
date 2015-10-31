@@ -51,6 +51,7 @@ limitations under the License.
 ```
 
 ###3. Running YangExplorer
+###3.1 Running with localhost
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
@@ -61,6 +62,33 @@ limitations under the License.
 
 #####Start Explorer:
 ```bash
+   http://localhost:8088/static/YangExplorer.html
+```
+###3.2 Running with ip-address
+#####Start Server:
+```bash
+   cd <install-root>/yang-explorer
+   
+   vim ./start.sh
+   (replace localhost with ip-address)
+   
+   [sudo] ./start.sh
+
+   Note: sudo may be required if you did not use virtualenv during installation.
+```
+
+#####Start Explorer:
+```bash
+   cd <install-root>/yang-explorer/server/static
+   vim YangExplorer.html
+   
+   Add ip-address/port in YangExplorer.html after following line:
+      
+      var flashvars = {}; 
+
++     flashvars.host = '1.2.3.4'; 
++     flashvars.port = '8088';
+
    http://localhost:8088/static/YangExplorer.html
 ```
 
