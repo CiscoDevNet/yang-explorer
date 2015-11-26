@@ -4,13 +4,13 @@ echo "Installing yang-explorer .."
 echo "Checking environment .."
 
 command -v pyang >/dev/null 2>&1 || {
-	echo "pyang not found.. please install pyang before continuing !!" >&2;
-	exit 1;
+    echo "pyang not found.. please install pyang before continuing !!" >&2;
+    exit 1;
 }
 
 command -v pip >/dev/null 2>&1 || {
-	echo "pip not found.. please install python pip before continuing !!" >&2;
-	exit 1;
+    echo "pip not found.. please install python pip before continuing !!" >&2;
+    exit 1;
 }
 
 command -v virtualenv >/dev/null 2>&1 || {
@@ -46,14 +46,14 @@ pip install -r requirements.txt
 
 rc=$?
 if [[ $rc != 0 ]]; then
-	echo "Installation failed !! aborted !!"
-	exit $rc
+    echo "Installation failed !! aborted !!"
+    exit $rc
 fi
 
 echo "Setting up initial database .."
 
 if [ -f "server/data/db.sqlite3" ]; then
-	echo "Database already exist .. skipping"
+    echo "Database already exist .. skipping"
 else
     if [[ $UID == 0 ]]; then
         echo ""
@@ -72,34 +72,35 @@ else
         fi
     fi
 
-	cd server
-	echo "Creating data directories .."
-	mkdir -p data/users
-	mkdir -p data/session
-	mkdir -p data/collections
+cd server
+echo "Creating data directories .."
+mkdir -p data/users
+mkdir -p data/session
+mkdir -p data/collections
 
-	if [ ! -d "data/users" ]; then
-		echo "Failed to create data directories !!"
-		echo "Setup failed !!"
-		exit -1
-	fi
+if [ ! -d "data/users" ]; then
+    echo "Failed to create data directories !!"
+    echo "Setup failed !!"
+    exit -1
+fi
 
-	echo "Creating database .."
-	python manage.py migrate
-	echo "Creating default users .."
-	python manage.py setupdb
-	cd ..
+echo "Creating database .."
+python manage.py migrate
+echo "Creating default users .."
+python manage.py setupdb
+cd ..
 fi
 
 if [ -d "server/data/users/guest/yang" ]; then
-	echo "Copying default models .."
-	cp default-models/* server/data/users/guest/yang/
-	cd server
-	GUESTPATH=data/users/guest
-	DEFAULT_YANG=$GUESTPATH/yang/ietf-interfaces@2013-12-23.yang
-	DEFAULT_CXML=$GUESTPATH/cxml/ietf-interfaces@2013-12-23.xml
-	pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f cxml  $GUESTPATH/yang/*.yang $DEFAULT_YANG > $DEFAULT_CXML
-	cd ..
+    echo "Copying default models .."
+    cp default-models/* server/data/users/guest/yang/
+    cd server
+    GUESTPATH=data/users/guest
+    DEFAULT_YANG=$GUESTPATH/yang/ietf-interfaces@2013-12-23.yang
+    DEFAULT_CXML=$GUESTPATH/cxml/ietf-interfaces@2013-12-23.xml
+    pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f cxml  $GUESTPATH/yang/*.yang $DEFAULT_YANG > $DEFAULT_CXML
+    pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f pyimport $GUESTPATH/yang/*.yang > $GUESTPATH/yang/dependencies.xml
+    cd ..
 fi
 
 echo "Setup completed.. "

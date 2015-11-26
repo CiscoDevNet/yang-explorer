@@ -24,7 +24,6 @@
                      variableRowHeight="true"
                      fontFamily="Avenir"
                      fontSize="14"
-                     width="100%" height="100%"
                      creationComplete="creationCompleteHandler()"
                      itemClick="itemClickHandler(event)"
                      initialize="initializeHandler(event)"

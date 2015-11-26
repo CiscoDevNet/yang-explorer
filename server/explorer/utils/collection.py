@@ -20,8 +20,11 @@ import os
 import glob
 import lxml.etree as ET
 import logging
+from collections import defaultdict
 from explorer.models import Collection as Col
 from explorer.models import User
+from explorer.utils.dygraph import DYGraph
+from explorer.utils.cxml import Cxml
 
 class Collection(object):
     ''' This class implements utility routines to work with
@@ -143,4 +146,131 @@ class Collection(object):
             return False
 
         payload = ET.parse(_file).getroot()
-        return payload
+        resp = process_collection(payload)
+        return resp
+
+def _get_tag(elem):
+    if '{' in elem.tag:
+        v = elem.tag.split('}')
+        return (v[1], v[0].split('{')[1])
+    return (elem.tag, None)
+
+def _find_child(node, tag):
+    for child in node:
+        if child.xpath('local-name()') == tag:
+            return child
+    return None
+
+def process_collection(payload):
+    if payload is None:
+        return None
+
+    logging.debug("process_collection: enter..")
+    for child in payload:
+        tag = child.xpath('local-name()')
+        if tag == 'metadata':
+            user = process_metadata(child)
+        elif tag == 'rpc':
+            return process_netconf(child, user)
+        else:
+            logging.debug("process_collection: Unexpected tag " + child.tag)
+    return None
+
+def process_metadata(metadata):
+    user = metadata.find('author')
+    return user.text
+
+def process_netconf(rpc, user):
+    logging.debug("process_netconf: enter")
+    for child in rpc:
+        rpc_op = child.xpath('local-name()')
+        if rpc_op == 'edit-config':
+            payload = _find_child(child, 'config')
+        elif rpc_op in ['get-config', 'get']:
+            payload = _find_child(child, 'filter')
+        else:
+            rpc_op = 'rpc'
+            payload = rpc
+
+    return process_netconf_payload(payload, rpc_op, user)
+
+def process_netconf_payload(payload, mode, user):
+    logging.debug("process_netconf_payload: enter (mode: %s, user %s)" % (mode, user))
+    if payload is None:
+        logging.error('process_netconf_payload: Invalid RPC')
+        return None
+
+    modules = defaultdict(list)
+    dfile = os.path.join('data', 'users', user, 'yang', 'dependencies.xml')
+    dgraph = DYGraph(dfile)
+
+    for child in payload:
+        namespace = _get_tag(child)[1]
+        module = dgraph.get_module_by_namespace(namespace)
+        if module is None:
+            logging.waring("process_netconf_payload: module not found for ns -> " + namespace)
+            continue
+        build_keyvalues(child, mode, module.get_modulename(), modules)
+    return build_tree(modules, user)
+
+
+def build_keyvalues(payload, mode, modulename, modules):
+    # build key-value pair for rpc
+    kv_pairs = []
+
+    # build top level path <modulename> / <top-node>
+    path = modulename + '/' + _get_tag(payload)[0]
+    if build_xpaths(payload, mode, path, kv_pairs):
+        if mode in ['get', 'get-config', 'rpc']:
+            kv_pairs.append((path, {'value': '<' + mode +'>'}))
+
+    # update xpaths in modules dictionary
+    if modulename not in modules:
+        modules[modulename] = kv_pairs
+    else:
+        modules[modulename].extend(kv_pairs)
+
+def _build_value(val, mode):
+    rval = '<' + mode + '>'
+    if mode == 'edit-config':
+        if val is None or val == '':
+            rval = '<empty>'
+        else:
+            rval = val
+    return rval
+
+def build_xpaths(rpc, mode, path, kv_pairs):
+    """ Build path value pair """
+    if len(rpc) == 0:
+        val = rpc.text
+        if val is not None and val != '':
+            kv_pairs.append((path, {'value': val}))
+            return True
+        else:
+            kv_pairs.append((path, {'value': _build_value(val, mode)}))
+        return False
+
+    insert_op = ''
+    for child in rpc:
+        has_key = build_xpaths(child, mode, path + '/' + _get_tag(child)[0], kv_pairs)
+        if has_key and mode in ['get', 'get-config', 'rpc']:
+            insert_op = '<' + mode + '>'
+
+    if insert_op:
+        kv_pairs.append((path, {'value': insert_op}))
+    return False
+
+def build_tree(modules, user):
+    """ Build lazy tree from keyvalue dictionary"""
+    tree = ET.Element('module')
+    for name in modules:
+        filename = os.path.join('data', 'users', user, 'cxml', name + '.xml')
+        if not os.path.exists(filename):
+            continue
+        cxml = Cxml(filename)
+        logging.debug('build_tree: (path, value) = (%s, %s)' % modules[name][0])
+        tree.append(cxml.get_lazy_tree(modules[name]))
+
+    module_tree = ET.Element('module-tree')
+    module_tree.append(tree)
+    return module_tree

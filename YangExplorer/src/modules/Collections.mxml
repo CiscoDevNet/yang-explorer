@@ -99,6 +99,9 @@
                         if (child.localName() == 'rpc') {
                             parentApplication.setEncodingText(child.toXMLString());
                         }
+                        if (child.localName() == 'module') {
+                            parentApplication.setTree(child);
+                        }
                     }
                 } else {
                     Alert.show('Invalid response from server' + response.toString(), 'Error');

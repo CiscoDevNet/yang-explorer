@@ -128,7 +128,6 @@ class Cxml:
                 logging.info(ET.tostring(tree))
             else:
                 subpath += '/'
-
                 temp = tree.find(xpath)
                 if temp is not None:
                     tree.find(xpath).remove(tree.find(xpath)[0])
@@ -139,7 +138,6 @@ class Cxml:
 
                 xpath += '/node[@name="%s"]' % elems
             subpath += elems
-
         return tree
 
     def get_lazy_tree(self, pathvalues):
@@ -157,8 +155,12 @@ class Cxml:
         plist = []
         vdict = {}
         for (path, value) in pathvalues:
-            plist.append(path.split('/'))
-            vdict[path] = value
+            a_path = self.get_absolute_path(path)
+            if not a_path:
+                logging.debug('get_lazy_tree: Path %s not found in tree .. ' % path)
+                continue
+            plist.append(a_path.split('/'))
+            vdict[a_path] = value
 
         level = 0
         logging.info(str(plist))
@@ -179,14 +181,19 @@ class Cxml:
             if len(pending) == 0:
                 break
 
+            print "pending -> " + str(pending)
             for cxpath in pending:
+                print "searching -> " + str(cxpath)
                 subtree = self.get_lazy_node(cxpath, False)
                 xpath = self.toxpath(cxpath)
 
                 if len(subtree) == 0:
                     continue
 
+                print "tree.find -> " + xpath
+
                 tree.find(xpath).remove(tree.find(xpath)[0])
+
                 for child in subtree:
                     cpath = child.get('path', '')
                     values = vdict.get(cpath, '')
@@ -198,6 +205,35 @@ class Cxml:
         #end while
 
         return tree
+
+    def __get_elem(self, tree, elem, output):
+        'Returns list of path elems'
+        for child in tree:
+            if child.tag != 'node':
+                continue
+            if child.get('type', '') in ['choice', 'case', 'input']:
+                output.append(child.get('name', None))
+                subtree = self.__get_elem(child, elem, output)
+                if subtree is not None:
+                    return subtree
+                output.pop()
+            elif child.get('name', '') == elem:
+                output.append(elem)
+                return child
+        return None
+
+    def get_absolute_path(self, ipath):
+        ''' Returns absolute tree xpath from given netconf xpath,
+            including non-schema nodes such as choice, case
+        '''
+        tree = self.cxml.getroot()
+        i_elems = ipath.split('/')
+        o_elems = [i_elems[0]]
+        for elem in i_elems[1:]:
+            tree = self.__get_elem(tree, elem, o_elems)
+            if tree is None:
+                break
+        return '/'.join(o_elems)
 
     def get_namespaces(self):
         return [(ns.get('prefix', ''), ns.get('module', ''), ns.text) \

@@ -69,6 +69,10 @@ class DYModule(object):
         """ add namespace statement """
         self.namespace = ns
 
+    def get_modulename(self, rev = True):
+        if rev and self.revisions:
+            return self.name + '@' + self.revisions[0]
+        return self.name
 
 class DYGraph(object):
     """
@@ -148,6 +152,13 @@ class DYGraph(object):
 
         module = self.modules.get(modulename, None)
         return module
+
+    def get_module_by_namespace(self, namespace):
+        for name in self.modules:
+            module = self.modules[name]
+            if module.namespace == namespace:
+                return module
+        return None
 
     def digraph(self, yangfile=None):
         """

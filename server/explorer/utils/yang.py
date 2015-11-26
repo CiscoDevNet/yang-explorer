@@ -33,8 +33,8 @@ class Parser(object):
         if not os.path.exists(filename):
             return
 
-        module_re = re.compile("^\s*[sub]*module\s+([\w+[\-\w+]+)\s*")
-        revision_re = re.compile("^\s*revision\s+(\w+-\w+-\w+)\s*")
+        module_re = re.compile("^\s*[sub]*module\s+\"?([\w+[\-\w+]+)\"?\s*")
+        revision_re = re.compile("^\s*revision\s+\"?(\w+-\w+-\w+)\"?\s*")
 
         with open(filename, 'r') as f:
             for line in f:

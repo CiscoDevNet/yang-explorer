@@ -61,7 +61,6 @@
             
             import flatspark.enums.BrandColorEnum;
             import flatspark.enums.ButtonSizeEnum;
-            import flatspark.enums.TextInputSizeEnum;
             import flatspark.utils.AwesomeUtils;
             
             import modules.LoginWindow;
@@ -104,7 +103,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.5 (Beta)';
+            public var VERSION : String = '0.0.6 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -242,68 +241,19 @@
                 }
             }
             
-            public function loadTestCasePayload(payload:XML) : void
+            
+            public function setTree(payload:XML) : void
             {
                 resetTreeView();
-                for each (var child : XML in payload.children()) {
-                    /* Restore config from saved testcase payload */
-                    switch (child.localName() as String) {
-                        case 'device-auth':
-                            /*if (child.hasOwnProperty('@user')) {
-                                txtUser.text = child.@user
-                            }
-                            
-                            if (child.hasOwnProperty('@passwd')) {
-                                txtPwd.text = child.@passwd
-                            }
-                            
-                            if (child.hasOwnProperty('@port')) {
-                                txtPort.text = child.@port
-                            }
-                            
-                            if (child.hasOwnProperty('@host')) {
-                                txtIpAddr.text = child.@host
-                            }*/
-                            
-                            if (child.hasOwnProperty('@platform')) {
-                                updateDevicePlatform(child.@platform)
-                            }
-                            break
-                        
-                        case 'netconf-auth':
-                            if (child.hasOwnProperty('@user')) {
-                                txtNCUser.text = child.@user
-                                if (txtNCUser.text != '') {
-                                    reset_netconfSettings(false)
-                                }
-                            }
-                            
-                            if (child.hasOwnProperty('@passwd')) {
-                                txtNCPwd.text = child.@passwd
-                            }
-                            
-                            if (child.hasOwnProperty('@port')) {
-                                txtNCPort.text = child.@port
-                            }
-                            
-                            if (child.hasOwnProperty('@host')) {
-                                txtNCIpAddr.text = child.@host
-                            }
-                            break
-                        
-                        case 'module-tree':
-                            // Load test case tree
-                            adg.treeXml = XML(child.module.toString())
-                            adg.setOpenNodes()
-                            adg.processXML(null)
-                            updateForm()
-                            break
-                        
-                        case 'keyvalue':
-                            tnWorkflow.selectedIndex = 0
-                            break
-                    }
-                }
+                btnClear_clickHandler(null);
+                adg.update(payload)
+                adg.setOpenNodes()
+                adg.processXML(null)
+                updateForm()
+                getRequestPayload(false)
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+                return
             }
             
             private function updateTreeNode(tree:XMLList, path:Array, value:String) : void 
@@ -689,7 +639,7 @@
                                        click="btnLogin_clickHandler(event)"
                                        iconFont="{AwesomeUtils.fa_user}"/>
             </mx:ApplicationControlBar>
-            <mx:HDividedBox width="100%" height="100%">
+            <mx:HDividedBox id='hdBox' width="100%" height="100%">
                 <mx:Canvas id="cnvTree" width="32%" height="100%" label="Canvas 3">
                     <modules:YangDataGrid id="adg" width="100%" height="100%"
                                           defaultLeafIcon="@Embed(source='assets/leaf.png')"
@@ -697,7 +647,7 @@
                                           sortableColumns="false"
                                           styleName="myStyle"
                                           sortItemRenderer="{null}"
-                                          horizontalScrollPolicy="off"
+                                          horizontalScrollPolicy="auto"
                                           >
                         <modules:columns>
                             <mx:AdvancedDataGridColumn width="300" dataField="@name" editable="false"
