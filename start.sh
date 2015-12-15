@@ -4,7 +4,7 @@ HOST='localhost'
 PORT='8088'
 
 if [ ! -f "server/data/db.sqlite3" ]; then
-    echo "Yang-Explorer database is not initialized .. please run start.sh first !!"
+    echo "Yang-Explorer database is not initialized .. please run setup.sh first !!"
     exit -1
 fi
 
