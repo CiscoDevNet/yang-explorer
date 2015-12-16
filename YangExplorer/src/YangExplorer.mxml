@@ -104,7 +104,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.5 (Beta)';
+            public var VERSION : String = '0.0.6 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -209,7 +209,7 @@
                         if (lstDevPlatform.selectedIndex == 1) {
                             cbTgtDs.selectedIndex = 0;
                         } else {
-                            cbTgtDs.selectedIndex = 2;
+                            cbTgtDs.selectedIndex = 0;
                         }
                         break;
                     case YangUtil.GET_CONFIG:

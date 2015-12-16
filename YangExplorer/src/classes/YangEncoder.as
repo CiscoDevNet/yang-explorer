@@ -184,7 +184,7 @@ package classes
             var type : String = node.@type;
             var xml  : XML;
             
-            if (is_terminal(type)) {
+            if (is_terminal(type) || type == 'container') {
                 if (value == '') {
                     return null;
                 }
