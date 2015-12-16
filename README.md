@@ -42,7 +42,7 @@ limitations under the License.
 
    Note: sudo may be required if you do not use virtualenv.
 ```
-
+   See section 6 Troubleshooting for more:
 ```bash
    If you get installation error for missing python.h or xmlversion.h try installing
    dependency packages:
@@ -94,6 +94,7 @@ limitations under the License.
 
 ###4. Caveats
    - Yang Model upload fails, Workaround: Use Google Chrome.
+   - See section 6 Troubleshooting for more:
 
 ###5. User Guide (TBD)
 
@@ -203,3 +204,34 @@ Collections can be used to save user generated RPCs on the server so that saved 
 #####5.3.7 Loading saved RPC:
    - Click **Collections** Tab
    - Double click on the RPCs title you want to load.
+
+###6 Troubleshooting
+####6.1 Installation
+#####6.1.1 error for missing python.h or xmlversion.h
+   - Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev
+   - Mac : xcode-select --install
+
+#####6.1.2 django.db.utils.OperationalError: near "񐁂򐁇N": syntax error
+   - http://stackoverflow.com/questions/33270297/django-db-utils-operationalerror-near-n-syntax-error
+
+#####6.1.3 After install if you are not able to login using guest/guest try one of the following
+   - mv server/data/db.sqlite3 server/data/db.sqlite3_backup
+   - bash setup.sh
+   In end of setup.sh script log you should see something like this -
+```bash
+      ...
+      Creating default users ..
+      Copying default models ..
+      Setup completed.. 
+      
+      Use start.sh to start yang-explorer server
+```
+
+####6.2 Yang Model Upload
+#####6.2.1 Failure during upload of yang model
+   - Chrome browser is required currently to upload models using User Interface
+   - Please see failure message, if dependent models are missing you will see specific error in message window.
+
+   
+
+
