@@ -9,11 +9,11 @@ USER_PATH=data/users/$USER_NAME/yang
 USER_FILES=""
 
 if [ -d $USER_PATH ]; then
-    if find "$USER_PATH" -mindepth 1 -print -quit | grep -q .; then
+    count=$(find $USER_PATH -maxdepth 1 -type f -name '*.yang' | wc -l)
+    if [ $count -gt 0 ] ; then
         USER_FILES="$USER_PATH/*.yang"
-        echo "UserFiles: $USER_FILES"
     else
-        echo "No files in the directory !!"
+        echo "No yang files in the directory !!"
         exit 0
     fi
 else
@@ -25,7 +25,7 @@ echo "$0 $1 $2"
 
 if [ -z "$SESSION_KEY" ]; then
     INC_PATH=$USER_PATH
-    OUT_FILE=data/users/$USER_NAME/dependencies.xml
+    OUT_FILE=data/users/$USER_NAME/yang/dependencies.xml
 else
     SESSION_PATH=data/session/$SESSION_KEY
     OUT_FILE="$SESSION_PATH/dependencies.xml"

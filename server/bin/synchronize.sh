@@ -10,7 +10,8 @@ NAME=`basename $FILE_NAME .yang`
 USER_PATH=data/users/$USER_NAME/yang
 USER_FILES=""
 if [ -d $USER_PATH ]; then
-    if find "$USER_PATH" -mindepth 1 -print -quit | grep -q .; then
+    count=$(find $USER_PATH -maxdepth 1 -type f -name '*.yang' | wc -l)
+    if [ $count -gt 0 ] ; then
         USER_FILES="$USER_PATH/*.yang"
     fi
 fi

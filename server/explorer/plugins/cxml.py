@@ -21,6 +21,24 @@ import string
 from pyang import types
 from pyang import plugin
 from pyang import statements
+import xml.etree.ElementTree as ET
+#from lxml import etree as ET
+
+def CDATA(text=None):
+    element = ET.Element('![CDATA[')
+    element.text = text
+    return element
+
+ET._original_serialize_xml = ET._serialize_xml
+
+
+def _serialize_xml(write, elem, encoding, qnames, namespaces):
+    if elem.tag == '![CDATA[':
+        write("<%s%s]]>%s" % (elem.tag, elem.text, elem.tail))
+        return
+    return ET._original_serialize_xml(
+         write, elem, encoding, qnames, namespaces)
+ET._serialize_xml = ET._serialize['xml'] = _serialize_xml
 
 def pyang_plugin_init():
     plugin.register_plugin(CxmlPlugin())
@@ -128,12 +146,14 @@ class Cxml:
         if prefix is None or direct:
             self.module_prefixes[module.arg] = (pfx_str, direct)
 
+    def make_node(self, name):
+        node = ET.Element('node')
+        node.set('name', name)
+        return node
+
     def emit_cxml(self):
         fd = self.fd
         path = self.path
-
-        fd.write('<?xml version="1.0" encoding="UTF-8" ?>\n')
-
         module = self.modules[-1]
         chs = [ch for ch in module.i_children
                if ch.keyword in statements.data_definition_keywords]
@@ -145,26 +165,23 @@ class Cxml:
         if not prefix:
             return
 
-        fd.write('<node name="%s" type="module" prefix="%s">\n' % (module.arg, prefix.arg))
+        module_node = self.make_node(module.arg)
+        module_node.set('prefix', prefix.arg)
+        module_node.set('type', 'module')
 
         for name in self.module_prefixes:
             (pfx, direct) = self.module_prefixes[name]
-            fd.write('  <namespace prefix="%s" module="%s"' % (pfx, name))
-            fd.write(' import="%s"' % (str(direct)).lower())
-            fd.write('>%s</namespace>\n' % (self.module_namespaces[name]))
+            namespace = ET.Element('namespace')
+            namespace.set('prefix', pfx)
+            namespace.set('module', name)
+            namespace.set('import', (str(direct)).lower())
+            namespace.text = self.module_namespaces[name]
+            module_node.append(namespace)
 
         if len(chs) > 0:
-            self.print_children(chs, module, fd, ' ', path, 'data')
+            self.print_children(chs, module, module_node, path, 'data')
 
-        '''for augment in module.search('augment'):
-            if (hasattr(augment.i_target_node, 'i_module') and
-                augment.i_target_node.i_module not in modules):
-                fd.write("augment %s:\n" % augment.arg)
-                print_children(augment.i_children, module, fd,
-                               ' ', path, 'augment')'''
-
-        rpcs = [ch for ch in module.i_children
-                if ch.keyword == 'rpc']
+        rpcs = [ch for ch in module.i_children if ch.keyword == 'rpc']
         if path is not None:
             if len(path) > 0:
                 rpcs = [rpc for rpc in rpcs if rpc.arg == path[0]]
@@ -172,10 +189,9 @@ class Cxml:
             else:
                 rpcs = []
         if len(rpcs) > 0:
-            self.print_children(rpcs, module, fd, ' ', path, 'rpc')
+            self.print_children(rpcs, module, module_node, path, 'rpc')
 
-        notifs = [ch for ch in module.i_children
-                  if ch.keyword == 'notification']
+        notifs = [ch for ch in module.i_children if ch.keyword == 'notification']
         if path is not None:
             if len(path) > 0:
                 notifs = [n for n in notifs if n.arg == path[0]]
@@ -183,153 +199,97 @@ class Cxml:
             else:
                 notifs = []
         if len(notifs) > 0:
-            self.print_children(notifs, module, fd, ' ', path, 'notification')
-        fd.write('</node>')
+            self.print_children(notifs, module, module_node, path, 'notification')
 
-    def print_children(self, i_children, module, fd, prefix, path, mode, width=0):
-        def get_width(w, chs):
-            for ch in chs:
-                if ch.keyword in ['choice', 'case']:
-                    w = get_width(w, ch.i_children)
-                else:
-                    if ch.i_module.i_modulename == module.i_modulename:
-                        nlen = len(ch.arg)
-                    else:
-                        nlen = len(ch.i_module.i_prefix) + 1 + len(ch.arg)
-                    if nlen > w:
-                        w = nlen
-            return w
+        #fd.write(ET.tostring(module_node, pretty_print=True))
+        fd.write(ET.tostring(module_node))
 
-        if width == 0:
-            width = get_width(0, i_children)
-
+    def print_children(self, i_children, module, parent, path, mode):
         for ch in i_children:
             if ((ch.keyword == 'input' or ch.keyword == 'output') and
                 len(ch.i_children) == 0):
-                pass
-            else:
-                if (ch == i_children[-1] or
-                    (i_children[-1].keyword == 'output' and
-                     len(i_children[-1].i_children) == 0)):
-                    # the last test is to detect if we print input, and the
-                    # next node is an empty output node; then don't add the |
-                    newprefix = prefix + '   '
-                else:
-                    newprefix = prefix + '   '
-                if ch.keyword == 'input':
-                    mode = 'input'
-                elif ch.keyword == 'output':
-                    mode = 'output'
-                self.print_node(ch, module, fd, newprefix, path, mode, width)
+                continue
 
-    def print_node(self, s, module, fd, prefix, path, mode, width):
-        fd.write("%s" % (prefix[0:-1]))
-        #fd.write("%s%s--" % (prefix[0:-1], get_status_str(s)))
+            if ch.keyword in ['input', 'output']:
+                mode = ch.keyword
+            self.print_node(ch, module, parent, path, mode)
 
+    def print_node(self, s, module, parent, path, mode):
         if s.i_module.i_modulename == module.i_modulename:
             name = s.arg
         else:
             name = s.i_module.i_prefix + ':' + s.arg
 
         flags = self.get_flags_str(s, mode)
-        fd.write("<node name=\"" + name + "\" " + flags + " ")
+        node = self.make_node(name)
+        if flags is not None:
+            node.set(flags[0], flags[1])
 
-        description = self.get_description(s)
-        close_tag = False
-
+        node.set('type', s.keyword)
         if s.keyword == 'list':
-            fd.write(" type=\"list\"")
             if s.search_one('key') is not None:
-                fd.write(" key=\"" + s.search_one('key').arg + "\"")
-            fd.write(">")
+                node.set('key', s.search_one('key').arg)
         elif s.keyword == 'container':
             p = s.search_one('presence')
             if p is not None:
-                fd.write(" type=\"container\" presence=\"true\">")
-            else:
-                fd.write(" type=\"container\">")
-            #fd.write(flags + " " + name)
+                node.set('presence', 'true')
         elif s.keyword  == 'choice':
-            fd.write(' type="choice"')
             m = s.search_one('mandatory')
             if m is None or m.arg == 'false':
-                fd.write(' mandatory="true"')
+                node.set('mandatory', 'true')
 
             d = s.search_one('default')
             if d is not None:
-                fd.write(" default=\"" + d.arg + "\"")
+                node.set('default', d.arg)
 
-            # add possible cases as value
             values = self.type_choice_values(s)
             if values:
-                fd.write(' values=\"' + values + '\"')
-
-            fd.write('>')
-        elif s.keyword == 'case':
-            fd.write(" type=\"case\">")
+                node.set('values', values)
         elif s.keyword in ['leaf', 'leaf-list']:
             typename = self.get_typename(s)
-            fd.write(' type="' + s.keyword + '" datatype="' + typename + '"')
+            node.set('datatype', typename)
+
             m = s.search_one('mandatory')
             if m is not None and m.arg == 'true' or hasattr(s, 'i_is_key'):
-                fd.write(" mandatory=\"true\"")
+                node.set('mandatory', 'true')
+
             if hasattr(s, 'i_is_key'):
-                fd.write(" is_key=\"true\"")
+                node.set('is_key', 'true')
 
             d = s.search_one('default')
             if d is not None:
-                fd.write(" default=\"" + d.arg + "\"")
+                node.set('default', d.arg)
 
             t = s.search_one('type')
             if t is not None:
                 tv = self.type_values(t)
                 if tv != '':
-                  fd.write(' values=\"' + tv + '\"')
+                    node.set('values', tv)
 
-            if description != '':
-                close_tag = True
-                fd.write('>')
-            else:
-                fd.write('/>')
-        elif s.keyword in ['rpc','notification', 'input','output']:
-            fd.write(' type="' + s.keyword + '">')
-        else:
-            close_tag = True
-
+        description = self.get_description(s)
         if description != '':
-            fd.write('\n%s  <description><![CDATA[' %  prefix[0:-1])
-            description.replace('<', '&lt')
-            description.replace('>', '&gt')
-            fd.write(description)
-            fd.write(']]>\n%s  </description>' %  prefix[0:-1])
+            desc = description.replace('<', '&lt')
+            desc += description.replace('>', '&gt')
+            cdata = ET.Element('![CDATA[')
+            cdata.text = desc
+            desc_node = ET.Element('description')
+            desc_node.append(cdata)
+            node.append(desc_node)
 
-        if close_tag:
-            fd.write("\n%s</node>" % (prefix[0:-1]))
-
-        #features = s.search('if-feature')
-        #if len(features) > 0:
-        #    fd.write(" {%s}?" % ",".join([f.arg for f in features]))
-
-        fd.write('\n')
+        parent.append(node)
         if hasattr(s, 'i_children'):
             chs = s.i_children
             if path is not None and len(path) > 0:
-                chs = [ch for ch in chs
-                       if ch.arg == path[0]]
+                chs = [ch for ch in chs if ch.arg == path[0]]
                 path = path[1:]
-            if s.keyword in ['choice', 'case']:
-                self.print_children(chs, module, fd, prefix, path, mode, width)
-                fd.write("%s</node> \n" % (prefix[0:-1]))
-            elif not s.keyword in ['leaf', 'leaf-list']:
-                self.print_children(chs, module, fd, prefix, path, mode)
-                fd.write("%s</node> \n" % (prefix[0:-1]))
+            self.print_children(chs, module, node, path, mode)
 
     def get_status_str(self, s):
         status = s.search_one('status')
         if status is None or status.arg == '':
-            return 'status="current"'
+            return ('status', 'current')
         elif status.arg in ['current', 'deprecated', 'obsolete']:
-            return 'status="' + status.arg  + '"'
+            return ('status', status.arg )
 
     def get_description(self, s):
         desc = s.search_one('description')
@@ -340,17 +300,17 @@ class Cxml:
 
     def get_flags_str(self, s, mode):
         if mode == 'input':
-            return 'access="write"'
+            return ('access', 'write')
         elif (s.keyword == 'rpc' or s.keyword == ('tailf-common', 'action')):
-            return 'access="write"'
+            return ('access', 'write')
         elif s.keyword == 'notification':
-            return 'access="read-only"'
+            return ('access', 'read-only')
         elif s.i_config == True:
-            return 'access="read-write"'
-        elif s.i_config == False or mode == 'output' or mode == 'notification':
-            return 'access="read-only"'
+            return ('access', 'read-write')
+        elif s.i_config == False or mode in ['output', 'notification']:
+            return ('access', 'read-only')
         else:
-            return ''
+            return None
 
     def get_typename(self, s):
         t = s.search_one('type')

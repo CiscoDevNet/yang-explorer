@@ -77,6 +77,7 @@ class DYGraph(object):
 
     def __init__(self, filename):
         self.modules = {}
+        logging.debug('Parsing %s !!' % filename)
         root = ET.parse(filename).getroot()
 
         for child in root:

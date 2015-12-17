@@ -164,12 +164,12 @@ def commit_files(user, session):
     # so that it will be recompiled next time
     if count > 0:
         session_d = os.path.join(directory, 'dependencies.xml')
-        if os.path.exists(session_d):
-            logging.debug('Moving dependency file ...')
-            os.rename(session_d, os.path.join(yangdst, 'dependencies.xml'))
-        else:
-            logging.debug('Compiling user dependency ...')
-            Compiler.compile_pyimport(user)
+        #if os.path.exists(session_d):
+        #    logging.debug('Moving dependency file ...')
+        #    os.rename(session_d, os.path.join(yangdst, 'dependencies.xml'))
+        #else:
+        logging.debug('Compiling user dependency ...')
+        Compiler.compile_pyimport(user)
 
         # added module might affect existing module, recompile them
         _compile_dependecies(user, [m.text for m in modules])

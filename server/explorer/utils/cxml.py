@@ -25,6 +25,7 @@ class Cxml:
         self.filename = filename
         self.modulename = os.path.splitext(os.path.basename(filename))[0]
         if os.path.exists(filename):
+            logging.debug('Parsing %s' % filename)
             self.cxml = ET.parse(filename)
         else:
             self.cxml = None

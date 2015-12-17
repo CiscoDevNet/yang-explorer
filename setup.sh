@@ -91,14 +91,19 @@ else
 	cd ..
 fi
 
+add_model() {
+	GUESTPATH=data/users/guest
+	DEFAULT_YANG=$GUESTPATH/yang/$1.yang
+	DEFAULT_CXML=$GUESTPATH/cxml/$1.xml
+	pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f cxml  $GUESTPATH/yang/*.yang $DEFAULT_YANG > $DEFAULT_CXML
+}
+
 if [ -d "server/data/users/guest/yang" ]; then
 	echo "Copying default models .."
 	cp default-models/* server/data/users/guest/yang/
 	cd server
-	GUESTPATH=data/users/guest
-	DEFAULT_YANG=$GUESTPATH/yang/ietf-interfaces@2013-12-23.yang
-	DEFAULT_CXML=$GUESTPATH/cxml/ietf-interfaces@2013-12-23.xml
-	pyang --plugindir explorer/plugins -p $GUESTPATH/yang -f cxml  $GUESTPATH/yang/*.yang $DEFAULT_YANG > $DEFAULT_CXML
+    add_model "ietf-interfaces@2013-12-23"
+    add_model "ietf-netconf-monitoring@2010-10-04"
 	cd ..
 fi
 
