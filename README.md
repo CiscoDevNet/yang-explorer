@@ -20,6 +20,13 @@ limitations under the License.
    - MAC, Linux, (not verified on Windows)
    - python 2.7
    - pip package manager (https://pip.pypa.io/en/stable/installing/)
+```bash
+   If already installed, make sure that pip / setuptools are upto date (commands may vary)
+   
+   pip install --upgrade pip
+   
+   Ubuntu: sudo pip install --upgrade setuptools
+```
    - pyang (https://github.com/mbj4668/pyang)
 
 ```bash
