@@ -26,7 +26,11 @@ class Cxml:
         self.modulename = os.path.splitext(os.path.basename(filename))[0]
         if os.path.exists(filename):
             logging.debug('Parsing %s' % filename)
-            self.cxml = ET.parse(filename)
+            try:
+                self.cxml = ET.parse(filename)
+            except:
+                self.cxml = None
+                logging.error('ET Failed to parse %s' % filename)
         else:
             self.cxml = None
             logging.error('File %s does not exists' % filename)
@@ -78,8 +82,12 @@ class Cxml:
         nodes for on-demand loading in client tree.
         '''
         logging.debug('get_lazy_node: ' + path)
-        cxml_root = self.cxml.getroot()
         root = ET.Element('root')
+        if self.cxml is None:
+            return root
+
+        cxml_root = self.cxml.getroot()
+
         if path == '':
             node = self.get_lazy_node_internal(cxml_root)
             nslist = [c.get('prefix') + ',' + c.text for c in cxml_root if c.tag == 'namespace']
@@ -201,5 +209,8 @@ class Cxml:
         return tree
 
     def get_namespaces(self):
+        if self.cxml is None:
+            return []
+
         return [(ns.get('prefix', ''), ns.get('module', ''), ns.text) \
          for ns in self.cxml.getroot() if ns.tag == 'namespace']
