@@ -20,11 +20,14 @@ import os
 import shutil
 import tempfile
 import glob
+import logging
 from django.core.management.base import BaseCommand
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from explorer.utils.uploader import sync_file, commit_files
 import lxml.etree as ET
+
+logging.basicConfig(level=logging.DEBUG)
 
 class Command(BaseCommand):
     help = 'Bulk upload yang models'

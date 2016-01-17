@@ -164,12 +164,15 @@ def dependencies_graph(username, modules=[]):
     dgraph = DYGraph(depfile)
     g = dgraph.digraph([m.text.split('.yang')[0] for m in modules])
     if g is None:
-        return (False, 'Failed to generate dependency graph for ' + module)
+        return (False, """Failed to generate dependency graph, please make sure that grapviz
+python package is installed !!""")
 
     try:
         g.render(filename=os.path.join(settings.BASE_DIR, 'static', 'graph'))
     except:
-        return (False, 'Failed to render dependency graph for ' + module)
+        return (False, """Failed to render dependency graph, please make sure that grapviz
+binaries (http://www.graphviz.org/Download.php) are installed on
+the server !!""")
 
     return (True, g.comment)
 

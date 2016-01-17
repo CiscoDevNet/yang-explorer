@@ -99,12 +99,15 @@ add_model() {
 }
 
 if [ -d "server/data/users/guest/yang" ]; then
-	echo "Copying default models .."
-	cp default-models/* server/data/users/guest/yang/
-	cd server
-    add_model "ietf-interfaces@2013-12-23"
-    add_model "ietf-netconf-monitoring@2010-10-04"
-	cd ..
+    count=$(find server/data/users/guest/yang -maxdepth 1 -type f -name '*.yang' | wc -l)
+    if [ $count -eq 0 ] ; then
+        echo "Copying default models .."
+        cp default-models/* server/data/users/guest/yang/
+        cd server
+        add_model "ietf-interfaces@2013-12-23"
+        add_model "ietf-netconf-monitoring@2010-10-04"
+        cd ..
+    fi
 fi
 
 echo "Setup completed.. "
