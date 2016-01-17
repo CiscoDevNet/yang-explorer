@@ -17,7 +17,7 @@ limitations under the License.
 
 ###2. Installation
 #####Prerequisite:
-   - MAC, Linux, (not verified on Windows)
+   - MAC, Linux (not supported on Windows)
    - python 2.7
    - pip package manager (https://pip.pypa.io/en/stable/installing/)
 ```bash
@@ -34,11 +34,13 @@ limitations under the License.
    cd pyang
    [sudo] python setup.py install
 ```
-   - virtualenv (optional, recommended)
+   - virtualenv (recommended)
 ```bash
    Ubuntu: sudo apt-get install virtualenv
    MAC: sudo pip install virtualenv
 ```
+   - graphviz (http://www.graphviz.org/Download.php)
+   
    - Browser with latest flash plugin (tested with google chrome)
 
 #####Download and install:
@@ -184,7 +186,15 @@ Collections can be used to save user generated RPCs on the server so that saved 
 ```
    All models must be compiled successfully, in case of any error none of the models will be uploaded to yang-explorer.
    
-#####5.3.4 Creating RPCs:
+#####5.3.4 Generating dependency graph:
+###### Upload using yang-explorer user interface
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/graph.png)
+   - Click **Manage** tab
+      - Select one or more model name to get dependency graph
+      - If no models are selected, all subscribed model will be used to generate graph
+   - Click Graph buttons to generate graph
+
+#####5.3.5 Creating RPCs:
 
    You can explore yang models in explorer area (left pane) using tree navigation:
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
@@ -199,16 +209,16 @@ Collections can be used to save user generated RPCs on the server so that saved 
       - Use **Reset** button on top-right bar to reset data in the model tree
    - Click **RPC** button
 
-#####5.3.5 Executing RPCs:
+#####5.3.6 Executing RPCs:
    - Create RPC using *5.3.4*
    - Populate Device info in Device Settings Tab
    - Click **Run**
 
-#####5.3.6 Saving RPCs to Collection:
+#####5.3.7 Saving RPCs to Collection:
    - Create RPC using *5.3.4*
    - Click **Save**
 
-#####5.3.7 Loading saved RPC:
+#####5.3.8 Loading saved RPC:
    - Click **Collections** Tab
    - Double click on the RPCs title you want to load.
 
