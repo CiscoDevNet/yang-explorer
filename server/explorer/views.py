@@ -31,6 +31,8 @@ from explorer.utils.misc import Response
 from explorer.utils.adapter import Adapter
 from explorer.utils.collection import Collection
 from explorer.models import UserProfile
+from explorer.utils.misc import ServerSettings
+from explorer.utils.admin import ModuleAdmin
 from explorer.utils.uploader import upload_file, sync_file, commit_files, \
                                     get_upload_files, clear_upload_files
 
@@ -55,6 +57,11 @@ def login_handler(request):
                 return HttpResponse(Response.error('login', 'Authentication Failed'))
         else:
             try:
+                if request.session.session_key is not None and request.session.session_key != '':
+                    session_dir = ServerSettings.session_path(request.session.session_key)
+                    if os.path.exists(session_dir):
+                        logging.debug('Cleaning ' + session_dir)
+                        shutil.rmtree(session_dir)
                 logout(request)
             except Exception as ex:
                 print(ex.__doc__)
@@ -74,16 +81,23 @@ def session_handler(request):
 @csrf_exempt
 def upload_handler(request):
     """ HTTP Request handler function to upload yang models """
-    if not request.user.is_authenticated():
-        logging.debug('Unauthorized upload request .. ')
-        return HttpResponse(Response.error('upload', 'Unauthorized'))
 
     mode = request.GET.get('mode', '')
     logging.debug(request.method + ':Received upload request .. ' + mode)
-   
+
+    if not request.user.is_authenticated():
+        logging.debug('User must be logged in !!')
+        return HttpResponse(Response.error(mode, 'Unauthorized'))
+
+    if not ServerSettings.user_aware():
+        if not request.user.has_perm('explorer.delete_yangmodel') or \
+           not request.user.has_perm('explorer.change_yangmodel'):
+            logging.debug('Unauthorized upload request .. ')
+            return HttpResponse(Response.error(mode, 'User does not have permission to upload !!'))
+
     if request.method == 'POST':
         # create a temporary storage for this session
-        directory = os.path.join('data', 'session', request.session.session_key)
+        directory = ServerSettings.session_path(request.session.session_key)
         _file = upload_file(request.FILES['Filedata'], directory)
         if _file is not None:
             module = ET.Element('module')
@@ -102,12 +116,12 @@ def upload_handler(request):
             if success:
                 return HttpResponse(Response.success(mode, 'ok'))
             return HttpResponse(Response.error(mode, 'compilation failed', xml=response))
-        
+
         elif mode == 'commit':
             success, modules = commit_files(request.user.username, request.session.session_key)
             if success:
                 return HttpResponse(Response.success('commit', 'ok', modules))
-        
+
         elif mode == 'init':
             success, modules = get_upload_files(request.user.username, request.session.session_key)
             if success:
@@ -117,7 +131,7 @@ def upload_handler(request):
             success, modules = clear_upload_files(request.user.username, request.session.session_key)
             if success:
                 return HttpResponse(Response.success(mode, 'ok', modules))
-        return HttpResponse(Response.error(mode, 'failed'))       
+        return HttpResponse(Response.error(mode, 'failed'))
 
     return render_to_response('upload.html')
 
@@ -133,13 +147,18 @@ def admin_handler(request):
     action = request.GET.get('action', '')
     logging.debug('Received admin request %s for user %s' % (action, request.user.username))
 
-    if action in ['subscribe', 'unsubscribe', 'delete']:
+    if action in ['subscribe', 'unsubscribe', 'delete', 'graph']:
         payload = request.GET.get('payload', None)
-        if not ModuleAdmin.admin_action(request.user.username, payload, action):
-            return HttpResponse(Response.error(action, 'Failed to %s' % action))
+        print(str(payload))
+        (rc, msg) = ModuleAdmin.admin_action(request.user.username, payload, action)
+        if not rc:
+            return HttpResponse(Response.error(action, msg))
+
+    if action == 'graph':
+        return HttpResponse(Response.success(action, msg))
 
     modules = ModuleAdmin.get_modules(request.user.username)
-    return HttpResponse(Response.success('modulelist', 'ok', xml=modules))
+    return HttpResponse(Response.success(action, 'ok', xml=modules))
 
 def request_handler(request):
     """ HTTP Request handler function to handle actions on collections """
@@ -187,26 +206,30 @@ def module_handler(request):
     Handle module request from UI. Response from this request builds
     UI Explorer tree
     '''
+    logging.debug("module_handler: enter")
     lst = []
     if request.user.is_authenticated():
         modules = []
         path = request.GET.get('node', '')
 
+        username = request.user.username
         if path == 'root':
              # Request for root models
-            uid = request.user.id
-            userprofile = UserProfile.objects.filter(user=uid)
-            if len(userprofile) > 0:
-                modules = [e.module.strip() for e in userprofile.all()]
+            modules = ModuleAdmin.get_modulelist(username)
             modules.sort()
             path = ''
         else:
-            modules = [(path.split('/'))[0]]
+            modules = [path.split('/')[0]]
 
         for module in modules:
-            filename = os.path.join('data', 'users', request.user.username,
-                                    'cxml', module + '.xml')
-            module = Cxml(filename)
-            nodes = module.get_lazy_node(path)
-            lst.extend([ET.tostring(node) for node in nodes])
+            filename = ModuleAdmin.cxml_path(username, module)
+            if filename is not None:
+                logging.debug("module_handler: loading " + filename)
+                module = Cxml(filename)
+                nodes = module.get_lazy_node(path)
+                lst.extend([ET.tostring(node) for node in nodes])
+            else:
+                logging.error("module_handler: %s not found !!" + module)
+
+    logging.debug("module_handler: exit")
     return render_to_response('loader.xml', {'nodes': lst}, RequestContext(request))

@@ -1,21 +1,21 @@
 """
-Copyright 2015, Cisco Systems, Inc
+    Copyright 2015, Cisco Systems, Inc
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
-@author: Pravin Gohite, Cisco Systems, Inc.
+    @author: Pravin Gohite, Cisco Systems, Inc.
 """
-
+import os
 import lxml.etree as ET
 
 class Response(object):
@@ -49,3 +49,23 @@ class Response(object):
     def success(_type, msg, xml=None):
         """ Build success response """
         return Response._build(_type, 'success', msg, xml)
+
+class ServerSettings(object):
+    @staticmethod
+    def user_aware():
+        return True
+
+    @staticmethod
+    def session_path(session):
+        """ Build path to session directory """
+        return os.path.join('data', 'session', session)
+
+    @staticmethod
+    def yang_path(user):
+        """ Build path to user's yang directory """
+        return os.path.join('data', 'users', user, 'yang')
+
+    @staticmethod
+    def cxml_path(user):
+        """ Build path to user's yang directory """
+        return os.path.join('data', 'users', user, 'cxml')

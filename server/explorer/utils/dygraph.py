@@ -1,20 +1,19 @@
 """
-Copyright 2015, Cisco Systems, Inc
+    Copyright 2015, Cisco Systems, Inc
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@author: Pravin Gohite, Cisco Systems, Inc.
+    @author: Pravin Gohite, Cisco Systems, Inc.
 """
+import os
 import logging
 import lxml.etree as ET
 from graphviz import Digraph
@@ -141,8 +140,8 @@ class DYGraph(object):
         """
         Get dependency module object for given yang
         """
-
-        modulename = yangfile.split('.yang')[0]
+        module = os.path.basename(yangfile)
+        modulename = module.split('.yang')[0]
 
         if '@' in modulename:
             modulename = modulename.split('@')[0]
@@ -150,29 +149,42 @@ class DYGraph(object):
         module = self.modules.get(modulename, None)
         return module
 
-    def digraph(self, yangfile=None):
+    def digraph(self, files=[]):
         """
         Create a graph object
         """
+        modules = []
+        for _file in files:
+            module = os.path.basename(_file)
+            modulename = module.split('.yang')[0]
+            if '@' in modulename:
+                modulename = modulename.split('@')[0]
+            modules.append(modulename)
 
-        if yangfile is None:
-            return None
+        title = modules[0] if len(modules) == 1 else 'Dependency Graph'
+        return self._gen_graph(modules, title)
 
-        modulename = yangfile.split('.yang')[0]
-        if '@' in modulename:
-            modulename = modulename.split('@')[0]
-        module = self.modules.get(modulename, None)
+    def digraph_all(self):
+        """
+        Return graph for all modules
+        """
+        return self._gen_graph(self.modules.keys())
 
-        graph = Digraph(comment=modulename, format='jpeg')
+    def _gen_graph(self, modules, title='Dependency Graph'):
+        """
+        Invoke graphviz and generate graph
+        """
+        graph = Digraph(comment=title, format='jpeg')
+        for name in modules:
+            m = self.modules.get(name, None)
+            if m is None:
+                continue
 
-        graph.node(modulename)
-        for imp in module.imports:
-            graph.node(imp)
-            graph.edge(imp, modulename)
-
-        for dep in module.depends:
-            graph.node(dep)
-            graph.edge(modulename, dep)
+            for imp in m.imports:
+                graph.node(imp)
+                graph.edge(name, imp)
+            for dep in m.depends:
+                graph.node(dep)
+                graph.edge(dep, name)
 
         return self._apply_style(graph)
-
