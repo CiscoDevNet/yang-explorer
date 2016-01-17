@@ -20,8 +20,10 @@ limitations under the License.
    - Execute RPC agains real netconf server
    - Save created RPCs to collections for later use
    - Build dependency graph for models
-   - Browse data model tree and inspect their yang properties
+   - Browse data model tree and inspect yang properties
    
+   **Screenshots: ** https://github.com/CiscoDevNet/yang-explorer/tree/master/docs/images
+
    This application is under Beta mode, contributions / suggestions are welcome !!
 
 ###2. Installation
