@@ -42,11 +42,14 @@
             <fx:String>nexus</fx:String>
             <fx:String>other</fx:String>
         </mx:ArrayCollection>
+        <s:RadioButtonGroup id="netconfOpType" itemClick="netconfOpType_itemClickHandler(event)"/>
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
             import mx.collections.ArrayCollection;
             import mx.core.FlexGlobals;
+            import mx.events.IndexChangedEvent;
+            import mx.events.ItemClickEvent;
             import mx.managers.PopUpManager;
             import mx.rpc.events.FaultEvent;
             import mx.rpc.events.ResultEvent;
@@ -61,7 +64,6 @@
             
             import flatspark.enums.BrandColorEnum;
             import flatspark.enums.ButtonSizeEnum;
-            import flatspark.enums.TextInputSizeEnum;
             import flatspark.utils.AwesomeUtils;
             
             import modules.LoginWindow;
@@ -73,7 +75,7 @@
             /* Tab navigator views for workflow */
             public static const TAB_BUILD_VIEW:int = 0;
             public static const TAB_EXECUTE_VIEW:int = 1;
-            public static const TAB_ADMIN_VIEW:int = 1;
+            public static const TAB_MANAGE_VIEW:int = 2;
             
             /* Tab navigator views for test builder */
             public static const TAB_OPERATION_VIEW:int = 0;
@@ -87,6 +89,7 @@
             public static const SSH_PORT:String = '22';
             public static const NETCONF_PORT:String = '830';
             public static const RESTCONF_PORT:String = '8008';
+            public static const HELP_URL:String = "https://github.com/CiscoDevNet/yang-explorer";
             
             /* Global settings */
             public var global : Globals;
@@ -104,7 +107,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.6 (Beta)';
+            public var VERSION : String = '0.0.7 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -211,6 +214,8 @@
                         } else {
                             cbTgtDs.selectedIndex = 0;
                         }
+                        rbtnOper.selected = false;
+                        rbtnConfig.selected = true;
                         break;
                     case YangUtil.GET_CONFIG:
                         cbSrcDs.enabled = true;
@@ -218,6 +223,8 @@
                         cbTgtDs.enabled = false;
                         cbTgtDs.selectedIndex = -1;
                         adgOp.editable = false;
+                        rbtnOper.selected = true;
+                        rbtnConfig.selected = false;
                         break;
                     default:
                         cbSrcDs.enabled = false;
@@ -225,6 +232,8 @@
                         cbTgtDs.enabled = false;
                         cbTgtDs.selectedIndex = -1;
                         adgOp.editable = false;
+                        rbtnOper.selected = false;
+                        rbtnConfig.selected = false;
                 }
             }
             
@@ -660,6 +669,30 @@
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW;
             }
             
+            protected function tnWorkflow_changeHandler(event:IndexChangedEvent):void
+            {
+                switch (tnWorkflow.selectedIndex) {
+                    case TAB_EXECUTE_VIEW:
+                        refresh_collectionArea();
+                        break;
+                    case TAB_MANAGE_VIEW:
+                        mgmt.refresh_if_required();
+                        break;
+                }
+            }
+
+            protected function netconfOpType_itemClickHandler(event:ItemClickEvent):void
+            {
+                if (rbtnConfig.selected) {
+                    adg.changeMode(YangUtil.EDIT_CONFIG)
+                } else {
+                    adg.changeMode(YangUtil.DEFAULT)
+                }
+            }
+            
+            public function enableMultiInstance(enable : Boolean) : void {
+                btnIAdd.enabled = btnIDelete.enabled = enable;
+            }
         ]]>
     </fx:Script>
     
@@ -670,6 +703,10 @@
                                        brand="{BrandColorEnum.Inverse}" enabled="false"
                                        fontFamily="Avenir" fontWeight="bold"/>
                 <s:Spacer width="95%"/>
+                <components:ButtonIcon id="btnHelp" width="100" height="{ButtonSizeEnum.Small}"
+                                       label="Help" brand="{BrandColorEnum.Success}"
+                                       click="navigateToURL(new URLRequest(HELP_URL))"
+                                       iconFont="{AwesomeUtils.fa_github}"/>
                 <components:ButtonIcon id="btnAdmin" width="100" height="{ButtonSizeEnum.Small}"
                                        label="Admin" brand="{BrandColorEnum.Success}"
                                        click="navigateToURL(new URLRequest(ADMIN_URL))"
@@ -678,12 +715,7 @@
                                        label="Refresh" brand="{BrandColorEnum.Success}"
                                        click="btnRefresh_clickHandler(event)"
                                        iconFont="{AwesomeUtils.fa_refresh}"
-                                       toolTip="Reload content from server"/>
-                <components:ButtonIcon id="btnReset" width="80" height="{ButtonSizeEnum.Small}"
-                                       label="Reset" brand="{BrandColorEnum.Success}"
-                                       click="resetTreeView()"
-                                       iconFont="{AwesomeUtils.fa_repeat}"
-                                       toolTip="Reset user data from explorer windows."/>	
+                                       toolTip="Reload content from server"/>	
                 <components:ButtonIcon id="btnLogin" width="100" height="{ButtonSizeEnum.Small}"
                                        label="Login" brand="{BrandColorEnum.Success}"
                                        click="btnLogin_clickHandler(event)"
@@ -691,6 +723,7 @@
             </mx:ApplicationControlBar>
             <mx:HDividedBox width="100%" height="100%">
                 <mx:Canvas id="cnvTree" width="32%" height="100%" label="Canvas 3">
+                    <s:VGroup width="100%" height="100%">
                     <modules:YangDataGrid id="adg" width="100%" height="100%"
                                           defaultLeafIcon="@Embed(source='assets/leaf.png')"
                                           doubleClickEnabled="true" editable="item"
@@ -722,9 +755,38 @@
                             </mx:AdvancedDataGridColumn>
                         </modules:columns>
                     </modules:YangDataGrid>
+                    <s:HGroup horizontalAlign="right" width="100%" padding="5">
+                        <s:RadioButton id="rbtnConfig" groupName="netconfOpType"
+                                       label="Config"
+                                       toolTip="Convert to config mode"/>
+                        <s:RadioButton id="rbtnOper"  groupName="netconfOpType"
+                                       label="Oper"
+                                       toolTip="Convert to oper mode"/>
+                        <s:Spacer width="100%"/>
+                        <components:ButtonIcon id="btnIAdd" width="80" height="{ButtonSizeEnum.Small}"
+                                               label="Add" brand="{BrandColorEnum.Success}"
+                                               click="adg.addInstance()"
+                                               enabled="false"
+                                               iconFont="{AwesomeUtils.fa_plus}"/>
+                        <components:ButtonIcon id="btnIDelete" width="80" height="{ButtonSizeEnum.Small}"
+                                               label="Delete" brand="{BrandColorEnum.Success}"
+                                               click="adg.deleteInstance()"
+                                               enabled="false"
+                                               iconFont="{AwesomeUtils.fa_minus}"
+                                               toolTip="Reload content from server"/>
+                        <components:ButtonIcon id="btnReset" width="80" height="{ButtonSizeEnum.Small}"
+                                               label="Reset" brand="{BrandColorEnum.Success}"
+                                               click="resetTreeView()"
+                                               iconFont="{AwesomeUtils.fa_repeat}"
+                                               toolTip="Reset user data from explorer windows."/>
+                    </s:HGroup>
+                    </s:VGroup>
                 </mx:Canvas>
                 <mx:Canvas id="cnvNetconf" width="40%" height="100%" label="Canvas 3">
-                    <mx:TabNavigator id="tnWorkflow" width="100%" height="100%" creationPolicy="all" fontFamily="Avenir">
+                    <mx:TabNavigator id="tnWorkflow" width="100%" height="100%" 
+                                     creationPolicy="all"
+                                     change="tnWorkflow_changeHandler(event)"
+                                     fontFamily="Avenir">
                         <mx:VBox width="100%" height="100%" label="  Build  ">
                             <mx:TabNavigator id="tnSettings" width="100%" height="40%"
                                              creationPolicy="all" fontFamily="Avenir">

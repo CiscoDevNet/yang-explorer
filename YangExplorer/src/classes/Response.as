@@ -24,7 +24,7 @@ package classes
         public var errored : Boolean;
         public var msg : String;
         public var xml : XML;
-
+        
         public function Response(response : XML)
         {
             type = '';
@@ -53,7 +53,7 @@ package classes
         public function toString() : String {
             var str : String = 'Response { type : ' + type;
             str += 'status : ' + errored.toString()
-            str += '\n  xml : ' + xml.toXMLString();
+            if (xml) str += '\n  xml : ' + xml.toXMLString();
             str += '  }';
             return str;
         }

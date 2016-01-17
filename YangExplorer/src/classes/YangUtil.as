@@ -19,8 +19,10 @@
 package classes
 {
     import flash.utils.Dictionary;
+    
     import mx.collections.ArrayCollection;
-
+    import mx.utils.StringUtil;
+    
     public class YangUtil
     {
         private var netconfOp:ArrayCollection;
@@ -51,16 +53,16 @@ package classes
         public function getModeString() : String 
         {
             switch (mode) {
-            case EDIT_CONFIG:
-                return 'edit-config';
-            case GET_CONFIG:
-                return 'get-config';
-            case GET:
-                return 'get';
-            case RPC:
-                return 'rpc';
+                case EDIT_CONFIG:
+                    return 'edit-config';
+                case GET_CONFIG:
+                    return 'get-config';
+                case GET:
+                    return 'get';
+                case RPC:
+                    return 'rpc';
             }
-
+            
             return ''
         }
         
@@ -116,9 +118,7 @@ package classes
         }
         
         public function resetXML (xml:XMLList, target_mode:int = DEFAULT) : void {
-            if (target_mode != -1 ) {
-                this.mode = target_mode;
-            }
+            this.mode = target_mode;
             
             if (xml == null) return;
             
@@ -129,13 +129,52 @@ package classes
                 if (item.hasOwnProperty('@value')) {
                     item.@value = '';
                 }
-                
-                if (target_mode != -1) {
-                    resetXML(item.children());
-                }
+                resetXML(item.children());
             }
         }
-
+        
+        public function changeMode (xml:XMLList, target_mode:int = DEFAULT) : void {
+            var value : String = '';
+            if (xml == null) return;
+            this.mode = target_mode;
+            
+            for each (var item:XML in xml) {
+                if (item.hasOwnProperty('@ncop')) {
+                    if (target_mode != EDIT_CONFIG) {
+                        item.@ncop = '';
+                    }
+                }
+                
+                if (item.hasOwnProperty('@value')) {
+                    value = item.@value;
+                    value = StringUtil.trim(value);
+                    var access:String = item.attribute('access');
+                    switch (target_mode) {
+                        case DEFAULT:
+                        case EDIT_CONFIG:
+                            if (value == '<get-config>' || value == '<get>' ||  access != 'read-write') {
+                                item.@value = '';
+                            }
+                            break;
+                        case GET_CONFIG:
+                            if (value == '<get>' && access == 'read-write') {
+                                item.@value = '<get-config>';
+                            }
+                            break;
+                        case GET:
+                            if (value == '<get-config>') {
+                                item.@value = '<get>';
+                            }
+                            break;
+                        default:
+                            item.@value = '';
+                    }
+                }
+                changeMode(item.children(), target_mode);
+            }
+            return;
+        }
+        
         public function processXMLList (xmllist:XMLList, kvdict:Dictionary) : void {	
             for each (var item:XML in xmllist) {
                 if (item.hasOwnProperty('@path')) {
@@ -144,6 +183,7 @@ package classes
                     var ncop : String = '';
                     if (item.hasOwnProperty('@value')) {
                         value = item.attribute('value');
+                        value = StringUtil.trim(value);
                     }
                     
                     if (item.hasOwnProperty('@ncop')) {
@@ -215,7 +255,7 @@ package classes
             if (access == 'read-only' && val == '<get-config>') {
                 return false;
             }
-
+            
             if (val == '<get>' || val == '<get-config>') {
                 return true;
             }

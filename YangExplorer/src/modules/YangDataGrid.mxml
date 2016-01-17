@@ -27,8 +27,8 @@
                      width="100%" height="100%"
                      creationComplete="creationCompleteHandler()"
                      itemClick="itemClickHandler(event)"
-                     initialize="initializeHandler(event)"
                      itemRollOver="lastRollOverIndex = event.rowIndex"
+                     cacheAsBitmap="true"
                      >
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -57,37 +57,37 @@
             
             /* Tree view icon bindings */
             [Embed(source="assets/module.png")]
-            public var module:Class;
+            public static const module:Class;
             
             [Embed(source="assets/container.png")]
-            public var container:Class;
+            public static const container:Class;
             
             [Embed(source="assets/p-container.png")]
-            public var pcontainer:Class;
+            public static const pcontainer:Class;
             
             [Embed(source="assets/leaf.png")]
-            public var leaf:Class;
+            public static const leaf:Class;
             
             [Embed(source="assets/leaf-plus.png")]
-            public var leaf_plus:Class;
+            public static const leaf_plus:Class;
             
             [Embed(source="assets/leaf-key.png")]
-            public var leaf_key:Class;
+            public static const leaf_key:Class;
             
             [Embed(source="assets/leaf-mandatory.png")]
-            public var leaf_mandatory:Class;
+            public static const leaf_mandatory:Class;
             
             [Embed(source="assets/list.png")]
-            public var list:Class;
+            public static const list:Class;
             
             [Embed(source="assets/choice.png")]
-            public var _choice:Class;
+            public static const _choice:Class;
             
             [Embed(source="assets/case.png")]
-            public var _case:Class;
+            public static const _case:Class;
             
             [Embed(source="assets/notification.png")]
-            public var notification:Class;
+            public static const notification:Class;
             
             /*
             * String to keep track of logs
@@ -190,6 +190,10 @@
                 }
                 return payload.toXMLString();
             }
+            
+            public function changeMode(mode : int) : void {
+                yangUtil.changeMode(treeXml.children(), mode);
+            }
 
             /**********************************************
              *  PRIVATE FUNCTIONS
@@ -199,6 +203,7 @@
             * Component initializer
             */
             private function creationCompleteHandler():void {
+                yangUtil = new YangUtil();
                 url = parentApplication.TREE_URL;
                 pendingNode = new Object();
                 iconFunction = treeIconFunction;
@@ -312,9 +317,16 @@
                 /* Get selected node from tree */
                 var selectedNode:XML = event.target.selectedItem as XML;
                 if (selectedNode) {
+                    if (selectedNode.attribute('type') == 'leaf-list' ||
+                        selectedNode.attribute('type') == 'list') {
+                        parentApplication.enableMultiInstance(true);
+                    } else {
+                        parentApplication.enableMultiInstance(false);
+                    }
                     parentApplication.updateProperty(selectedNode)
                     parentApplication.updateStatus('Tree node selected : ' + selectedNode.attribute('name'))
                 } else {
+                    parentApplication.enableMultiInstance(false);
                     parentApplication.updateProperty(null)
                     parentApplication.updateStatus('Tree node is not selected')
                 }
@@ -463,27 +475,12 @@
             [Bindable]
             private var cm:ContextMenu;
             private var lastRollOverIndex:int;
-            
-            protected function initializeHandler(event:FlexEvent):void
-            {
-                yangUtil = new YangUtil();
-                var cmi_add:ContextMenuItem = new ContextMenuItem("Add Instance", true);
-                var cmi_del:ContextMenuItem = new ContextMenuItem("Delete Instance", true);
-                cmi_add.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, contextMenu_addInstance);
-                cmi_del.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, contextMenu_deleteInstance);
-                cm = new ContextMenu();
-                cm.hideBuiltInItems();
-                cm.customItems = [cmi_add, cmi_del];
-                cm.addEventListener(ContextMenuEvent.MENU_SELECT, contextMenu_menuSelect);
-                cm.hideBuiltInItems();
-                contextMenu = cm;
-            }
-            
+
             private function contextMenu_menuSelect(evt:ContextMenuEvent):void {
                 this.selectedIndex = lastRollOverIndex;
             }
             
-            private function contextMenu_addInstance(evt:ContextMenuEvent):void {
+            public function addInstance():void {
                 var obj:XML = this.selectedItem as XML;
                 
                 if (obj == null) {
@@ -506,7 +503,7 @@
                 }
             }
             
-            private function contextMenu_deleteInstance(evt:ContextMenuEvent):void {
+            public function deleteInstance():void {
                 var obj:XML = this.selectedItem as XML;
                 
                 if (obj == null) {
@@ -517,7 +514,6 @@
                     this.validateNow();
                 }
             }
-            
         ]]>
     </fx:Script>
 </mx:AdvancedDataGrid>

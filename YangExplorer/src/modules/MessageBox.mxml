@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-@author: Pravin Gohite, Cisco Systems, Inc.
+    @author: Pravin Gohite, Cisco Systems, Inc.
 -->
 <s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
                xmlns:mx="library://ns.adobe.com/flex/mx" 
@@ -23,20 +23,20 @@
                skinClass="flatspark.skins.TitleWindowSkin" xmlns:components="flatspark.components.*"
                fontFamily="Avenir"
                title="Log"
-               width="400" height="300">
+               width="500" height="400">
     <s:layout>
         <s:VerticalLayout/>
     </s:layout>
     <fx:Script>
         <![CDATA[
             import mx.managers.PopUpManager;
-            
             import flatspark.enums.BrandColorEnum;
-            import flatspark.enums.ButtonSizeEnum;
+
             // Handle the close button and Cancel button.
             private function handleCloseEvent():void {
                 PopUpManager.removePopUp(this);
             }
+            
             public function setText(msg : String) : void {
                 txtLog.text = msg;
             }
@@ -44,9 +44,15 @@
     </fx:Script>
     <s:VGroup width="100%" height="100%" fontSize="14" padding="10">
         <s:TextArea id='txtLog' width="100%" height="90%"/>
-        <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
-                               label="Copy"
-                               brand="{BrandColorEnum.Success}"
-                               click="System.setClipboard(txtLog.text);"/>
+        <s:HGroup width="100%" horizontalAlign="right">
+            <components:ButtonIcon width="80"
+                                   label="Copy"
+                                   brand="{BrandColorEnum.Success}"
+                                   click="System.setClipboard(txtLog.text);"/>
+            <components:ButtonIcon width="80"
+                                   label="Close"
+                                   brand="{BrandColorEnum.Success}"
+                                   click="handleCloseEvent()"/>
+        </s:HGroup>
     </s:VGroup>
 </s:TitleWindow>

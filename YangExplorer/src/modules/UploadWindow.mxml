@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright 2015, Cisco Systems, Inc
-    
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    
-    http://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-    
-    @author: Pravin Gohite, Cisco Systems, Inc.
+Copyright 2015, Cisco Systems, Inc
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
 -->
 <s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
                xmlns:s="library://ns.adobe.com/flex/spark" 
-               xmlns:mx="library://ns.adobe.com/flex/mx" width="500" height="400" xmlns:components="flatspark.components.*"
+               xmlns:mx="library://ns.adobe.com/flex/mx" width="500" height="400"
+               xmlns:components="flatspark.components.*"
                skinClass="flatspark.skins.TitleWindowSkin"
                close="PopUpManager.removePopUp(this);"
                creationComplete="creationCompleteHandler(event)"
@@ -44,7 +45,6 @@
             import classes.Response;
             
             import flatspark.enums.BrandColorEnum;
-
             private var file:FileReference;
             private var fileType:FileFilter;
             private var currentIndex : int;
@@ -52,21 +52,20 @@
             
             [Bindable]
             private var dpUpload : ArrayCollection;
-
             public var messageBox:MessageBox;
             public var url : String;
             /*
-             *  client   --- upload file 1 -->
-             *           <--- upload response 1  -- server
-             *  client   --- upload file 2 -->
-             *           <--- upload response 2  --  server
-             *  client   --- sync file 1  -->
-             *           <--- sync response 1 (errorlist?)  --   server
-             *  client   --- sync file 1  -->
-             *           <--- sync response 1 (errorlist?)  --   server
-             *  client   ---- commit ----
-             *           <--- commit response (modulelist)   --   server
-             */
+            *  client   --- upload file 1 -->
+            *           <--- upload response 1  -- server
+            *  client   --- upload file 2 -->
+            *           <--- upload response 2  --  server
+            *  client   --- sync file 1  -->
+            *           <--- sync response 1 (errorlist?)  --   server
+            *  client   --- sync file 1  -->
+            *           <--- sync response 1 (errorlist?)  --   server
+            *  client   ---- commit ----
+            *           <--- commit response (modulelist)   --   server
+            */
             
             public function init(_url : String) : void {
                 url = _url + "/upload";
@@ -86,7 +85,6 @@
                     PopUpManager.centerPopUp(messageBox)
                 }
             }
-
             protected function updateStatus(msg : XML, status : String):void
             {
                 var text : String  = '';
@@ -111,7 +109,13 @@
                     uploadFile()
                 } else if (dpUpload.length > 0) {
                     syncCompile()
+                } else {
+                    Alert.show('Please choose files to upload !!')
+                    return;
                 }
+                btnUpload.enabled = false;
+                btnBrowse.enabled = false;
+                btnClear.enabled = false;
             }
             
             /**
@@ -126,19 +130,21 @@
                 syncService.send({mode: 'clear'});
                 dpUpload.refresh();
             }
-
+            
             private function syncCompile() : void {
                 dpUpload[currentIndex].Status = "Compiling";
                 dpUpload.refresh();
                 syncService.url = url
-                syncService.send({mode: 'sync', file : dpUpload[currentIndex].Name, index: currentIndex.toString()});
+                syncService.send({mode: 'sync', file : dpUpload[currentIndex].Name,
+                    index: currentIndex.toString()});
             }
-
+            
             private function syncCommit() : void {
                 syncService.url = url
                 syncService.send({mode: 'commit'});
+                busyMsg(true);
             }
-
+            
             private function uploadFile() : void {
                 dpUpload.refresh()
                 var request:URLRequest = new URLRequest(url + "/upload-add");
@@ -149,7 +155,7 @@
                 file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
                 file.upload(request);
             }
-
+            
             private var _refAddFiles:FileReferenceList;
             protected function btnBrowseFile_clickHandler():void
             {
@@ -159,7 +165,7 @@
                 _refAddFiles.addEventListener(Event.SELECT, selectHandler);
                 _refAddFiles.browse([fileType]);
             }
-
+            
             /**
              * Event handler for when the upload operation has completed.
              * Specifically manages response data.
@@ -174,7 +180,7 @@
                 file = _refAddFiles.fileList[currentIndex];
                 for each (var child : Object in dpUpload) {
                     if ((child.Status == 'Uploaded' && child.Name == response.xml.toString()) ||
-                         child.Name == file.name) {
+                        child.Name == file.name) {
                         if (target) {
                             dpUpload.removeItem(target);
                         }
@@ -197,14 +203,12 @@
                     Alert.show('Invalid response from server' + response.toString(), 'Error');
                     return;
                 }
-
                 
                 target.Status = "Uploaded";
                 currentIndex++;
                 dpUpload.refresh()
-
                 if (currentIndex < totalFiles) {
-                   uploadFile()
+                    uploadFile()
                 } else {
                     currentIndex = 0
                     callLater(syncCompile, null);
@@ -218,7 +222,6 @@
                 }
                 dpUpload.refresh()
             }
-
             /**
              * Event handler for when the user selects a file from disk.
              * 
@@ -230,13 +233,12 @@
                         dpUpload.addItem({Name : file.name, Status : "Ready"});
                     }
                 }
-
                 totalFiles = _refAddFiles.fileList.length;
                 btnUpload.enabled = true;
                 btnBrowse.enabled = false;
                 dpUpload.refresh()
             }
-
+            
             /**
              * Event handler for the file upload IO error.
              * 
@@ -246,7 +248,7 @@
                 dpUpload[currentIndex].Status = "Failed";
                 Alert.show("IO Error: " + event.toString());
             }
-
+            
             protected function creationCompleteHandler(event:FlexEvent):void
             {
                 dpUpload = new ArrayCollection();
@@ -259,8 +261,9 @@
             {
                 dpUpload[currentIndex].Status = "Failed";
                 dpUpload.refresh();
+                busyMsg(false);
             }
-
+            
             protected function syncService_resultHandler(event:ResultEvent):void
             {
                 var result:XML = event.result as XML;
@@ -282,7 +285,7 @@
                     }
                     
                     // filename may be changed to include revision, update here
-                    dpUpload[currentIndex].Status = "Done"
+                    dpUpload[currentIndex].Status = "Compiled"
                     dpUpload.refresh()
                     currentIndex++;
                     if (currentIndex < dpUpload.length) {
@@ -300,50 +303,55 @@
                     if (!response.errored) {
                         updateStatus(response.xml, 'Done');
                         parentApplication.refresh_mgmtArea();
+                        parentApplication.refresh_explorerArea();
                         PopUpManager.removePopUp(this);
                     }
                 } else if (response.type == 'init') {
                     if (!response.errored) {
                         addUploadedFiles(response.xml)
+                    } else {
+                        Alert.show(response.msg, "Error");
                     }
                 } else if (response.type == 'clear') {
                     PopUpManager.removePopUp(this);
                 } else {
                     Alert.show('Invalid response from server' + result.toXMLString(), 'Error');
-                    return;
                 }
+                
+                busyMsg(false);
+            }
+            
+            private function busyMsg(en : Boolean) : void {
+                busy.visible = lblMsg.visible = en;
             }
         ]]>
     </fx:Script>
     
-    <s:VGroup width="100%" height="100%" paddingLeft="-5">
-        <s:Form width="100%" height="100%">
-            <s:FormItem height="80%">
-                <s:HGroup width="100%" height="85%">
-                    <s:DataGrid dataProvider="{dpUpload}" width="100%" height="100%"
-                                verticalScrollPolicy="on" fontFamily="Avenir" minHeight="250">
-                        <s:columns>
-                            <s:ArrayList>
-                                <s:GridColumn dataField="Name"   width="300"/>
-                                <s:GridColumn dataField="Status" width="150"/>
-                            </s:ArrayList>
-                        </s:columns>
-                    </s:DataGrid>
-                </s:HGroup>
-            </s:FormItem>
-            <s:FormItem direction="rtl" height="15%">
-                <s:HGroup direction="rtl" width="100%">
-                <components:ButtonIcon id="btnBrowse" label="Browse" click="btnBrowseFile_clickHandler()"
-                                           width="100"
-                                           brand="{BrandColorEnum.Success}"/>
-                <components:ButtonIcon id="btnUpload" label="Upload"
-                                       width="100" click="btnUpload_clickHandler()"
-                                       brand="{BrandColorEnum.Success}"/>
-                <components:ButtonIcon id="btnClear" label="Clear"
-                                       width="100" click="btnClear_clickHandler()"
-                                       brand="{BrandColorEnum.Success}"/>
-                </s:HGroup>
-            </s:FormItem>
-        </s:Form>
+    <s:VGroup width="100%" height="100%">
+        <s:HGroup width="100%" height="100%" padding="5">
+            <s:DataGrid dataProvider="{dpUpload}" width="100%" height="100%"
+                        verticalScrollPolicy="auto" fontFamily="Avenir" minHeight="250">
+                <s:columns>
+                    <s:ArrayList>
+                        <s:GridColumn dataField="Name"   width="300"/>
+                        <s:GridColumn dataField="Status" width="150"/>
+                    </s:ArrayList>
+                </s:columns>
+            </s:DataGrid>
+        </s:HGroup>
+        <s:HGroup width="100%" paddingLeft="5" paddingRight="5" paddingBottom="5">
+            <components:ButtonIcon id="btnBrowse" label="Browse" click="btnBrowseFile_clickHandler()"
+                                   width="100"
+                                   brand="{BrandColorEnum.Success}"/>
+            <components:ButtonIcon id="btnUpload" label="Upload"
+                                   width="100" click="btnUpload_clickHandler()"
+                                   brand="{BrandColorEnum.Success}"/>
+            <components:ButtonIcon id="btnClear" label="Clear"
+                                   width="100" click="btnClear_clickHandler()"
+                                   brand="{BrandColorEnum.Success}"/>
+            <s:Label id="lblMsg" visible="false"
+                     text=" Rebuilding.." fontFamily="Avenir, Verdana"/>
+            <s:BusyIndicator id="busy"  visible="false" symbolColor="green"/>
+        </s:HGroup>
     </s:VGroup>
 </s:TitleWindow>

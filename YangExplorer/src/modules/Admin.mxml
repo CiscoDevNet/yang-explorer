@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright 2015, Cisco Systems, Inc
-    
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    
-    http://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-    
-    @author: Pravin Gohite, Cisco Systems, Inc.
+Copyright 2015, Cisco Systems, Inc
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+@author: Pravin Gohite, Cisco Systems, Inc.
 -->
 
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
@@ -41,20 +41,27 @@
             
             import flatspark.enums.BrandColorEnum;
             import flatspark.utils.AwesomeUtils;
-
+            
             private var url:String;
             private var base_url:String;
-
+            
             [Bindable]
             private var dpModuleList : ArrayCollection;
             
             public var uploadWindow:UploadWindow;
+            public var graphWindow:GraphWindow;
             
             public function update(_url : String) : void {
                 url = _url + '/admin';
                 base_url = _url;
             }
-
+            
+            public function refresh_if_required() : void {
+                if (!dpModuleList) {
+                    refresh();
+                }
+            }
+            
             public function refresh() : void {
                 if (!url) {
                     return;
@@ -63,6 +70,7 @@
                 if (!dpModuleList) {
                     dpModuleList = new ArrayCollection()
                 }
+                
                 adminService.url = url;
                 adminService.method = URLRequestMethod.GET;
                 adminService.send({action:'modulelist'});
@@ -82,6 +90,7 @@
                 btnDel.enabled = enalble;
                 btnSub.enabled = enalble;
                 btnUnSub.enabled = enalble;
+                cbSelAll.selected = false;
             }
             
             protected function creationCompleteHandler(event:FlexEvent):void
@@ -96,12 +105,11 @@
                 if (!base_url) {
                     return;
                 }
-
                 uploadWindow = UploadWindow(PopUpManager.createPopUp(this, UploadWindow, true))
                 uploadWindow.init(base_url);
                 PopUpManager.centerPopUp(uploadWindow)
             }
-           
+            
             private function get_selected() : XML {
                 var str : String = '<modules>';
                 var count:int = 0;
@@ -119,15 +127,33 @@
                 return new XML(str);
             }
             
+            private function get_subscribed() : XML {
+                var str : String = '<modules>';
+                var count:int = 0;
+                
+                for each (var item : Object in dpModuleList) {
+                    if (item.subscribe != '') {
+                        str +=  '<module>' + item.module + '</module>';
+                        count++;
+                    }
+                }
+                
+                if (count == 0) {
+                    return null
+                }
+                str += '</modules>';
+                return new XML(str);
+            }
+            
             protected function btnSub_clickHandler(subscribe : Boolean) : void
             {
-               var payload_xml : XML = get_selected();
-               if (payload_xml) {
-                   adminService.url = url;
-                   adminService.method = URLRequestMethod.GET;
-                   var act : String = subscribe ? 'subscribe' : 'unsubscribe';
-                   adminService.send({action: act, payload:payload_xml});
-               }
+                var payload_xml : XML = get_selected();
+                if (payload_xml) {
+                    adminService.url = url;
+                    adminService.method = URLRequestMethod.GET;
+                    var act : String = subscribe ? 'subscribe' : 'unsubscribe';
+                    adminService.send({action: act, payload:payload_xml});
+                }
             }
             
             private function alertListener(eventObj:CloseEvent):void {
@@ -144,21 +170,29 @@
             protected function btnDel_clickHandler(event:MouseEvent):void
             {
                 var str : String = '';
+                var count : int = 0;
                 for each (var item : Object in dpModuleList) {
                     if (item.selected) {
-                        str +=  '- ' + item.module + '\n';
+                        if (count < 20) {
+                            str +=  item.module + ' ';
+                        } else if (count == 20) {
+                            str += ' and more .. !!';
+                        }
+                        count++;
                     }
+                    
                 }
                 
                 if (str != '') {
-                    str = 'Following Modules will be deleted: \n' + str;
-                    Alert.show(str, "Confirm", Alert.OK | Alert.CANCEL, this, alertListener, null, Alert.OK);
+                    str = count.toString() + ' models will be deleted for all Users!!\n' + str;
+                    Alert.show(str, "Warning", Alert.OK | Alert.CANCEL, this, alertListener,
+                        null, Alert.CANCEL);
                 }
             }
             
             protected function adminService_faultHandler(event:FaultEvent):void
             {
-                Alert.show('Something went wrong, returned null response', 'Http Error');
+                Alert.show('Something went wrong, returned errored response !!', 'Http Error');
             }
             
             protected function adminService_resultHandler(event:ResultEvent):void
@@ -168,23 +202,36 @@
                     Alert.show('Something went wrong, admin request', 'Http Error');
                     return;
                 }
-               
+                
                 var response : Response = new Response(result);
                 var label : String = '';
                 
-                if (response.type == 'modulelist' && !response.errored && response.xml) {
-                    dpModuleList.removeAll()
+                if (!response.errored && response.type == 'graph') {
+                    callLater(showGraph, [response.msg]);
+                    return;
+                }
+                
+                if (!response.errored && response.xml) {
+                    dpModuleList.removeAll();
+                    cbSelAll.selected = false;
                     for each (var module : XML in response.xml.children()) {
                         var name : String = module.toString();
                         label = module.hasOwnProperty('@subscribed') ? '[subscribed]' : '';
                         dpModuleList.addItem({selected: false, module: name, subscribe: label});
                     }
-                    parentApplication.refresh_explorerArea();
+                    
+                    // if it was [un]subscribe, delete request then refresh tree
+                    if (response.type != 'modulelist') {
+                        parentApplication.refresh_explorerArea();
+                    }
+                } else {
+                    Alert.show(response.msg, "Error");
+                    return;
                 }
                 dpModuleList.refresh();
                 enable(true);
             }
-
+            
             private function listFilter(item:Object):Boolean {
                 var target : String;
                 if(item.hasOwnProperty("module")) {
@@ -207,6 +254,30 @@
                 }
                 dpModuleList.filterFunction = listFilter;
                 dpModuleList.refresh();
+            }
+            
+            protected function btnGraph_clickHandler(event:MouseEvent):void
+            {
+                var payload : XML = get_selected();
+                if (payload == null)
+                    payload = get_subscribed()
+                
+                if (payload != null) {
+                    adminService.url = url;
+                    adminService.method = URLRequestMethod.GET;
+                    adminService.send({action: 'graph', payload:payload});
+                } else {
+                    Alert.show("Please select or subscribe to atleast one model.")
+                }
+            }
+            
+            protected function showGraph(module : String) : void {
+                if (!base_url) {
+                    return;
+                }
+                graphWindow = GraphWindow(PopUpManager.createPopUp(this, GraphWindow, true));
+                graphWindow.init(parentApplication.global.get_root_url(), module);
+                PopUpManager.centerPopUp(graphWindow)
             }
         ]]>
     </fx:Script>
@@ -234,6 +305,10 @@
                                    brand="{BrandColorEnum.Success}"/>
             <components:ButtonIcon id="btnDel" label="Delete"
                                    click="btnDel_clickHandler(event)"
+                                   width="100"
+                                   brand="{BrandColorEnum.Success}"/>
+            <components:ButtonIcon id="btnGraph" label="Graph"
+                                   click="btnGraph_clickHandler(event)"
                                    width="100"
                                    brand="{BrandColorEnum.Success}"/>
         </s:HGroup>

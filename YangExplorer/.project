@@ -19,12 +19,17 @@
 		<link>
 			<name>bin-debug</name>
 			<type>2</type>
-			<location>/Users/prgohite/git/GitHub/yang-explorer/server/static</location>
+			<location>//vmware-host/Shared Folders/Downloads</location>
 		</link>
 		<link>
 			<name>bin-release</name>
 			<type>2</type>
-			<location>/Users/prgohite/GitHub/yang-explorer/server/static/YangExplorer</location>
+			<location>C:/Users/prgohite/GitHub/yang-explorer/server/static/YangExplorer</location>
+		</link>
+		<link>
+			<name>bin-release1</name>
+			<type>2</type>
+			<location>//vmware-host/Shared Folders/Downloads/YangExplorer</location>
 		</link>
 	</linkedResources>
 </projectDescription>

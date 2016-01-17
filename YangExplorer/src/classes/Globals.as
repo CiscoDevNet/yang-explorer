@@ -33,5 +33,9 @@ package classes
         public function get_url() : String {
             return 'http://' + this.host + ':' + this.port + '/explorer';
         }
+
+        public function get_root_url() : String {
+            return 'http://' + this.host + ':' + this.port;
+        }
     }
 }
