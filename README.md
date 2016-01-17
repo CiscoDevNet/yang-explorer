@@ -13,7 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ###1. Description
-   An open-source Yang Browser and RPC Builder Application
+   An open-source Yang Browser and RPC Builder Application to experiment with Yang Data Models
+   ** Features **
+   - Upload / Compile yang models from User Interface Or Command Line
+   - Build NetConf RPC
+   - Execute RPC agains real netconf server
+   - Save created RPCs to collections for later use
+   - Build dependency graph for models
+   - Browse data model tree and inspect their yang properties
+   
+   This application is under Beta mode, contributions / suggestions are welcome !!
 
 ###2. Installation
 #####Prerequisite:
@@ -157,9 +166,7 @@ Collections can be used to save user generated RPCs on the server so that saved 
    You can use guest login (guest/guest) or newly created account.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 
-#####5.3.2 Exploring Models:
-
-#####5.3.3 Adding/Deleing Yang Models:
+#####5.3.2 Adding/Deleing Yang Models:
 ###### Upload using yang-explorer user interface
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
    - Click **Manage** tab
