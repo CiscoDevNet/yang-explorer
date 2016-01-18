@@ -76,13 +76,4 @@ class UsersTestCase(TestCase):
         self.assertTrue(response.status_code == 200)
         self.assertTrue('ok' in response.content)
         self.assertTrue('demo' in response.content)
-
-
-
-
-
-
-
-
-
-
+        
