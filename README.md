@@ -14,15 +14,16 @@ limitations under the License.
 
 ###1. Description
    An open-source Yang Browser and RPC Builder Application to experiment with Yang Data Models
-   ** Features **
+   
+   ** Features**
    - Upload / Compile yang models from User Interface Or Command Line
    - Build NetConf RPC
-   - Execute RPC agains real netconf server
+   - Execute RPC against real netconf server
    - Save created RPCs to collections for later use
    - Build dependency graph for models
    - Browse data model tree and inspect yang properties
    
-   **Screenshots: ** https://github.com/CiscoDevNet/yang-explorer/tree/master/docs/images
+   **Screenshots:** https://github.com/CiscoDevNet/yang-explorer/tree/master/docs/images
 
    This application is under Beta mode, contributions / suggestions are welcome !!
 
@@ -51,7 +52,10 @@ limitations under the License.
    MAC: sudo pip install virtualenv
 ```
    - graphviz (http://www.graphviz.org/Download.php)
-   
+```bash
+   Ubuntu: sudo apt-get install graphviz
+   MAC: brew install graphviz
+```
    - Browser with latest flash plugin (tested with google chrome)
 
 #####Download and install:
