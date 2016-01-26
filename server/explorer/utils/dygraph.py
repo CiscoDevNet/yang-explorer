@@ -27,6 +27,7 @@ class DYModule(object):
         self.prefix = module.get('prefix', None)
         self.revisions = []
         self.imports = []
+        self.includes = []
         self.depends = []
         self.namespace = None
 
@@ -41,6 +42,9 @@ class DYModule(object):
             elif child.tag == 'imports':
                 for i in child:
                     self.imports.append(i.get('module', ''))
+            elif child.tag == 'includes':
+                for i in child:
+                    self.includes.append(i.get('module', ''))
 
     def __str__(self):
         _str = self.name + '@' + str(self.revisions) + ' -> [ '
@@ -91,6 +95,14 @@ class DYGraph(object):
                     logging.warning('Dependent modules %s not found in dependency list !!' % imp)
                     continue
                 if imp not in i_module.depends:
+                    i_module.depends.append(name)
+
+            for inc in module.includes:
+                i_module = self.modules.get(inc, None)
+                if i_module is None:
+                    logging.warning('Included modules %s not found in dependency list !!' % inc)
+                    continue
+                if inc not in i_module.depends:
                     i_module.depends.append(name)
 
     def __str__(self):
@@ -174,7 +186,16 @@ class DYGraph(object):
         """
         Invoke graphviz and generate graph
         """
-        graph = Digraph(comment=title, format='jpeg')
+        try:
+            graph = Digraph(comment=title, strict=True, format='jpeg')
+            logging.debug('Creating graph ..')
+        except TypeError:
+            logging.warning('graphviz module does not support strict graphs, please upgrade python graphviz !!')
+            graph = Digraph(comment=title, format='jpeg')
+        except:
+            logging.error('Failed to create dependency graph !!')
+            return None
+
         for name in modules:
             m = self.modules.get(name, None)
             if m is None:
@@ -183,6 +204,9 @@ class DYGraph(object):
             for imp in m.imports:
                 graph.node(imp)
                 graph.edge(name, imp)
+            for inc in m.includes:
+                graph.node(inc)
+                graph.edge(name, inc)
             for dep in m.depends:
                 graph.node(dep)
                 graph.edge(dep, name)

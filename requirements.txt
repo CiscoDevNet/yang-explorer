@@ -1,5 +1,5 @@
 Django==1.8.3
-graphviz==0.4.6
+graphviz==0.4.9
 ncclient==0.4.3
 ecdsa==0.13
 paramiko>=1.15.1,<=1.15.2

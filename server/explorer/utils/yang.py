@@ -118,7 +118,19 @@ class Compiler(object):
         # finally add target module
         command.append(yangfile)
 
-        return  Compiler.invoke_compile(command, cxmlfile)
+        # create a callback to handle empty output
+        def empty_callback(outfile):
+            module = os.path.basename(outfile)
+            module = module.split('.')[0]
+            module = module.split('@')[0]
+            node = ET.Element('node')
+            node.set('name', module)
+            node.set('type', 'module')
+            with open(outfile, 'w') as fd:
+                fd.write(ET.tostring(node))
+            logging.debug('compile_cxml: Empty output from pyang, created default cxml!!')
+
+        return  Compiler.invoke_compile(command, cxmlfile, empty_callback)
 
     @staticmethod
     def compile_pyimport(username, session=None):
@@ -194,6 +206,8 @@ class Compiler(object):
                 continue
             for name in module.imports:
                 dmodules.add(name)
+            for name in module.includes:
+                dmodules.add(name)
             for name in module.depends:
                 dmodules.add(name)
 
@@ -216,7 +230,7 @@ class Compiler(object):
         return deplist
 
     @staticmethod
-    def invoke_compile(command, outfile):
+    def invoke_compile(command, outfile, empty_callback=None):
         """
         Invoke pyang compilation and return result
         """
@@ -245,7 +259,9 @@ class Compiler(object):
                 logging.debug('invoke_compile: %s -> done', outfile)
             logging.debug('invoke_compile: Compile Warning: ' + str(lines))
         else:
-            logging.error('invoke_compile: Empty output from pyang!!')
+            logging.warning('invoke_compile: empty pyang output !!')
+            if empty_callback is not None:
+                empty_callback(outfile)
 
         messages = ET.Element('messages')
         for line in lines:

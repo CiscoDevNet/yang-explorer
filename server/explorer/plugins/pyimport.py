@@ -1,19 +1,19 @@
 """
-Copyright 2015, Cisco Systems, Inc
+    Copyright 2015, Cisco Systems, Inc
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
-@author: Pravin Gohite, Cisco Systems, Inc.
+    @author: Pravin Gohite, Cisco Systems, Inc.
 """
 
 import optparse
@@ -67,7 +67,7 @@ class PyImportPlugin(plugin.PyangPlugin):
                 xmodules.append(xmodule)
 
         fd.write(ET.tostring(xmodules))
-    
+
     def emit_imports(self, module):
         _module = ET.Element('module')
         _module.set('id', module.arg)
@@ -83,6 +83,18 @@ class PyImportPlugin(plugin.PyangPlugin):
             _namespace = ET.Element('namespace')
             _namespace.text = uri_stmt.arg
             _module.append(_namespace)
+
+        # includes statements
+        _includes = ET.Element('includes')
+        _module.append(_includes)
+        includes_stmt = module.search('include')
+        for i_stmt in includes_stmt:
+            _include = ET.Element('include')
+            _include.set('module', i_stmt.arg)
+            revision_stmt = i_stmt.search_one('revision-date')
+            if revision_stmt is not None:
+                _include.set('rev-date', revision_stmt.arg)
+            _includes.append(_include)
 
         # import statements
         _imports = ET.Element('imports')
@@ -100,7 +112,7 @@ class PyImportPlugin(plugin.PyangPlugin):
         # module revision statement
         _revisions = ET.Element('revisions')
         _module.append(_revisions)
-        
+
         revision_stmts = module.search("revision")
         for rev in revision_stmts:
             _revision = ET.Element('revision')
