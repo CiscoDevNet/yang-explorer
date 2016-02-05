@@ -74,7 +74,7 @@ limitations under the License.
    If you get installation error for missing python.h or xmlversion.h try installing
    dependency packages:
    
-   Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev
+   Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev zlib1g-dev
 ```
 
 ###3. Running YangExplorer
