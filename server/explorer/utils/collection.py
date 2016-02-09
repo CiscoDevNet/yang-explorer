@@ -22,6 +22,7 @@ import lxml.etree as ET
 import logging
 from explorer.models import Collection as Col
 from explorer.models import User
+from explorer.utils.adapter import Adapter
 
 class Collection(object):
     ''' This class implements utility routines to work with
@@ -118,16 +119,15 @@ class Collection(object):
                 for child in payload.getroot():
                     if child.tag == 'metadata':
                         cols_elem.append(child)
-
         return cols_elem
 
     @staticmethod
-    def load(metadata):
+    def load(username, metadata):
         """ Load a collection entry """
 
         if metadata is None or metadata == '':
             logging.error('Invalid metadata')
-            return False
+            return None
 
         metadata = ET.fromstring(metadata)
         cname = metadata.find('collection').text
@@ -135,12 +135,25 @@ class Collection(object):
 
         if not Col.objects.filter(name=cname).exists():
             logging.debug('Collection %s does not exists !!' % cname)
-            return False
+            return None
 
         _file = os.path.join('data', 'collections', cname, name + '.xml')
         if not os.path.exists(_file):
             logging.error('Collection entry not found')
-            return False
+            return None
 
-        payload = ET.parse(_file).getroot()
+        data = None
+        with open(_file, 'r') as f:
+            data = f.read()
+            data = data.replace('&gt;','>')
+            data = data.replace('&lt;','<')
+            payload = ET.fromstring(data)
+
+        if data is None:
+            logging.error('Collection entry is empty')
+            return None
+
+        fmt = payload.get('format', 'raw')
+        if fmt == 'xpath':
+            return Adapter.gen_rpc(username, data)
         return payload

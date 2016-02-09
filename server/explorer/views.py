@@ -173,14 +173,19 @@ def request_handler(request):
 
     elif mode == 'load-collection':
         metadata = request.GET.get('metadata', '')
-        reply_xml = Collection.load(metadata)
+        reply_xml = Collection.load(request.user.username, metadata)
 
         if reply_xml is None:
             return HttpResponse(Response.error(mode, 'Failed'))
 
+        if isinstance(reply_xml, str):
+            return HttpResponse(Response.success(mode, reply_xml))
+
     elif mode == 'add-collection':
         metadata = request.GET.get('metadata', '')
         payload = request.GET.get('payload', '')
+        logging.debug('metadata: ' + metadata)
+        logging.debug('payload: ' + payload)
         if not Collection.add(metadata, payload):
             return HttpResponse(Response.error(mode, 'Failed'))
 
@@ -195,9 +200,16 @@ def request_handler(request):
         reply_xml = Collection.list()
         mode = 'get-collection-list'
 
+    elif mode == 'rpc':
+        req  = request.GET.get('payload', '')
+        reply_xml = Adapter.gen_rpc(request.user.username, req)
+        if isinstance(reply_xml, str):
+            return HttpResponse(Response.success(mode, reply_xml))
+
     elif mode in ['get-cap', 'run-rpc']:
         payload = request.GET.get('payload', '')
-        reply_xml = Adapter.run_request(payload)
+        logging.debug('run: ' + payload)
+        reply_xml = Adapter.run_request(request.user.username, payload)
 
     return HttpResponse(Response.success(mode, 'ok', reply_xml))
 

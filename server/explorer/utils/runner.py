@@ -17,6 +17,9 @@ limitations under the License.
 """
 
 import sys
+import json
+import base64
+import requests
 import logging
 import lxml.etree as ET
 from ncclient import manager
@@ -161,3 +164,49 @@ class NCClient(object):
             self.handle.close_session()
             logging.debug("Disconnected: %s" % self.__str__())
 
+
+class RestClient(object):
+    def __init__(self, device):
+        self.device = device
+        self.auth = requests.auth.HTTPBasicAuth(device['user'],device['passwd'])
+        logging.debug('__init__: ' + self.__str__())
+
+    def get_capability(self, url):
+        reply = ET.Element('reply')
+        reply.text = 'NotImplemented'
+        return reply
+
+    def run(self, msg):
+        method = msg['method']
+        url = msg['url']
+        params = msg['params']
+        payload = msg['data']
+        reply = ET.Element('reply')
+
+        logging.debug("@%s %s" % (method, url))
+
+        try:
+            if method in ['GET', 'DELETE']:
+                method_func =  eval('requests.' + method.lower())
+                response = method_func(url, headers=params, auth=self.auth)
+            elif method in ['POST', 'PUT', 'PATCH']:
+                method_func =  eval('requests.' + method.lower())
+                response = method_func(url, data=json.dumps(payload), headers=params, auth=self.auth)
+            else:
+                reply.text = 'Invalid Rest Method ' + method
+                logging.error(reply.text)
+                return reply
+
+            msg = '@%s %s %s\n' % (method, url, 'OK' if response.ok else 'ERROR')
+            msg += 'Status Code: ' + str(response.status_code) + '\n'
+            if response.content:
+                msg += 'Content: ' + response.content
+        except:
+            logging.exception('Restconf Request Aborted : ')
+            msg = '@%s %s %s\n' % (method, url, 'ABORTED')
+            msg += 'Content: ' + 'Exception while running request, please verify'
+            msg += 'device restconf ip, port, authentication parameters !!'
+
+        reply.text = msg
+        logging.debug(msg)
+        return reply

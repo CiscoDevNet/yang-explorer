@@ -1,8 +1,12 @@
 Django==1.8.3
-graphviz==0.4.9
-ncclient==0.4.3
 ecdsa==0.13
 paramiko>=1.15.1,<=1.15.2
 pycrypto==2.6.1
 requests==2.7.0
+Jinja2==2.7.3
+python-slugify
+django-debug-toolbar==1.4
+markupsafe
 lxml==3.4.4
+graphviz==0.4.9
+ncclient==0.4.3
