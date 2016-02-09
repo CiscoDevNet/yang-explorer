@@ -42,7 +42,8 @@
             <fx:String>nexus</fx:String>
             <fx:String>other</fx:String>
         </mx:ArrayCollection>
-        <s:RadioButtonGroup id="netconfOpType" itemClick="netconfOpType_itemClickHandler(event)"/>
+        <s:RadioButtonGroup id="netconfOpType" itemClick="netconfOpType_itemClickHandler()"/>
+        <s:RadioButtonGroup id="protocolType" itemClick="protocolType_itemClickHandler()"/>
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
@@ -90,7 +91,7 @@
             public static const NETCONF_PORT:String = '830';
             public static const RESTCONF_PORT:String = '8008';
             public static const HELP_URL:String = "https://github.com/CiscoDevNet/yang-explorer";
-            
+
             /* Global settings */
             public var global : Globals;
 
@@ -107,7 +108,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.0.7 (Beta)';
+            public var VERSION : String = '0.1.0 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -150,9 +151,15 @@
                     txtConsole.text = 'Errored';
                     return;
                 }
-                txtConsole.text = response.xml.children()[0].toXMLString();
-                txtConsole.scroller.verticalScrollBar.maximum
-                updateStatus('Recieved HTTP Result for script run')
+                
+                if (response.type == 'rpc') {
+                    txtScript.text = response.msg;
+                    tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                } else {
+                    txtConsole.text = response.xml.children()[0].toXMLString();
+                    txtConsole.scroller.verticalScrollBar.maximum;
+                }
+                updateStatus('Recieved HTTP Result for request: ' + response.type)
             }
             
             private function onServiceResult(event:ResultEvent):void
@@ -164,8 +171,15 @@
                 switch(response.type) {
                     case 'run-rpc':
                     case 'get-cap':
+                    case 'rpc':
                         if (!response.errored) {
-                            txtScript.text = response.xml.toString();
+                            if (response.xml) {
+                                txtScript.text = response.xml.toString();
+                            } else {
+                                txtScript.text = response.msg
+                                    ;
+                            }
+                            tnResults.selectedIndex = TAB_SCRIPT_VIEW;
                         }
                         break;
                     case 'session':
@@ -258,22 +272,6 @@
                     /* Restore config from saved testcase payload */
                     switch (child.localName() as String) {
                         case 'device-auth':
-                            /*if (child.hasOwnProperty('@user')) {
-                                txtUser.text = child.@user
-                            }
-                            
-                            if (child.hasOwnProperty('@passwd')) {
-                                txtPwd.text = child.@passwd
-                            }
-                            
-                            if (child.hasOwnProperty('@port')) {
-                                txtPort.text = child.@port
-                            }
-                            
-                            if (child.hasOwnProperty('@host')) {
-                                txtIpAddr.text = child.@host
-                            }*/
-                            
                             if (child.hasOwnProperty('@platform')) {
                                 updateDevicePlatform(child.@platform)
                             }
@@ -339,34 +337,30 @@
                     statusBar.text += 'Compare ' + node.@name + ':' + tag
                 }
             }
-            
-            private function setDeviceSettings() : Boolean 
+
+            private function setDeviceSettings(runnable : Boolean) : Boolean 
             {
-/*                if (txtIpAddr.text == '' || txtUser.text == '' || txtPwd.text == '' ||
-                    lstDevPlatform.selectedIndex == -1) {
-                    Alert.show('Device credentials are not provided or invalid', 'Error')
-                    return false;
-                } else {
-                    ncReq.setDeviceSettings(
-                        lstDevPlatform.selectedItem as String,
-                        txtIpAddr.text, txtPort.text, 
-                        txtUser.text, txtPwd.text)	
-                }*/
-                
                 if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '') {
-                    Alert.show('Server credentials are not provided', 'Error')
-                    return false;
+                    if (runnable) {
+                        Alert.show('Server credentials are not provided', 'Error')
+                        return false;
+                    }
                 } else {
-                    ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, null, null, null, null);
-                    ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
-                        txtNCUser.text, txtNCPwd.text)
+                    if (runnable) {
+                        ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
+                        ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
+                                                 txtNCUser.text, txtNCPwd.text)
+                    } else {
+                        ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
+                        ncReq.setNetconfSettings('', '', '', '');
+                    }
                 }
                 return true
             }
-            
+
             public function getRequestCapPayload() : XML
             {
-                if (!setDeviceSettings()) {
+                if (!setDeviceSettings(true)) {
                     return null;
                 }
                 ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
@@ -377,45 +371,62 @@
                 return new XML(strPayload);
             }
             
-            public function getRequestPayload(runnable : Boolean) : XML 
-            { 
+            public function getRequestPayload(runnable : Boolean) : XML
+            {
                 ncReq.reset()
                 var src:String =  (cbSrcDs.selectedIndex >= 0) ? netconfDataSrc[cbSrcDs.selectedIndex] : '';
                 var tgt:String =  (cbTgtDs.selectedIndex >= 0) ? netconfDataSrc[cbTgtDs.selectedIndex] : '';
-                var strPayload : String = ''
+                var strPayload : String = '';
                 
-                if (runnable && !setDeviceSettings()) {
-                    return null;
-                }
-
+                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
                 if (cbEdit.selected) {
                     if (txtScript.text != '') {
                         strPayload = txtScript.text;
+                        ncReq.setFormat(RequestPayload.FMT_RAW);
                     } else {
                         Alert.show('Custom RPC text is empty !!', 'RPC');
                         return null;
                     }
                 } else {
-                    strPayload = adg.getNetConfEncoding(src, tgt);
-                    if (!strPayload || strPayload == '') {
-                        return null;
-                    } else {
-                        txtScript.text = strPayload;
+                    ncReq.setMode(adg.getModeString())
+                    ncReq.setDatastore(src, tgt)
+                    ncReq.removeAll()
+                    adg.processXML(ncReq.kvpairs)
+                    if (ncReq.kvpairs.length <= 0) {
+                        Alert.show('Tree is empty, please polulate tree to generate RPC !!', 'RPC');
                     }
                 }
-                ncReq.setRPC(strPayload);
-                return XML(ncReq.toString());
-            }
-            
-            private function runScript(mode:String) : void {
-                var req : XML = null
                 
+                /* Include device info only if script is runnable */
+                if (!setDeviceSettings(runnable)) {
+                    return null
+                }
+
+                try { 
+                    var xml : XML = XML(strPayload);
+                } catch (e) {
+                    Alert.show('Invalid custom RPC', 'RPC');
+                    return null;
+                }
+                
+                strPayload = ncReq.toString(strPayload);
+                if (strPayload == '') {
+                    updateStatus('No Data to process!!')
+                    return null;
+                }
+                
+                return  XML(strPayload);
+            }
+
+            private function runScript(mode:String) : void {
+                var req : XML = null;
+
                 if (mode == 'get-cap') {
                     req = getRequestCapPayload()
                 } else {
                     req = getRequestPayload(true)
                 }
-                
+
                 if (req != null) {
                     runService.url = NC_URL
                     runService.send({payload:req, mode:mode})
@@ -423,6 +434,22 @@
                     txtConsole.text = 'Waiting for result ... '
                     updateStatus('Run request sent to server. please wait ..')
                 } 
+            }
+
+            protected function btnGenRPC_clickHandler():void
+            {
+                if (cbEdit.selected) {
+                    Alert.show('Please uncheck Custom RPC checkbox to use generated RPCs', 'RPC');
+                    return;
+                }
+                
+                var req : XML = getRequestPayload(false)
+                if (req != null) {
+                    moduleService.url = NC_URL
+                    moduleService.send({payload:req, mode:'rpc'})
+                    updateStatus('Request for rpc encoding sent to server')
+                }
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW
             }
             
             public function loadUserSession() : void
@@ -508,17 +535,6 @@
                 statusBar.text = 'Status : ' + msg
             }
             
-            
-            protected function btnGenRPC_clickHandler(event:MouseEvent):void
-            {
-                if (cbEdit.selected) {
-                    Alert.show('Please uncheck Custom RPC checkbox to use generated RPCs', 'RPC');
-                    return;
-                }
-                getRequestPayload(false)
-                tnResults.selectedIndex = TAB_SCRIPT_VIEW
-            }
-            
 /*            private function reset_deviceSettings():void
             {
                 lstDevPlatform.selectedIndex = -1
@@ -593,7 +609,7 @@
                 }
             }
             
-            protected function lstDevProfile_changeHandler(event:IndexChangeEvent):void
+            protected function lstDevProfile_changeHandler():void
             {
                 if (deviceProfilesXML == null) {
                     return
@@ -612,12 +628,6 @@
                         updateDevicePlatform(item.platform.toString())
                         for each (var t : XML in item.transports.transport) {
                            switch (String(t.@type)) {
-                            case "ssh":
-/*                                txtIpAddr.text = t.address.toString();
-                                txtPort.text = t.port.toString();
-                                txtUser.text = t.username.toString();
-                                txtPwd.text  = t.password.toString();*/
-                                break;
                             case "netconf":
                                 if (rbtnNetConf.selected) {
                                     txtNCIpAddr.text = t.address.toString();
@@ -653,7 +663,7 @@
                 updateStatus('Reset completed')
             }
             
-            public function setEncodingText(text : String) : void {
+            public function setEncodingText(text : String, xml : Boolean) : void {
                 resetTreeView()
                 txtScript.text = text;
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW;
@@ -661,6 +671,9 @@
                 if (text && text != '') {
                     cbEdit.selected = true;
                 }
+                rbtnNetConf.selected = xml;
+                rbtnRestConf.selected = !xml
+                protocolType_itemClickHandler();
             }
             
             protected function cbEdit_changeHandler(event:Event):void
@@ -681,7 +694,7 @@
                 }
             }
 
-            protected function netconfOpType_itemClickHandler(event:ItemClickEvent):void
+            protected function netconfOpType_itemClickHandler():void
             {
                 if (rbtnConfig.selected) {
                     adg.changeMode(YangUtil.EDIT_CONFIG)
@@ -692,6 +705,20 @@
             
             public function enableMultiInstance(enable : Boolean) : void {
                 btnIAdd.enabled = btnIDelete.enabled = enable;
+            }
+            
+            protected function protocolType_itemClickHandler():void
+            {
+                lstDevProfile_changeHandler()
+                if (rbtnRestConf.selected) {
+                    if (txtNCPort.text == '830' || txtNCPort.text == '2022') {
+                        txtNCPort.text = RESTCONF_PORT;
+                    }
+                } else {
+                    if (txtNCPort.text == '8008') {
+                        txtNCPort.text = NETCONF_PORT;
+                    }
+                }
             }
         ]]>
     </fx:Script>
@@ -815,7 +842,7 @@
                                         </s:layout> 
                                         <s:FormItem label="    Profile">
                                             <s:DropDownList id="lstDevProfile" width="120"
-                                                            change="lstDevProfile_changeHandler(event)"
+                                                            change="lstDevProfile_changeHandler()"
                                                             dataProvider="{deviceProfiles}"/>
                                         </s:FormItem>
                                         <s:FormItem label="   Platform">
@@ -873,17 +900,15 @@
                                           paddingLeft="10" paddingRight="10">
                                     <s:RadioButton id="rbtnNetConf" groupName="protocolType"
                                                    label="NetConf"
-                                                   selected="true"
-                                                   change="lstDevProfile_changeHandler(null)"/>
+                                                   selected="true"/>
                                     <s:RadioButton id="rbtnRestConf"  groupName="protocolType"
-                                                   label="RestConf" enabled="false"
-                                                   change="lstDevProfile_changeHandler(null)"/>
+                                                   label="RestConf"/>
                                     <s:Spacer width="100%"/>
                                     <components:ButtonIcon id="btnGenRPC" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="RPC"
                                                            brand="{BrandColorEnum.Success}"
-                                                           click="btnGenRPC_clickHandler(event)"/>
+                                                           click="btnGenRPC_clickHandler()"/>
                                     <components:ButtonIcon id="btnCap" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Capabilities"

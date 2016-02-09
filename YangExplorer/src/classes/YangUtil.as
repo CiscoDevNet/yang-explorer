@@ -1,32 +1,30 @@
 /********************************************************************************
  *    Copyright 2015, Cisco Systems, Inc
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  *    @author: Pravin Gohite, Cisco Systems, Inc.
  ********************************************************************************/
 
 package classes
 {
-    import flash.utils.Dictionary;
-    
     import mx.collections.ArrayCollection;
     import mx.utils.StringUtil;
-    
+
     public class YangUtil
     {
         private var netconfOp:ArrayCollection;
-        private var msg_id : uint;	
+        private var msg_id : uint;
         public static const DEFAULT:int = 0;
         public static const EDIT_CONFIG:int = 1;
         public static const GET_CONFIG:int = 2;
@@ -34,23 +32,23 @@ package classes
         public static const RPC:int = 4;
         public var mode : int;
         public var kvpair : ArrayCollection;
-        
-        public function YangUtil()	
+
+        public function YangUtil()
         {
             msg_id = uint(Math.random() * (uint.MAX_VALUE/100000));
             mode = DEFAULT;
             kvpair = new ArrayCollection();
         }
-        
+
         public function setMode (mode : int): void {
             this.mode = mode;
         }
-        
+
         public function getMode () : int {
             return this.mode;
         }
-        
-        public function getModeString() : String 
+
+        public function getModeString() : String
         {
             switch (mode) {
                 case EDIT_CONFIG:
@@ -62,16 +60,16 @@ package classes
                 case RPC:
                     return 'rpc';
             }
-            
+
             return ''
         }
-        
+
         public function getPath(object:XML):String
         {
             var path:String = "";
             var name:String = "";
             var type:String = "";
-            
+
             while (object != null && object.@type != 'module') {
                 name = object.@name;
                 type = object.@type;
@@ -82,9 +80,9 @@ package classes
             }
             return path;
         }
-        
+
         public function searchNode (root:XML, path:String) : XML
-        {	
+        {
             var names:Array = path.split('/');
             for (var i:int = 0; i < names.length; i++) {
                 for each (var child:XML in root.node) {
@@ -94,34 +92,34 @@ package classes
                     }
                 }
             }
-            
+
             if (root.@path == path) {
                 return root
             }
-            
+
             return null;
         }
-        
-        public function isKey(node:XML) : Boolean 
+
+        public function isKey(node:XML) : Boolean
         {
             return (node.attribute('is_key') == 'true');
         }
-        
-        public function isPresence(node:XML) : Boolean 
+
+        public function isPresence(node:XML) : Boolean
         {
             return (node.attribute('presence') == 'true');
         }
-        
-        public function isEmpty(node:XML) : Boolean 
+
+        public function isEmpty(node:XML) : Boolean
         {
             return (node.attribute('type') == 'leaf' && node.attribute('datatype') == 'empty');
         }
-        
+
         public function resetXML (xml:XMLList, target_mode:int = DEFAULT) : void {
             this.mode = target_mode;
-            
+
             if (xml == null) return;
-            
+
             for each (var item:XML in xml) {
                 if (item.hasOwnProperty('@ncop')) {
                     item.@ncop = '';
@@ -132,19 +130,19 @@ package classes
                 resetXML(item.children());
             }
         }
-        
+
         public function changeMode (xml:XMLList, target_mode:int = DEFAULT) : void {
             var value : String = '';
             if (xml == null) return;
             this.mode = target_mode;
-            
+
             for each (var item:XML in xml) {
                 if (item.hasOwnProperty('@ncop')) {
                     if (target_mode != EDIT_CONFIG) {
                         item.@ncop = '';
                     }
                 }
-                
+
                 if (item.hasOwnProperty('@value')) {
                     value = item.@value;
                     value = StringUtil.trim(value);
@@ -174,44 +172,46 @@ package classes
             }
             return;
         }
-        
-        public function processXMLList (xmllist:XMLList, kvdict:Dictionary) : void {	
+
+        public function processXMLList (xmllist:XMLList, kvpairs:ArrayCollection) : void {
             for each (var item:XML in xmllist) {
                 if (item.hasOwnProperty('@path')) {
                     var path : String = item.attribute('path');
+                    var type : String = item.attribute('type');
                     var value : String = '';
                     var ncop : String = '';
+
                     if (item.hasOwnProperty('@value')) {
                         value = item.attribute('value');
                         value = StringUtil.trim(value);
                     }
-                    
+
                     if (item.hasOwnProperty('@ncop')) {
                         ncop = item.attribute('ncop');
                     }
-                    
-                    if (kvdict != null && (value != '' || ncop != '')) {
-                        kvdict[path] = {Value:value, Option:ncop};
+
+                    if (kvpairs != null && (value != '' || ncop != '')) {
+                        kvpairs.addItem({Key:path, Value:value, Option:ncop})
                     }
-                    
+
                     if (value != '') {
                         updateNetConfMode(item, value);
                     }
                 }
-                processXMLList(item.children(), kvdict)
+                processXMLList(item.children(), kvpairs)
             }
         }
-        
-        public function processXML (xml:XML, kvdict:Dictionary) : void {
-            processXMLList(xml.children(), kvdict)
+
+        public function processXML (xml:XML, kvpairs:ArrayCollection) : void {
+            processXMLList(xml.children(), kvpairs)
         }
-        
+
         public  function updateNetConfMode(node:XML, val:String): void
         {
             if (val == null || node == null || val == '') {
                 return;
             }
-            
+
             /* Set mode based on cell value */
             if (val == '<get-config>') {
                 this.mode = GET_CONFIG;
@@ -227,17 +227,17 @@ package classes
                 } else if (access == 'read-only') {
                     this.mode = GET;
                 }
-            } 
+            }
         }
-        
+
         public function validateInput(node:XML, val:String) : Boolean
         {
             if (val == null || node == null || val == '') {
                 return true;
             }
-            
+
             var type: String = node.attribute('type');
-            
+
             // Validate that value has been entered in correct node *//
             switch(type) {
                 case 'module':
@@ -249,17 +249,17 @@ package classes
                 default:
                     break;
             }
-            
+
             // Skip Special Values *//
             var access: String = node.attribute('access');
             if (access == 'read-only' && val == '<get-config>') {
                 return false;
             }
-            
+
             if (val == '<get>' || val == '<get-config>') {
                 return true;
             }
-            
+
             if (type == 'leaf' || type == 'leaf-list') {
                 var datatype : String = node.attribute('datatype');
                 switch (datatype) {
@@ -278,10 +278,10 @@ package classes
                     case 'timeticks':
                     case 'timestamp':
                         return (!isNaN(parseInt(val)));
-                        
+
                     case 'boolean':
                         return (val == 'true' || val == 'false')
-                        
+
                     case 'empty':
                         return (val == '<empty>')
                     default:

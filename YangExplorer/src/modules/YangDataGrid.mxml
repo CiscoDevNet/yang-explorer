@@ -47,7 +47,6 @@
             import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
             import mx.events.AdvancedDataGridEvent;
             import mx.events.DataGridEventReason;
-            import mx.events.FlexEvent;
             import mx.events.ListEvent;
             import mx.rpc.events.FaultEvent;
             import mx.rpc.events.ResultEvent;
@@ -174,23 +173,14 @@
                 return yangUtil.getMode();
             }
             
-            public function processXML(kvdict : Dictionary) : void {
-                yangUtil.processXML(treeXml, kvdict)
+            public function processXML(kvpairs : ArrayCollection) : void {
+                yangUtil.processXML(treeXml, kvpairs)
             }
             
             public function getModeString() : String {
                 return yangUtil.getModeString();
             }
-            
-            public function getNetConfEncoding(source : String, target : String) : String {
-                var encoder : YangEncoder = new YangEncoder();
-                var payload : XML = encoder.to_xml(treeXml, yangUtil.getModeString(), source, target)
-                if (payload == null) {
-                    return null;
-                }
-                return payload.toXMLString();
-            }
-            
+
             public function changeMode(mode : int) : void {
                 yangUtil.changeMode(treeXml.children(), mode);
             }

@@ -95,10 +95,33 @@
                 if (response.type == 'get-collection-list') {
                     updateCollection(response.xml)
                 } else if (response.type == 'load-collection') {
-                    for each (var child : XML in response.xml.children()) {
-                        if (child.localName() == 'rpc') {
-                            parentApplication.setEncodingText(child.toXMLString());
+                    if (response.xml) {
+                        switch(response.xml.localName()) {
+                        case 'payload':
+                            var is_rest : Boolean = false;
+                            if (response.xml.hasOwnProperty('@protocol')) {
+                                is_rest = (response.xml.attribute('protocol') == 'restconf')
+                            }
+                            
+                            var rpc : String = '';
+                            for each (var child : XML in response.xml.children()) {
+                                if (child.localName() == 'rpc') {
+                                    rpc = child.toXMLString()
+                                }
+                                if (child.localName() == 'raw') {
+                                    rpc = child.children()[0].toXMLString();
+                                }
+                            }
+                            parentApplication.setEncodingText(rpc, !is_rest);
+                            break;
+                        case 'rpc':
+                            parentApplication.setEncodingText(response.xml.toXMLString(), true);
+                            break;
+                        default:
+                            Alert.show('Unknow tag in response ' + response.xml.localName());
                         }
+                    } else {
+                        parentApplication.setEncodingText(response.msg, false);
                     }
                 } else {
                     Alert.show('Invalid response from server' + response.toString(), 'Error');

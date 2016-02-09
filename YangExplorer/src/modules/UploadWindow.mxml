@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Copyright 2015, Cisco Systems, Inc
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@author: Pravin Gohite, Cisco Systems, Inc.
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+    @author: Pravin Gohite, Cisco Systems, Inc.
 -->
 <s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
                xmlns:s="library://ns.adobe.com/flex/spark" 
@@ -339,7 +339,11 @@ limitations under the License.
                 </s:columns>
             </s:DataGrid>
         </s:HGroup>
-        <s:HGroup width="100%" paddingLeft="5" paddingRight="5" paddingBottom="5">
+        <s:HGroup width="100%" horizontalAlign="right" paddingLeft="5" paddingRight="5" paddingBottom="5">
+            <s:Label id="lblMsg" visible="false"
+                     text=" Rebuilding.." fontFamily="Avenir, Verdana"/>
+            <s:BusyIndicator id="busy"  visible="false" symbolColor="green"/>
+            <s:Spacer width="100%"/>
             <components:ButtonIcon id="btnBrowse" label="Browse" click="btnBrowseFile_clickHandler()"
                                    width="100"
                                    brand="{BrandColorEnum.Success}"/>
@@ -349,9 +353,6 @@ limitations under the License.
             <components:ButtonIcon id="btnClear" label="Clear"
                                    width="100" click="btnClear_clickHandler()"
                                    brand="{BrandColorEnum.Success}"/>
-            <s:Label id="lblMsg" visible="false"
-                     text=" Rebuilding.." fontFamily="Avenir, Verdana"/>
-            <s:BusyIndicator id="busy"  visible="false" symbolColor="green"/>
         </s:HGroup>
     </s:VGroup>
 </s:TitleWindow>
