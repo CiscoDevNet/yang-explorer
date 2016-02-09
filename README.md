@@ -15,7 +15,7 @@ limitations under the License.
 ###1. Description
    An open-source Yang Browser and RPC Builder Application to experiment with Yang Data Models
    
-   ** Features**
+   **Features**
    - Upload / Compile yang models from User Interface Or Command Line
    - Build NetConf RPC
    - Execute RPC against real netconf server
@@ -31,6 +31,7 @@ limitations under the License.
 
 
 ###2. Installation
+####2.1 First time installation
 #####Prerequisite:
    - MAC, Linux (not supported on Windows)
    - python 2.7
@@ -76,9 +77,16 @@ limitations under the License.
    
    Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev zlib1g-dev
 ```
+####2.2 Update exising installtion
+
+```bash
+  cd <install-root>/yang-explorer
+  git pull origin
+  bash setup.sh
+```
 
 ###3. Running YangExplorer
-###3.1 Running with localhost
+####3.1 Running with localhost
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
@@ -91,7 +99,7 @@ limitations under the License.
 ```bash
    http://localhost:8088/static/YangExplorer.html
 ```
-###3.2 Running with ip-address (Shared server)
+####3.2 Running with ip-address (Shared server)
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
