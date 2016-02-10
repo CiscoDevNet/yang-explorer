@@ -1,16 +1,45 @@
 #/usr/bin/env bash
 
+show_help() {
+    echo 'Usage: bash setup.sh [-y]'
+    echo '       -y accept default yes to interactive prompt'
+    echo '          Setup may require user confirmation when running without'
+    echo '          virtualenv or as superuser'
+}
+
+OPTIND=1
+# Initialize our own variables:
+default_yes=0
+no_db=0
+while getopts "h?yn" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+
+    y)  default_yes=1
+        ;;
+
+    n)  no_db=1
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
 echo "Installing yang-explorer .."
 echo "Checking environment .."
 
 command -v pyang >/dev/null 2>&1 || {
 	echo "pyang not found.. please install pyang before continuing !!" >&2;
-	exit 1;
+	exit -1;
 }
 
 command -v pip >/dev/null 2>&1 || {
 	echo "pip not found.. please install python pip before continuing !!" >&2;
-	exit 1;
+	exit -1;
 }
 
 command -v virtualenv >/dev/null 2>&1 || {
@@ -20,14 +49,16 @@ command -v virtualenv >/dev/null 2>&1 || {
     echo "Without virtualenv, required python packages will be installed in system python"
     echo "environment and you may require superuser permission."
     echo ""
-    printf "Do you want to continue? (y/Y) "
-    read response
+    if [[ $default_yes != 1 ]]; then
+        printf "Do you want to continue? (y/Y) "
+        read response
 
-    if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
-    then
-        break;
-    else
-        exit 1;
+        if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
+        then
+            break;
+        else
+            exit -1;
+        fi
     fi
 }
 
@@ -61,14 +92,16 @@ else
         echo "Alternatively you can re-run this script as non-root"
         echo "to setup database without root privilege."
         echo ""
-        printf "Do you want to continue as root ? (n/N) "
-        read response
+        if [[ $default_yes != 1 ]]; then
+            printf "Do you want to continue as root ? (n/N) "
+            read response
 
-        if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
-            then
-            break;
-        else
-            exit 1;
+            if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
+                then
+                break;
+            else
+                exit 1;
+            fi
         fi
     fi
 

@@ -270,10 +270,14 @@ def parse_url(username, request, mode):
             if seg.type == 'list':
                 keys = []
                 for key in seg.keys:
+                    if key is None: break
+                    if isinstance(key, str): continue;
                     keys.append(key.text)
-                k = ','.join(keys)
-                k = url_escape_chars(k)
-                url.append(k)
+
+                if len(keys) > 0:
+                    k = ','.join(keys)
+                    k = url_escape_chars(k)
+                    url.append(k)
 
     return (name, op, '/'.join(url), json.dumps(msg, indent=2))
 
