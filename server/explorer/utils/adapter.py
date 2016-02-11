@@ -93,8 +93,9 @@ class Adapter(object):
     def run_netconf(username, device, rpc):
         """ Execute Netconf request """
 
-        if device.get('platform', None) is not None:
-            params = {'name' : device['platform']}
+        plat = device.get('platform', None)
+        if plat is not None and plat not in ['', 'other']:
+            params = {'name' : plat}
         else:
             params = {}
 
@@ -103,6 +104,7 @@ class Adapter(object):
 
         # If rpc is not provided, return capabilities
         if rpc is None or rpc  == '':
+            print('params: ' + str(params))
             return session.get_capability()
 
         logging.debug("run_netconf: " + ET.tostring(rpc))
@@ -182,7 +184,7 @@ def build_response(res):
         msg['method'] = str(rest_ops.get(op, op))
         msg['url'] = url
         msg['params'] = hdr
-        msg['data'] = json.loads(data)
+        msg['data'] = json.loads(data, object_pairs_hook=OrderedDict)
 
     reply = json.dumps(msg, indent=3, separators=(',', ': '))
     logging.debug('Json: ' + reply)

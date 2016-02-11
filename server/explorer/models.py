@@ -39,14 +39,14 @@ class Collection(models.Model):
         directory = os.path.join('data', 'collections', name)
         if not os.path.exists(directory):
             os.makedirs(directory)
-              
+
     def __unicode__(self):
         return self.name
 
 class UserProfile(models.Model):
     user   = models.ForeignKey(User)
     module = models.CharField(max_length=256)
-    
+
     def __unicode__(self):
         return str(self.user) + ':' + str(self.module)
 
@@ -54,7 +54,7 @@ class DeviceProfile(models.Model):
     '''
     Collection of device profiles
     '''
-    CHOICES = (('csr','csr'), ('nexus','nexus'), ('other','other'))
+    CHOICES = (('csr','csr'), ('nexus','nexus'), ('iosxe','iosxe'), ('iosxr','iosxr'), ('default','default'), ('other','other'))
     profile = models.CharField(max_length=128, primary_key=True)
     device = models.CharField(max_length=32, choices=CHOICES, default='csr')
     user = models.ForeignKey(User)
@@ -78,9 +78,9 @@ class DeviceProfile(models.Model):
                                   help_text='Optional RestConf Password')
 
     description = models.CharField(max_length=128)
-    
+
     shared = models.BooleanField(default=False, verbose_name='Shared Device ?')
-    
+
     def __unicode__(self):
         return self.profile
 
@@ -93,7 +93,7 @@ def sessionend_handler(sender, **kwargs):
         if os.path.exists(tempdir):
             logging.debug('Deleting %s ..' % tempdir)
             shutil.rmtree(tempdir)
-    
+
 def signal_create_user(sender, instance, created, **kwargs):
     username = instance.username
     path = os.path.join(settings.BASE_DIR, 'data', 'users', username)

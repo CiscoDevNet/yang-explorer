@@ -97,7 +97,7 @@ class NCClient(object):
                                           look_for_keys=False,
                                           timeout=30)
         except:
-            logging.error("Failed to create netconf session: %s" % sys.exc_info()[0])
+            logging.exception("Failed to create netconf session:")
             self.handle = None
             return False
 
@@ -135,9 +135,13 @@ class NCClient(object):
             logging.debug("Failed to get reply")
             reply.text = 'Failed to get reply !!'
         else:
-            xml = ET.fromstring(result)
-            logging.debug("RECIEVE: \n=====\n%s\n=====\n" % ET.tostring(xml, pretty_print=True))
-            reply.append(xml)
+            try:
+                xml = ET.fromstring(result)
+                reply.append(xml)
+                logging.debug("RECIEVE: \n=====\n%s\n=====\n" % ET.tostring(xml, pretty_print=True))
+            except:
+                reply.text = 'no data'
+                logging.exception('Faild to encode to XML: ' + str(result))
         return reply
 
     def get_capability(self):
@@ -173,7 +177,7 @@ class RestClient(object):
 
     def get_capability(self, url):
         reply = ET.Element('reply')
-        reply.text = 'NotImplemented'
+        reply.text = 'Not-Implemented'
         return reply
 
     def run(self, msg):
