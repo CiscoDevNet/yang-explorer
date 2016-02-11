@@ -81,7 +81,9 @@ limitations under the License.
 
 ```bash
   cd <install-root>/yang-explorer
+  git stash (if you have local changes)
   git pull origin
+  git stash apply (if you have local changes)
   bash setup.sh
 ```
 
