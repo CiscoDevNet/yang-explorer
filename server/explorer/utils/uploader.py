@@ -31,9 +31,8 @@ ignore_list = ['tailf-common','ietf-yang-types','ietf-inet-types', 'xmas']
 
 def upload_file(_file, directory):
     """ Upload yang model into session storage """
-    #if (request == 'delete') and not user.has_perm('explorer.delete_yangmodel'):
-    #    return (False, 'User %s does not have permission to delete models!!' % username)
-
+    f = None
+    filename = None
     try:
         if not os.path.exists(directory):
             logging.debug('Creating session storage ..')
@@ -53,17 +52,16 @@ def upload_file(_file, directory):
         parser = Parser(fname)
         target_file = os.path.join(directory, parser.get_filename())
         os.rename(fname, target_file)
-        logging.debug('Copied to ' + target_file)
+        filename = parser.get_filename()
     except:
-        logging.error('Failed to upload file .. ' + sys.exc_info()[0])
-        return None
+        logging.exception('Failed to upload file: ')
     finally:
         logging.debug('Cleaning up ..')
-        if os.path.exists(f.name):
+        if f is not None and os.path.exists(f.name):
             logging.debug('Deleting ' + f.name)
             os.remove(f.name)
 
-    return parser.get_filename()
+    return filename
 
 def sync_file(user, session, filename, index):
     """ Compile yang module """

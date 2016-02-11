@@ -51,6 +51,9 @@ class Parser(object):
                         self.revision = res.group(1).strip()
                         break
 
+        if self.module is None:
+            logging.error('Could not parse modulename, uploaded file may be currupted !!')
+
     def get_filename(self):
         '''
         Returns yang file name with version suffix.

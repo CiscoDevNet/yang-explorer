@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import os
 import logging
+import shutil
 import lxml.etree as ET
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
