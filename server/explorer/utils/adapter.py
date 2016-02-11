@@ -104,7 +104,6 @@ class Adapter(object):
 
         # If rpc is not provided, return capabilities
         if rpc is None or rpc  == '':
-            print('params: ' + str(params))
             return session.get_capability()
 
         logging.debug("run_netconf: " + ET.tostring(rpc))
