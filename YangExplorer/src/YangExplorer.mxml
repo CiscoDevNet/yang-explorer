@@ -38,8 +38,12 @@
         <s:HTTPService id="runService" fault="httpService_fault(event);"
                        result="onRunServiceResult(event)" resultFormat="text" showBusyCursor="true"/>
         <mx:ArrayCollection id="devicePlatforms">
+            <fx:String></fx:String>
             <fx:String>csr</fx:String>
             <fx:String>nexus</fx:String>
+            <fx:String>iosxr</fx:String>
+            <fx:String>iosxe</fx:String>
+            <fx:String>default</fx:String>
             <fx:String>other</fx:String>
         </mx:ArrayCollection>
         <s:RadioButtonGroup id="netconfOpType" itemClick="netconfOpType_itemClickHandler()"/>
@@ -108,7 +112,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.1.0 (Beta)';
+            public var VERSION : String = '0.1.1 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -846,7 +850,7 @@
                                                             dataProvider="{deviceProfiles}"/>
                                         </s:FormItem>
                                         <s:FormItem label="   Platform">
-                                            <s:DropDownList id="lstDevPlatform" width="120"
+                                            <s:ComboBox id="lstDevPlatform" width="120"
                                                             dataProvider="{devicePlatforms}"/>
                                         </s:FormItem>
                                         <s:HGroup>
