@@ -138,8 +138,7 @@ limitations under the License.
 ####5.1 Work Flow
 
 #####5.2.1 Login:
-   YangExplorer uses user accounts to manage workspaces. You can create a user account using admin
-   page (See 5.2.1 Creating User Account)
+   YangExplorer uses user accounts to manage workspaces. You can create a user account using admin page (See 5.3.1 Creating User Account) or use the predefined login (guest/guest). You must login (click on the Login button on top right corner)
 
    You can use guest login (guest/guest) or newly created account.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
@@ -148,14 +147,14 @@ limitations under the License.
 ###### Upload using yang-explorer user interface
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
    - Click **Manage** tab
-   - Click **Upload** button
+   - Click **Add** button
       - Click **Browse** and select models to upload
       - Click *Upload*
       - **Clear** button can be used clear models in upload window
-   - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in exploerer area
+   - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in explorer area
    - Click Delete button to delete selected models from user account
 
-###### Upload using server console
+###### Upload models using server console
 
 ```bash
    cd <install-root>/yang-explorer
@@ -171,7 +170,7 @@ limitations under the License.
 ```
    All models must be compiled successfully, in case of any error none of the models will be uploaded to yang-explorer.
    
-#####5.2.3 Generating dependency graph:
+#####5.2.3 Generating the model dependency graph:
    - Click **Manage** tab
       - Select one or more model name to get dependency graph
       - If no models are selected, all subscribed model will be used to generate graph
@@ -210,7 +209,7 @@ limitations under the License.
 #####5.3.1 Creating User Account (optional):
 
    Creating user account is optional as you can use default guest/guest login, however creating user account can be userful
-   if you have a shared yang-explorer installtion.
+   if you have a shared yang-explorer installation.
    
    - Click **Admin** button in YangExplorer
    - Login as admin (user: admin, password: admin)
