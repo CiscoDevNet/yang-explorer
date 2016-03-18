@@ -16,9 +16,8 @@ limitations under the License.
 @author: Pravin Gohite, Cisco Systems, Inc.
 """
 
-import sys
+import os
 import json
-import base64
 import requests
 import logging
 import lxml.etree as ET
@@ -88,6 +87,8 @@ class NCClient(object):
         """ Establish netconf session """
 
         try:
+            # timeout is configurable as environment variable
+            timeout = int(os.getenv("NCCLIENT_TIMEOUT", 30))
             self.handle = manager.connect(host=self.host,
                                           port=self.port,
                                           username=self.username,
@@ -95,7 +96,7 @@ class NCClient(object):
                                           device_params=self.params,
                                           unknown_host_cb=self._unknown_host_cb,
                                           look_for_keys=False,
-                                          timeout=30)
+                                          timeout=timeout)
         except:
             logging.exception("Failed to create netconf session:")
             self.handle = None

@@ -3,6 +3,9 @@
 HOST='localhost'
 PORT='8088'
 
+# set timout value for ncclient
+export NCCLIENT_TIMEOUT=45
+
 if [ ! -f "server/data/db.sqlite3" ]; then
     echo "Yang-Explorer database is not initialized .. please run setup.sh first !!"
     exit -1

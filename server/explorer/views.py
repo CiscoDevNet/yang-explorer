@@ -37,7 +37,7 @@ from explorer.utils.admin import ModuleAdmin
 from explorer.utils.uploader import upload_file, sync_file, commit_files, \
                                     get_upload_files, clear_upload_files
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 
 @csrf_exempt
