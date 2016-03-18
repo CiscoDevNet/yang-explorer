@@ -195,6 +195,14 @@ limitations under the License.
    - Create RPC using *5.2.4*
    - Populate Device info in Device Settings Tab
    - Click **Run** button under **Build** tab
+   
+   Yang Explorer uses ncclient library to execute RPCs, connection timeout can be configured via
+   environment varible default timout value is 45 seconds. 
+```
+   #update value in start.sh & restart server
+   export NCCLIENT_TIMEOUT=120
+```
+
 
 #####5.2.6 Saving RPCs to Collection:
    - Create RPC using *5.2.4*
