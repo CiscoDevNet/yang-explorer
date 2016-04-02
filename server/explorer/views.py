@@ -27,17 +27,14 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from explorer.utils.cxml import Cxml
-from explorer.utils.admin import ModuleAdmin
 from explorer.utils.misc import Response
 from explorer.utils.adapter import Adapter
 from explorer.utils.collection import Collection
-from explorer.models import UserProfile
 from explorer.utils.misc import ServerSettings
 from explorer.utils.admin import ModuleAdmin
-from explorer.utils.uploader import upload_file, sync_file, commit_files, \
-                                    get_upload_files, clear_upload_files
+import explorer.utils.uploader as Uploader
 
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 @csrf_exempt
@@ -64,12 +61,13 @@ def login_handler(request):
                         logging.debug('Cleaning ' + session_dir)
                         shutil.rmtree(session_dir)
                 logout(request)
-            except Exception as ex:
-                print(ex.__doc__)
-                print(ex.message)
-        logging.debug('Login success')
+            except:
+                logging.exception("Failed")
+            else:
+                logging.debug('Logout success!!')
         return HttpResponse(Response.success(action, 'ok', session))
-    return HttpResponse(Response.error(action, 'Invalid Request'))
+    return HttpResponse(Response.error('unknown', 'Invalid request!!'))
+
 
 @csrf_exempt
 def session_handler(request):
@@ -78,6 +76,7 @@ def session_handler(request):
     if request.user.is_authenticated():
         session.text = request.user.username
     return HttpResponse(Response.success('session', 'ok', session))
+
 
 @csrf_exempt
 def upload_handler(request):
@@ -92,14 +91,14 @@ def upload_handler(request):
 
     if not ServerSettings.user_aware():
         if not request.user.has_perm('explorer.delete_yangmodel') or \
-           not request.user.has_perm('explorer.change_yangmodel'):
+                not request.user.has_perm('explorer.change_yangmodel'):
             logging.debug('Unauthorized upload request .. ')
             return HttpResponse(Response.error(mode, 'User does not have permission to upload !!'))
 
     if request.method == 'POST':
         # create a temporary storage for this session
         directory = ServerSettings.session_path(request.session.session_key)
-        _file = upload_file(request.FILES['Filedata'], directory)
+        _file = Uploader.upload_file(request.FILES['Filedata'], directory)
         if _file is not None:
             module = ET.Element('module')
             module.text = _file
@@ -112,29 +111,31 @@ def upload_handler(request):
             filename = request.GET.get('file', '')
             index = request.GET.get('index', '')
             logging.debug('Received sync request for ' + filename + ', index ' + index)
-            success, response = sync_file(request.user.username, request.session.session_key,
-                                          filename, index)
+            success, response = Uploader.sync_file(request.user.username,
+                                                   request.session.session_key,
+                                                   filename, index)
             if success:
                 return HttpResponse(Response.success(mode, 'ok'))
             return HttpResponse(Response.error(mode, 'compilation failed', xml=response))
 
         elif mode == 'commit':
-            success, modules = commit_files(request.user.username, request.session.session_key)
+            success, modules = Uploader.commit_files(request.user.username, request.session.session_key)
             if success:
                 return HttpResponse(Response.success('commit', 'ok', modules))
 
         elif mode == 'init':
-            success, modules = get_upload_files(request.user.username, request.session.session_key)
+            success, modules = Uploader.get_upload_files(request.user.username, request.session.session_key)
             if success:
                 return HttpResponse(Response.success(mode, 'ok', modules))
 
         elif mode == 'clear':
-            success, modules = clear_upload_files(request.user.username, request.session.session_key)
+            success, modules = Uploader.clear_upload_files(request.user.username, request.session.session_key)
             if success:
                 return HttpResponse(Response.success(mode, 'ok', modules))
         return HttpResponse(Response.error(mode, 'failed'))
 
     return render_to_response('upload.html')
+
 
 def admin_handler(request):
     """ HTTP Request handler function to handle actions on yang modules """
@@ -160,6 +161,7 @@ def admin_handler(request):
 
     modules = ModuleAdmin.get_modules(request.user.username)
     return HttpResponse(Response.success(action, 'ok', xml=modules))
+
 
 def request_handler(request):
     """ HTTP Request handler function to handle actions on collections """
@@ -202,7 +204,7 @@ def request_handler(request):
         mode = 'get-collection-list'
 
     elif mode == 'rpc':
-        req  = request.GET.get('payload', '')
+        req = request.GET.get('payload', '')
         reply_xml = Adapter.gen_rpc(request.user.username, req)
         if isinstance(reply_xml, str):
             return HttpResponse(Response.success(mode, reply_xml))
@@ -213,6 +215,7 @@ def request_handler(request):
         reply_xml = Adapter.run_request(request.user.username, payload)
 
     return HttpResponse(Response.success(mode, 'ok', reply_xml))
+
 
 def module_handler(request):
     '''
@@ -227,7 +230,7 @@ def module_handler(request):
 
         username = request.user.username
         if path == 'root':
-             # Request for root models
+            # Request for root models
             modules = ModuleAdmin.get_modulelist(username)
             modules.sort()
             path = ''
