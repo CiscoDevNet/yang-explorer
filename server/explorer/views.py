@@ -34,7 +34,7 @@ from explorer.utils.misc import ServerSettings
 from explorer.utils.admin import ModuleAdmin
 import explorer.utils.uploader as Uploader
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 @csrf_exempt
@@ -86,13 +86,13 @@ def upload_handler(request):
     logging.debug(request.method + ':Received upload request .. ' + mode)
 
     if not request.user.is_authenticated():
-        logging.debug('User must be logged in !!')
+        logging.warning('User must be logged in !!')
         return HttpResponse(Response.error(mode, 'Unauthorized'))
 
     if not ServerSettings.user_aware():
         if not request.user.has_perm('explorer.delete_yangmodel') or \
                 not request.user.has_perm('explorer.change_yangmodel'):
-            logging.debug('Unauthorized upload request .. ')
+            logging.warning('Unauthorized upload request .. ')
             return HttpResponse(Response.error(mode, 'User does not have permission to upload !!'))
 
     if request.method == 'POST':
@@ -110,7 +110,7 @@ def upload_handler(request):
         if mode == 'sync':
             filename = request.GET.get('file', '')
             index = request.GET.get('index', '')
-            logging.debug('Received sync request for ' + filename + ', index ' + index)
+            logging.info('Received sync request for ' + filename + ', index ' + index)
             success, response = Uploader.sync_file(request.user.username,
                                                    request.session.session_key,
                                                    filename, index)
@@ -147,7 +147,7 @@ def admin_handler(request):
         return HttpResponse(Response.error(None, 'Invalid admin Request'))
 
     action = request.GET.get('action', '')
-    logging.debug('Received admin request %s for user %s' % (action, request.user.username))
+    logging.info('Received admin request %s for user %s' % (action, request.user.username))
 
     if action in ['subscribe', 'unsubscribe', 'delete', 'graph']:
         payload = request.GET.get('payload', None)
@@ -169,7 +169,7 @@ def request_handler(request):
     mode = request.GET.get('mode', '')
     reply_xml = None
 
-    logging.debug('request_handler: Received Request: (%s)' % mode)
+    logging.info('request_handler: Received Request: (%s)' % mode)
 
     if mode == 'get-collection-list':
         reply_xml = Collection.list()
@@ -218,14 +218,13 @@ def request_handler(request):
 
 
 def module_handler(request):
-    '''
+    """
     Handle module request from UI. Response from this request builds
     UI Explorer tree
-    '''
+    """
     logging.debug("module_handler: enter")
     lst = []
     if request.user.is_authenticated():
-        modules = []
         path = request.GET.get('node', '')
 
         username = request.user.username

@@ -47,6 +47,7 @@ def _build_proto(proto, addr, port, uname, pwd):
 
     return transport
 
+
 def _build_device_profile(e):
     """ Build device profile xml instance """
 
@@ -69,6 +70,7 @@ def _build_device_profile(e):
     profile.append(elem)
     return profile
 
+
 def _build_collection_profile(p):
     """ Build collection profile xml instance """
 
@@ -76,6 +78,7 @@ def _build_collection_profile(p):
     profile.set('type', 'collection')
     profile.set('name', p.name)
     return profile
+
 
 def profile_handler(request):
     """ HTTP request handler for profile request """

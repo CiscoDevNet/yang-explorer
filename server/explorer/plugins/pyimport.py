@@ -21,13 +21,16 @@ import sys
 from pyang import plugin
 import xml.etree.ElementTree as ET
 
+
 def pyang_plugin_init():
     plugin.register_plugin(PyImportPlugin())
+
 
 def print_help():
     print("""
     pyang -f pyimport [option] <yang>
     """)
+
 
 class PyImportPlugin(plugin.PyangPlugin):
     def add_output_format(self, fmts):

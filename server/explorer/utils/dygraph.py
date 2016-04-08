@@ -18,6 +18,7 @@ import logging
 import lxml.etree as ET
 from graphviz import Digraph
 
+
 class DYModule(object):
     """
     Module class
