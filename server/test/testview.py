@@ -296,3 +296,6 @@ class UsersTestCase(TestCase):
         print response.content
         self.assertTrue('ok' in response.content)
         self.assertTrue('<collections/>' in response.content)
+
+        print("Test: request_handler PASSED")
+
