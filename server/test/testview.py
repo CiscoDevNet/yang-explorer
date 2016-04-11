@@ -15,6 +15,7 @@ from explorer.utils.admin import ModuleAdmin
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class UsersTestCase(TestCase):
     def setUp(self):
         demo = User()
@@ -194,6 +195,7 @@ class UsersTestCase(TestCase):
                 self.assertFalse(m.get('subscribed', 'false') == 'true')
         self.assertTrue(found)
 
+        module.text = 'ietf-yang-types@2013-07-15.yang'
         response = self.chrome.get('/explorer/admin', {'action':'delete', 'payload': ET.tostring(modules)})
         self.assertTrue(response.status_code == 200)
         print response.content
@@ -203,7 +205,7 @@ class UsersTestCase(TestCase):
         modulelist = ET.fromstring(response.content).find('modulelist')
         found = False
         for m in modulelist:
-            self.assertTrue(m.text != 'ietf-interfaces@2013-12-23.yang')
+            self.assertTrue(m.text != 'ietf-yang-types@2013-07-15.yang')
 
         _file = module.text
         yang_path = ServerSettings.yang_path('demo')
@@ -216,3 +218,81 @@ class UsersTestCase(TestCase):
         self.assertFalse(os.path.exists(os.path.join(cxml_path, xml_name)))
 
         print("Test: admin_handler PASSED")
+
+    def test_06_request_handler(self):
+        """ Verify request handler functionality """
+
+        # 1. Login to django server
+        response = self.chrome.post('/explorer/login/', {'username': 'demo', 'password': 'demo123', 'action': 'login'})
+        self.assertTrue(response.status_code == 200)
+
+        # 2. Verify get collections
+        response = self.chrome.get('/explorer/netconf', {'mode': 'get-collection-list'})
+        print response.content
+        self.assertTrue('ok' in response.content)
+        self.assertTrue('<collections/>' in response.content)
+
+        # 3. Verify add collection
+
+        metadata = '''
+<metadata>
+    <collection>default</collection>
+    <author>demo</author>
+    <name>test-demo</name>
+    <desc>This is test description</desc>
+</metadata>'''
+
+        payload = '''
+<payload version="3" protocol="netconf" format="xpath" operation="edit-config" target="running">
+    <metadata>
+        <device-auth profile="" platform="" host="" port="" user="" passwd=""/>
+        <netconf-auth host="" port="" user="" passwd=""/>
+    </metadata>
+    <keyvalue>
+        <node path="ietf-interfaces@2013-12-23/interfaces/interface/name">GigabitEthernet0</node>
+        <node path="ietf-interfaces@2013-12-23/interfaces/interface/description">Test</node>
+        <node path="ietf-interfaces@2013-12-23/interfaces/interface/type">ianaift:ethernetCsmacd</node>
+    </keyvalue>
+</payload>'''
+
+
+        response = self.chrome.get('/explorer/netconf', {'mode': 'add-collection',
+                                                         'metadata':metadata,
+                                                         'payload':payload})
+        print response.content
+        self.assertTrue('ok' in response.content)
+        self.assertTrue('<author>demo</author>' in response.content)
+        self.assertTrue('<name>test-demo</name>' in response.content)
+        self.assertTrue('<desc>This is test description</desc>' in response.content)
+
+        # Verify load-collection
+        response = self.chrome.get('/explorer/netconf', {'mode': 'load-collection', 'metadata':metadata})
+        print response.content
+        self.assertTrue('ok' in response.content)
+        self.assertTrue('<response type="load-collection">' in response.content)
+        self.assertTrue('<rpc' in response.content)
+        self.assertTrue('<edit-config>' in response.content)
+        self.assertTrue('<name>GigabitEthernet0</name>' in response.content)
+        self.assertTrue('<type>ianaift:ethernetCsmacd</type>' in response.content)
+        self.assertTrue('<description>Test</description>' in response.content)
+        self.assertTrue('<target><running/></target>' in response.content)
+        self.assertTrue('</rpc>' in response.content)
+
+        # Verify mode rpc
+        response = self.chrome.get('/explorer/netconf', {'mode': 'rpc','payload': payload})
+        print response.content
+        self.assertTrue('ok' in response.content)
+        self.assertTrue('<response type="rpc">' in response.content)
+        self.assertTrue('<rpc' in response.content)
+        self.assertTrue('<edit-config>' in response.content)
+        self.assertTrue('<name>GigabitEthernet0</name>' in response.content)
+        self.assertTrue('<type>ianaift:ethernetCsmacd</type>' in response.content)
+        self.assertTrue('<description>Test</description>' in response.content)
+        self.assertTrue('<target><running/></target>' in response.content)
+        self.assertTrue('</rpc>' in response.content)
+
+        # Verify delete-collection
+        response = self.chrome.get('/explorer/netconf', {'mode': 'delete-collection', 'metadata': metadata})
+        print response.content
+        self.assertTrue('ok' in response.content)
+        self.assertTrue('<collections/>' in response.content)
