@@ -55,7 +55,7 @@ class Collection(object):
                 return False
 
             user = User.objects.filter(username=author)
-            obj = Col(name=cname, user=user)
+            obj = Col(name=cname, user=user[0])
             obj.save()
             logging.debug('Created new collection ' + cname)
 
