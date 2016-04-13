@@ -19,6 +19,7 @@ import os
 import lxml.etree as ET
 from django.conf import settings
 
+
 class Response(object):
     """
     Utility class to build HTTP response
@@ -50,6 +51,7 @@ class Response(object):
     def success(_type, msg, xml=None):
         """ Build success response """
         return Response._build(_type, 'success', msg, xml)
+
 
 class ServerSettings(object):
     @staticmethod

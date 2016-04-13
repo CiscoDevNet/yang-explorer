@@ -17,13 +17,12 @@
     @author: Michael Ott, Cisco Systems, Inc.
 """
 
-import os
+
 import logging
 import xml.etree.ElementTree as ET
 from explorer.utils.admin import ModuleAdmin
 
 logging.basicConfig(level=logging.INFO)
-
 
 rpc_xmlns = 'urn:ietf:params:xml:ns:netconf:base:1.0'
 rpc_template = '''<rpc message-id="{msg_id}" xmlns="{rpc_ns}">
@@ -31,7 +30,7 @@ rpc_template = '''<rpc message-id="{msg_id}" xmlns="{rpc_ns}">
 </rpc>'''
 
 
-def buildRPC(request, tree, payload, operation):
+def build_rpc(request, payload, operation):
 
     source = request.get('source', 'running')
     target = request.get('target', 'candidate')
@@ -47,10 +46,9 @@ def buildRPC(request, tree, payload, operation):
     elif operation == 'get':
         payload = '<filter>\n' + payload + '</filter>\n'
         payload = '<get>\n' + payload + '</get>'
-    else:
-        datastore = ''
 
     return rpc_template.format(msg_id='101', rpc_ns=rpc_xmlns, msg_payload=payload)
+
 
 def get_namespace(tree, prefix=''):
     module_prefix = tree.get('prefix', '')
@@ -69,13 +67,14 @@ def get_namespace(tree, prefix=''):
             break
     return ns
 
+
 def pop_keyvalue(d, path, mode):
-    ''' Extract path, value pair from dictionary and
+    """ Extract path, value pair from dictionary and
         delete the list entry as we will processing
         this pair in current step
 
         Returns value and netconf operation pair.
-    '''
+    """
     index = 0
     for key in d:
         # leaf-list has '='' in path, extact path in this case
@@ -89,12 +88,12 @@ def pop_keyvalue(d, path, mode):
                 option = ' xc:operation="' + obj.option + '"'
 
             d.pop(index)
-            return (val, option, True)
+            return val, option, True
         index += 0
-    return ('', '', False)
+    return '', '', False
 
 
-def processTerminal(request, tree, d, node, prefix, ns, mode):
+def process_terminal(tree, d, node, prefix, ns, mode):
     (val, option, found) = pop_keyvalue(d, prefix, mode)
     if not found:
         return ''
@@ -104,7 +103,7 @@ def processTerminal(request, tree, d, node, prefix, ns, mode):
         if len(pfx) > 1:
             ns = get_namespace(tree, pfx[0])
 
-    name  = node.get('name', '')
+    name = node.get('name', '')
     if val != '':
         msg = '<' + name + ns + option + '>' + val + '</' + name + '>\n'
     else:
@@ -112,44 +111,48 @@ def processTerminal(request, tree, d, node, prefix, ns, mode):
 
     return msg
 
-def processLeafList(request, tree, d, node, prefix, ns, mode):
+
+def process_leaflist(tree, d, node, prefix, ns, mode):
     msg = ''
-    _msg = processTerminal(request, tree, d, node, prefix, ns, mode)
+    _msg = process_terminal(tree, d, node, prefix, ns, mode)
     while _msg != '':
         msg += _msg
-        _msg = processTerminal(request, tree, d, node, prefix, ns, mode)
+        _msg = process_terminal(tree, d, node, prefix, ns, mode)
     return msg
 
-def processXML(request, tree, d, node, prefix, ns, mode):
+
+def process_xml(tree, d, node, prefix, ns, mode):
     name = node.get('name', '')
     type_ = node.get('type', '')
     prefix = prefix + '/' + name
     msg = ''
 
     if type_ == 'leaf-list':
-        msg = processLeafList(request, tree, d, node, prefix, ns, mode)
+        msg = process_leaflist(tree, d, node, prefix, ns, mode)
     elif type_ in ['leaf', 'leafref']:
-        msg = processTerminal(request, tree, d, node, prefix, ns, mode)
+        msg = process_terminal(tree, d, node, prefix, ns, mode)
     elif type_ in ['module','choice', 'case', 'input', 'output']:
         for child in node:
-            msg += processXML(request, tree, d, child, prefix, '', mode)
+            msg += process_xml(tree, d, child, prefix, '', mode)
     elif type_ in ['list', 'container']:
         (val, option, found) = pop_keyvalue(d, prefix, mode)
 
         for child in node:
-            msg += processXML(request, tree, d, child, prefix, '', mode)
+            msg += process_xml(tree, d, child, prefix, '', mode)
 
         if msg != '':
             msg = '<' + name + ns + option + '>\n' + msg + '</' + name + '>\n'
         elif found:
             msg = '<' + name + ns + option + '/>\n'
     else:
-        logging.info('processXML: UnknownType: ' + type_)
+        logging.debug('processXML: UnknownType: ' + type_)
 
     return msg
 
+
 class ValueObject:
     pass
+
 
 class RPCRequestModule:
     def __init__(self, name):
@@ -198,12 +201,14 @@ def parseRequest(request):
                 obj.value  = child.text
             module.add_keyvalue(path, obj)
 
-        #add required namespace in a list
+        # add required namespace in a list
         namespace = [elem.split(':')[0] for elem in path.split('/') if ':' in elem]
         module.add_namespace_pfx(namespace)
     return modules
 
+
 def convert_rpc(rpc, mode):
+    """ Covert a edit-config RPC to get-config"""
     if not rpc:
         return rpc
 
@@ -217,6 +222,7 @@ def convert_rpc(rpc, mode):
         rpc = rpc.replace('</config>', '</filter>')
         return rpc
     return rpc
+
 
 def gen_netconf(username, request, mode):
     msg = ''
@@ -261,13 +267,14 @@ def gen_netconf(username, request, mode):
             # start processing CXML
             for child in tree:
                 if child.tag != 'namespace':
-                    msg += processXML(request, tree, kvDict, child, name, ns, mode)
+                    msg += process_xml(tree, kvDict, child, name, ns, mode)
 
     # Finally build RPC header
-    rpc += buildRPC(request, tree, msg, mode)
+    rpc += build_rpc(request, msg, mode)
     logging.debug('Generated netconf RPC')
     logging.debug(rpc)
     return rpc
+
 
 def get_rpc_from_request(request):
     _format = request.get('format', 'xpath')

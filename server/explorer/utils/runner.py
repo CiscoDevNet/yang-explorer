@@ -24,6 +24,7 @@ import lxml.etree as ET
 from ncclient import manager
 from ncclient.operations import RPCError
 
+
 class NotConnectedError(Exception):
     def __init__(self, value):
         Exception.__init__(self)
@@ -57,7 +58,6 @@ class NCClient(object):
     def __str__(self):
         return 'Host: %s, Port: %d, Username: %s, Params %s' % \
                (self.host, self.port, self.username, self.params)
-
 
     def _getchild(self, payload, tags):
         """ get child tag """

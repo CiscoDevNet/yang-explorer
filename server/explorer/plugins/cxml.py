@@ -22,12 +22,16 @@ from pyang import types
 from pyang import plugin
 from pyang import statements
 import xml.etree.ElementTree as ET
-#from lxml import etree as ET
+
+
+# from lxml import etree as ET
+
 
 def CDATA(text=None):
     element = ET.Element('![CDATA[')
     element.text = text
     return element
+
 
 ET._original_serialize_xml = ET._serialize_xml
 
@@ -37,11 +41,15 @@ def _serialize_xml(write, elem, encoding, qnames, namespaces):
         write("<%s%s]]>%s" % (elem.tag, elem.text, elem.tail))
         return
     return ET._original_serialize_xml(
-         write, elem, encoding, qnames, namespaces)
+        write, elem, encoding, qnames, namespaces)
+
+
 ET._serialize_xml = ET._serialize['xml'] = _serialize_xml
+
 
 def pyang_plugin_init():
     plugin.register_plugin(CxmlPlugin())
+
 
 class CxmlPlugin(plugin.PyangPlugin):
     def add_output_format(self, fmts):
@@ -54,7 +62,7 @@ class CxmlPlugin(plugin.PyangPlugin):
                                  dest="cxml_help",
                                  action="store_true",
                                  help="Print help on cxml symbols and exit"),
-            ]
+        ]
         g = optparser.add_option_group("CXML output specific options")
         g.add_options(optlist)
 
@@ -77,10 +85,12 @@ class CxmlPlugin(plugin.PyangPlugin):
         cxml = Cxml(modules, fd, path)
         cxml.emit_cxml()
 
+
 def print_help():
     print("""
     pyang -f cxml [option] <yang>
 """)
+
 
 class Cxml:
     def __init__(self, modules, fd, path):
@@ -102,10 +112,10 @@ class Cxml:
                 imports = module.search('import')
 
                 related = False
-                #build prefix to import modulename map
+                # build prefix to import modulename map
                 i_prefixes = {}
                 for i in imports:
-                    #indirect dependancies
+                    # indirect dependancies
                     if i.arg == self.name:
                         related = True
                     pfx = i.search_one('prefix')
@@ -121,24 +131,24 @@ class Cxml:
                     curr_idn = module.arg + ':' + idn.arg
                     base_idn = idn.search_one("base")
                     if base_idn:
-                        #identity has a base
+                        # identity has a base
                         base_idns = base_idn.arg.split(':')
                         if len(base_idns) > 1:
-                            #base is located in other modules
+                            # base is located in other modules
                             b_idn = i_prefixes.get(base_idns[0], '') + base_idns[1]
                         else:
                             b_idn = module.arg + ':' + base_idn.arg
 
                         if self.identity_deps.get(b_idn, None) is None:
                             self.identity_deps.setdefault(b_idn, [])
-                        #print 'Adding %s -> %s' % (b_idn, curr_idn)
+
                         self.identity_deps[b_idn].append(curr_idn)
                     else:
                         self.identity_deps.setdefault(curr_idn, [])
 
     def add_prefix(self, module, direct):
         name = module.arg
-        pfx  = module.search_one('prefix')
+        pfx = module.search_one('prefix')
         if pfx is None:
             return
         pfx_str = pfx.arg
@@ -201,13 +211,12 @@ class Cxml:
         if len(notifs) > 0:
             self.print_children(notifs, module, module_node, path, 'notification')
 
-        #fd.write(ET.tostring(module_node, pretty_print=True))
         fd.write(ET.tostring(module_node))
 
     def print_children(self, i_children, module, parent, path, mode):
         for ch in i_children:
             if ((ch.keyword == 'input' or ch.keyword == 'output') and
-                len(ch.i_children) == 0):
+                        len(ch.i_children) == 0):
                 continue
 
             if ch.keyword in ['input', 'output']:
@@ -233,7 +242,7 @@ class Cxml:
             p = s.search_one('presence')
             if p is not None:
                 node.set('presence', 'true')
-        elif s.keyword  == 'choice':
+        elif s.keyword == 'choice':
             m = s.search_one('mandatory')
             if m is None or m.arg == 'false':
                 node.set('mandatory', 'true')
@@ -287,9 +296,9 @@ class Cxml:
     def get_status_str(self, s):
         status = s.search_one('status')
         if status is None or status.arg == '':
-            return ('status', 'current')
+            return 'status', 'current'
         elif status.arg in ['current', 'deprecated', 'obsolete']:
-            return ('status', status.arg )
+            return 'status', status.arg
 
     def get_description(self, s):
         desc = s.search_one('description')
@@ -300,15 +309,15 @@ class Cxml:
 
     def get_flags_str(self, s, mode):
         if mode == 'input':
-            return ('access', 'write')
-        elif (s.keyword == 'rpc' or s.keyword == ('tailf-common', 'action')):
-            return ('access', 'write')
+            return 'access', 'write'
+        elif s.keyword == 'rpc' or s.keyword == ('tailf-common', 'action'):
+            return 'access', 'write'
         elif s.keyword == 'notification':
-            return ('access', 'read-only')
-        elif s.i_config == True:
-            return ('access', 'read-write')
-        elif s.i_config == False or mode in ['output', 'notification']:
-            return ('access', 'read-only')
+            return 'access', 'read-only'
+        elif s.i_config:
+            return 'access', 'read-write'
+        elif not s.i_config or mode in ['output', 'notification']:
+            return 'access', 'read-only'
         else:
             return None
 
@@ -347,14 +356,14 @@ class Cxml:
     def type_enums(self, t):
         tv = ''
         enum = t.search('enum')
-        if enum != []:
+        if enum:
             tv = '|'.join([e.arg for e in enum])
         return tv
 
     def type_values(self, t):
         if t is None:
             return ''
-        if t.i_is_derived == False and t.i_typedef != None:
+        if not t.i_is_derived and t.i_typedef is not None:
             return self.type_values(t.i_typedef.search_one('type'))
         if t.arg == 'boolean':
             return 'true|false'
@@ -378,7 +387,7 @@ class Cxml:
     def type_identityref_values(self, t):
         base_idn = t.search_one('base')
         if base_idn:
-            #identity has a base
+            # identity has a base
             idn_key = None
             base_idns = base_idn.arg.split(':')
             if len(base_idns) > 1:
@@ -408,4 +417,3 @@ class Cxml:
             clist = [c.arg for c in cases]
             values = '|'.join(clist)
         return values
-

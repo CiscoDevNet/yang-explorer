@@ -15,19 +15,15 @@
 """
 
 import os
-import sys
 import glob
 import logging
 import tempfile
-import time
-from sets import Set
 import lxml.etree as ET
 from explorer.utils.yang import Parser, Compiler
-from explorer.utils.dygraph import DYGraph
-from explorer.models import User
 from explorer.utils.misc import ServerSettings
 
-ignore_list = ['tailf-common','ietf-yang-types','ietf-inet-types', 'xmas']
+ignore_list = ['tailf-common', 'ietf-yang-types', 'ietf-inet-types', 'xmas']
+
 
 def upload_file(_file, directory):
     """ Upload yang model into session storage """
@@ -63,13 +59,14 @@ def upload_file(_file, directory):
 
     return filename
 
+
 def sync_file(user, session, filename, index):
     """ Compile yang module """
     if index == '0':
         logging.debug('Compiling session dependency ...')
         (rc, msg) = Compiler.compile_pyimport(user, session)
         if not rc:
-            return (rc, msg)
+            return rc, msg
 
     _file = os.path.join(ServerSettings.session_path(session), filename)
     if os.path.exists(_file):
@@ -77,7 +74,8 @@ def sync_file(user, session, filename, index):
     else:
         logging.error('sync_file: File %s not found ' % filename)
         (rc, msgs) = (False, None)
-    return (rc, msgs)
+    return rc, msgs
+
 
 def _compile_dependecies(user, modules, session=None):
     """ Compile affected modules """
@@ -88,7 +86,7 @@ def _compile_dependecies(user, modules, session=None):
         logging.debug('_compile_dependecies: no dependency found !!')
         return
 
-    #strip file path
+    # strip file path
     dmodules = []
     for m in dmodules_list:
         base_m = os.path.basename(m)
@@ -101,7 +99,7 @@ def _compile_dependecies(user, modules, session=None):
     for yangfile in glob.glob(os.path.join(yangdst, '*.yang')):
         basename = os.path.basename(yangfile)
 
-        #skip dependency module itself
+        # skip dependency module itself
         if basename in modules: continue
 
         base = os.path.splitext(basename)[0]
@@ -131,7 +129,7 @@ def commit_files(user, session):
     directory = ServerSettings.session_path(session)
     if not os.path.exists(directory):
         logging.error('Session storage %s does not exist' % directory)
-        return (False, None)
+        return False, None
 
     yangdst = ServerSettings.yang_path(user)
     cxmldst = ServerSettings.cxml_path(user)
@@ -181,7 +179,8 @@ def commit_files(user, session):
         _compile_dependecies(user, [m.text for m in modules], None)
 
     logging.debug('Committed ' + str(count) + ' file(s)')
-    return (True, modules)
+    return True, modules
+
 
 def get_upload_files(user, session):
     """ Get the list of uploaded yang files which are not committed """
@@ -190,25 +189,26 @@ def get_upload_files(user, session):
     directory = ServerSettings.session_path(session)
     if not os.path.exists(directory):
         logging.error('Session storage %s does not exist' % directory)
-        return (True, modules)
+        return True, modules
 
     for _file in glob.glob(os.path.join(directory, '*.yang')):
         module = ET.Element('module')
         module.text = os.path.basename(_file)
         modules.append(module)
 
-    return (True, modules)
+    return True, modules
+
 
 def clear_upload_files(user, session):
     """ Delete uploaded yang files which are not committed """
 
     directory = ServerSettings.session_path(session)
     if not os.path.exists(directory):
-        logging.error('Session storage %s does not exist' % directory)
-        return (False, None)
+        logging.debug('Session storage %s does not exist' % directory)
+        return False, None
 
     modules = ET.Element('modules')
     for _file in glob.glob(os.path.join(directory, '*')):
         os.remove(_file)
 
-    return (True, modules)
+    return True, modules

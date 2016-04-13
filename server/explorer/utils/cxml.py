@@ -20,6 +20,7 @@ import os
 import logging
 import lxml.etree as ET
 
+
 class Cxml:
     def __init__(self, filename):
         self.filename = filename
@@ -75,12 +76,12 @@ class Cxml:
         return node
 
     def get_lazy_node(self, path='', add_ns=True):
-        '''
+        """
         Returns yang explorer compatible lazy node xml. A lazy
         node only returns a cxml node which is requested. All
         other node along the path returned as _placeholder_
         nodes for on-demand loading in client tree.
-        '''
+        """
         logging.debug('get_lazy_node: ' + path)
         root = ET.Element('root')
         if self.cxml is None:
@@ -96,7 +97,7 @@ class Cxml:
             root.append(node)
             return root
 
-        #move root node to requested node
+        # move root node to requested node
         elements = path.split('/')
         for name in elements[1:]:
             for child in cxml_root:
@@ -116,14 +117,14 @@ class Cxml:
         return root
 
     def get_lazy_tree_one(self, path, value):
-        '''
+        """
         Returns yang explorer compatible lazy tree xml. A lazy
         tree  returns a cxml nested tree from root to requested
         node.
 
         Other node along the path returned as _placeholder_
         nodes for on-demand loading in client tree.
-        '''
+        """
 
         tree = None
         path_elems = path.split('/')
@@ -152,14 +153,14 @@ class Cxml:
         return tree
 
     def get_lazy_tree(self, pathvalues):
-        '''
+        """
         Returns yang explorer compatible lazy tree xml. A lazy
         tree  returns a cxml nested tree from root to requested
         node.
 
         Other node along the path returned as _placeholder_
         nodes for on-demand loading in client tree.
-        '''
+        """
 
         logging.debug('get_lazy_tree: Building lazy tree..')
 
@@ -203,8 +204,8 @@ class Cxml:
                         for key in values:
                             child.set(key, values[key])
                     tree.find(xpath).append(child)
-            level = level + 1
-        #end while
+            level += 1
+        # end while
 
         return tree
 
@@ -212,5 +213,5 @@ class Cxml:
         if self.cxml is None:
             return []
 
-        return [(ns.get('prefix', ''), ns.get('module', ''), ns.text) \
-         for ns in self.cxml.getroot() if ns.tag == 'namespace']
+        return [(ns.get('prefix', ''), ns.get('module', ''), ns.text)
+                for ns in self.cxml.getroot() if ns.tag == 'namespace']

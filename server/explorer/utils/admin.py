@@ -14,7 +14,6 @@
 """
 
 import os
-import time
 import glob
 import logging
 import lxml.etree as ET
@@ -24,13 +23,14 @@ from explorer.utils.yang import Compiler
 from explorer.utils.dygraph import DYGraph
 from explorer.utils.misc import ServerSettings
 
+
 class ModuleAdmin:
     @staticmethod
     def get_modules(username):
-        '''
+        """
         Return list of modules available to user + subscribed
-        '''
-        logging.debug("ModuleAdmin.get_modules: enter")
+        """
+        logging.info("ModuleAdmin.get_modules: enter")
 
         modules = ET.Element('modulelist')
         user = User.objects.filter(username=username)
@@ -72,12 +72,12 @@ class ModuleAdmin:
 
     @staticmethod
     def get_modulelist(username):
-        '''
+        """
         Return list of modules available to user
-        '''
+        """
         users = User.objects.filter(username=username)
         if not users:
-            logging.debug("ModuleAdmin.admin_action: Inavlid user " + username)
+            logging.warning("ModuleAdmin.admin_action: Invalid user " + username)
             return []
 
         modules = []
@@ -93,8 +93,8 @@ class ModuleAdmin:
         logging.debug("ModuleAdmin.admin_action: enter (%s -> %s)" % (username, request))
 
         if payload is None:
-            logging.debug('ModuleAdmin.admin_action: Invalid payload in request !!')
-            return (False, "Invalid payload !!")
+            logging.error('ModuleAdmin.admin_action: invalid payload in request !!')
+            return False, "Invalid payload !!"
 
         modified = False
         modules = ET.fromstring(payload)
@@ -104,13 +104,13 @@ class ModuleAdmin:
 
         users = User.objects.filter(username=username)
         if not users:
-            logging.debug("ModuleAdmin.admin_action: Inavlid user " + username)
-            return (False, 'Unknown User %s !!' % username)
+            logging.error("ModuleAdmin.admin_action: invalid user " + username)
+            return False, 'Unknown User %s !!' % username
 
         user = users[0]
         if not ServerSettings.user_aware():
             if (request == 'delete') and not user.has_perm('explorer.delete_yangmodel'):
-                return (False, 'User %s does not have permission to delete models!!' % username)
+                return False, 'User %s does not have permission to delete models!!' % username
 
         for module in modules:
             name = module.text.split('.yang')[0]
@@ -136,7 +136,7 @@ class ModuleAdmin:
             if request == 'subscribe':
                 if not is_browsable(username, name):
                     logging.debug('Module %s can not be subscribed ' % (module.text))
-                    return (False, 'Module %s  can not be subscribed, not a main module !!' % name)
+                    return False, 'Module %s  can not be subscribed, not a main module !!' % name
 
                 if not UserProfile.objects.filter(user=user, module=name).exists():
                     profile = UserProfile(user=user, module=name)
@@ -152,14 +152,15 @@ class ModuleAdmin:
                 os.remove(_file)
                 logging.debug('Deleted dependency file %s (user: %s)' % (_file, username))
 
-        return (True, None)
+        return True, None
 
 
 def dependencies_graph(username, modules=[]):
     depfile = os.path.join(ServerSettings.yang_path(username), 'dependencies.xml')
     if not os.path.exists(depfile):
         (rc, msg) = Compiler.compile_pyimport(username, None)
-        if not rc: return (rc, msg)
+        if not rc:
+            return rc, msg
 
     dgraph = DYGraph(depfile)
     g = dgraph.digraph([m.text.split('.yang')[0] for m in modules])
@@ -174,7 +175,8 @@ python package is installed !!""")
 binaries (http://www.graphviz.org/Download.php) are installed on
 the server !!""")
 
-    return (True, g.comment)
+    return True, g.comment
+
 
 def is_browsable(username, module):
     cxml_path = os.path.join(ServerSettings.cxml_path(username), module + '.xml')
@@ -185,5 +187,5 @@ def is_browsable(username, module):
             if root.find('node'):
                 browsable = True
         except:
-            logging.error('is_browsable: Excption in parse -> ' + cxml_path)
+            logging.error('is_browsable: Exception in parse -> ' + cxml_path)
     return browsable

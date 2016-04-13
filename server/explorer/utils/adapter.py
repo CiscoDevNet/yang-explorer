@@ -21,10 +21,10 @@ import json
 import logging
 from collections import OrderedDict
 import lxml.etree as ET
-from django.shortcuts import render
 from explorer.utils.netconf import gen_netconf
 from explorer.utils.restconf import gen_restconf
 from explorer.utils.runner import NCClient, RestClient
+
 
 class Adapter(object):
     """ Class adapter for NCClient """
@@ -54,7 +54,7 @@ class Adapter(object):
             elif tag == 'keyvalue' and len(child):
                 rpc = ''
 
-        return (protocol, auth, fmt, rpc)
+        return protocol, auth, fmt, rpc
 
     @staticmethod
     def run_request(username, payload):
@@ -170,6 +170,7 @@ class Adapter(object):
 
         # Generate NETCONF
         return gen_netconf(username, request, mode)
+
 
 def build_response(res):
     rest_ops = {"merge": "PATCH",

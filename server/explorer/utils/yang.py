@@ -24,10 +24,11 @@ from django.conf import settings
 from explorer.utils.dygraph import DYGraph
 from explorer.utils.misc import ServerSettings
 
+
 class Parser(object):
-    '''
+    """
     Basic Yang modulename parser
-    '''
+    """
     def __init__(self, filename):
         self.module = None
         self.revision = None
@@ -55,9 +56,9 @@ class Parser(object):
             logging.error('Could not parse modulename, uploaded file may be currupted !!')
 
     def get_filename(self):
-        '''
+        """
         Returns yang file name with version suffix.
-        '''
+        """
         if self.revision is not None:
             return self.module + '@' + self.revision + '.yang'
         return self.module + '.yang'
@@ -67,24 +68,24 @@ class Parser(object):
 
 
 class Compiler(object):
-    '''
+    """
     Compile yang models into cxml
-    '''
+    """
     @staticmethod
     def compile_cxml(username, session, filename):
-        '''
+        """
         Compile yang model and return tuple (boolean, list-of-errors)
-        '''
+        """
         logging.debug('Compiling %s .. !!' % filename)
 
         plugins = os.path.join(settings.BASE_DIR, 'explorer', 'plugins')
         if not os.path.exists(plugins):
             logging.error('CXML Plugin directory is missing .. !!')
-            return (False, None)
+            return False, None
 
         if subprocess.call(['which', 'pyang']) != 0:
             logging.error('Could not find pyang compiler, please install pyang .. !!')
-            return (False, None)
+            return False, None
 
         basename = os.path.basename(filename)
         modulename = basename.split('.')[0].strip()
@@ -94,7 +95,7 @@ class Compiler(object):
             session_dir = ServerSettings.session_path(session)
             if not os.path.exists(session_dir):
                 logging.error('compile_cxml: Session directory %s not found !!',  session_dir)
-                return (False, ["Session error !!"])
+                return False, ["Session error !!"]
             yangfile = os.path.join(session_dir, modulename + '.yang')
             cxmlfile = os.path.join(session_dir, modulename + '.xml')
         else:
@@ -104,7 +105,7 @@ class Compiler(object):
         # Verify if yang file exists
         if not os.path.exists(yangfile):
             logging.debug("compile_cxml: " + yangfile + ' not found !!')
-            return (False, ["Yang module %s not found on server !!" % modulename])
+            return False, ["Yang module %s not found on server !!" % modulename]
 
         command = ['pyang', '-f', 'cxml', '--plugindir', 'explorer/plugins', '-p']
 
@@ -133,21 +134,21 @@ class Compiler(object):
                 fd.write(ET.tostring(node))
             logging.debug('compile_cxml: Empty output from pyang, created default cxml!!')
 
-        return  Compiler.invoke_compile(command, cxmlfile, empty_callback)
+        return Compiler.invoke_compile(command, cxmlfile, empty_callback)
 
     @staticmethod
     def compile_pyimport(username, session=None):
-        '''
+        """
         Compile yang model and return tuple (boolean, list-of-errors)
-        '''
+        """
         plugins = os.path.join(settings.BASE_DIR, 'explorer', 'plugins')
         if not os.path.exists(plugins):
             logging.error('CXML Plugin directory is missing .. !!')
-            return (False, None)
+            return False, None
 
         if subprocess.call(['which', 'pyang']) != 0:
             logging.error('Could not find pyang compiler, please install pyang .. !!')
-            return (False, None)
+            return False, None
 
         logging.debug('Rebuilding dependencies for user %s' % username)
 
@@ -157,7 +158,7 @@ class Compiler(object):
             session_dir = ServerSettings.session_path(session)
             if not os.path.exists(session_dir):
                 logging.error('compile_pyimport: Session directory %s not found !!',  session_dir)
-                return (False, ["Session error !!"])
+                return False, ["Session error !!"]
             includes.append(session_dir)
             depfile = os.path.join(session_dir, 'dependencies.xml')
         else:
@@ -170,7 +171,7 @@ class Compiler(object):
 
         if not target_yangs:
             logging.debug('compile_pyimport: No yang file found !!')
-            return (True, ET.Element('messages'))
+            return True, ET.Element('messages')
 
         command = ['pyang', '-f', 'pyimport', '--plugindir', 'explorer/plugins', '-p']
         command += [':'.join(includes)]
@@ -272,7 +273,8 @@ class Compiler(object):
             msg.text = line
             messages.append(msg)
 
-        return (rc, messages)
+        return rc, messages
+
 
 def _find_matching(target, directory, modules):
     logging.debug('Searching target %s in %s' % (target, directory))

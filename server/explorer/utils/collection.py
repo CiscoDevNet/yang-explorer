@@ -24,13 +24,14 @@ from explorer.models import Collection as Col
 from explorer.models import User
 from explorer.utils.adapter import Adapter
 
+
 class Collection(object):
-    ''' This class implements utility routines to work with
-    collections '''
+    """ This class implements utility routines to work with
+    collections """
 
     @staticmethod
     def add(metadata, payload):
-        ''' Add a collection entry '''
+        """ Add a collection entry """
         if metadata in [None, '']:
             logging.error('Invalid metadata')
             return False
@@ -54,7 +55,7 @@ class Collection(object):
                 return False
 
             user = User.objects.filter(username=author)
-            obj = Col(name=cname, user=user)
+            obj = Col(name=cname, user=user[0])
             obj.save()
             logging.debug('Created new collection ' + cname)
 
@@ -77,7 +78,7 @@ class Collection(object):
 
     @staticmethod
     def remove(metadata):
-        ''' Remove a entry from collection '''
+        """ Remove a entry from collection """
         if metadata is None or metadata == '':
             logging.error('Invalid metadata')
             return False
