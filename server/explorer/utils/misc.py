@@ -17,6 +17,7 @@
 """
 import os
 import lxml.etree as ET
+from django.conf import settings
 
 class Response(object):
     """
@@ -69,3 +70,9 @@ class ServerSettings(object):
     def cxml_path(user):
         """ Build path to user's yang directory """
         return os.path.join('data', 'users', user, 'cxml')
+
+    @staticmethod
+    def schema_path(session):
+        """ Path to schema path """
+        return os.path.join(settings.BASE_DIR, 'data', 'session', session)
+

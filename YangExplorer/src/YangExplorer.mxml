@@ -81,6 +81,7 @@
             public static const TAB_BUILD_VIEW:int = 0;
             public static const TAB_EXECUTE_VIEW:int = 1;
             public static const TAB_MANAGE_VIEW:int = 2;
+            public static const TAB_SCHEMA_VIEW:int = 3;
             
             /* Tab navigator views for test builder */
             public static const TAB_OPERATION_VIEW:int = 0;
@@ -105,6 +106,7 @@
             public var DEVICE_URL:String; 
             public var LOGIN_URL:String;
             public var ADMIN_URL:String;
+            public var BASE_URL:String;
             
             /* Components */
             public var loginWindow:LoginWindow;
@@ -112,7 +114,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.1.1 (Beta)';
+            public var VERSION : String = '0.2.0 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -375,6 +377,19 @@
                 return new XML(strPayload);
             }
             
+            public function getRequestSchemaPayload(schemas: String) : XML
+            {
+                if (!setDeviceSettings(true)) {
+                    return null;
+                }
+                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+                var strPayload: String = ncReq.toSchemaString(schemas);
+                if (strPayload == '') {
+                    return null;
+                }
+                return new XML(strPayload);
+            }
+
             public function getRequestPayload(runnable : Boolean) : XML
             {
                 ncReq.reset()
@@ -456,6 +471,10 @@
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW
             }
             
+            public function get_dev_profiles() : ArrayCollection {
+                return deviceProfiles;
+            }
+
             public function loadUserSession() : void
             {
                 profileService.url = 'http://' + YTOOL_HOST + '/explorer/session';
@@ -468,16 +487,24 @@
             
             public function refresh_collectionArea() : void
             {
-                collections.update(global.get_url())
+                collections.update(BASE_URL)
                 collections.refresh()
             }
             
             public function refresh_mgmtArea() : void
             {
-                mgmt.update(global.get_url())
+                mgmt.update(BASE_URL)
                 mgmt.refresh()
             }
             
+            public function refresh_schemaArea(force : Boolean = false) : void
+            {
+                schema.update(BASE_URL)
+                if (tnWorkflow.selectedIndex == TAB_SCHEMA_VIEW) {
+                    schema.reset();
+                }
+            }
+
             public function loadUserProfile() : void
             {
                 adg.url = TREE_URL;
@@ -490,10 +517,12 @@
                     refresh_explorerArea();
                     refresh_collectionArea();
                     refresh_mgmtArea();
+                    refresh_schemaArea();
                     enableAllButtons(true)
                 } else {
                     adg.reset()
                     mgmt.reset()
+                    schema.reset()
                     collections.reset()
                     enableAllButtons(false)
                 }
@@ -516,6 +545,7 @@
                 DEVICE_URL = 'http://' + YTOOL_HOST + '/explorer/userprofiles';
                 LOGIN_URL = 'http://' + YTOOL_HOST + '/explorer/login'
                 ADMIN_URL = 'http://' + YTOOL_HOST + '/admin'
+                BASE_URL = 'http://' + YTOOL_HOST + '/explorer'
                 loadUserSession()
             }
             
@@ -613,19 +643,28 @@
                 }
             }
             
+            public function set_devProfile(index : int) : void {
+                populate_devProfile(index)
+            }
+
             protected function lstDevProfile_changeHandler():void
+            {
+                populate_devProfile(lstDevProfile.selectedIndex)
+            }
+
+            private function populate_devProfile(index : int):void
             {
                 if (deviceProfilesXML == null) {
                     return
                 }
                 
-                if (lstDevProfile.selectedIndex <= 0) {
+                if (index <= 0) {
                     //reset_deviceSettings()
                     reset_netconfSettings(true)
                     return
                 }
                 
-                var profilename:String = deviceProfiles.getItemAt(lstDevProfile.selectedIndex).toString()
+                var profilename:String = deviceProfiles.getItemAt(index).toString()
                 
                 for each (var item : XML in deviceProfilesXML.profile) {
                     if (item.@type == 'device' && profilename == item.@name) {
@@ -694,6 +733,9 @@
                         break;
                     case TAB_MANAGE_VIEW:
                         mgmt.refresh_if_required();
+                        break;
+                    case TAB_SCHEMA_VIEW:
+                        schema.refresh_if_required();
                         break;
                 }
             }
@@ -965,9 +1007,12 @@
                         <mx:VBox width="100%" height="100%" label=" Manage ">
                             <modules:Admin id="mgmt" width="100%" height="100%"/>
                         </mx:VBox>
+                        <mx:VBox width="100%" height="100%" label=" Schema ">
+                            <modules:Schema id="schema" width="100%" height="100%"/>
+                        </mx:VBox>
                     </mx:TabNavigator>
                 </mx:Canvas>
-                <mx:Canvas id="cnvComp" width="28%" height="100%" label="Canvas 2">
+                <mx:Canvas id="cnvComp" width="15%" height="100%" label="Canvas 2">
                     <modules:YangProperties id="adgProp" width="100%" height="100%"/>
                 </mx:Canvas>
             </mx:HDividedBox>

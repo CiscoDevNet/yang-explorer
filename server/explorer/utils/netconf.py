@@ -22,7 +22,7 @@ import logging
 import xml.etree.ElementTree as ET
 from explorer.utils.admin import ModuleAdmin
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 rpc_xmlns = 'urn:ietf:params:xml:ns:netconf:base:1.0'

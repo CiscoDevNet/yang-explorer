@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright 2015, Cisco Systems, Inc
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+@author: Jennifer Chou, Cisco Systems, Inc.
+-->
+
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+         xmlns:s="library://ns.adobe.com/flex/spark" 
+         xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="flatspark.components.*"
+         creationComplete="creationCompleteHandler(event)">
+    <fx:Declarations>
+        <s:HTTPService id="schemaService" fault="schemaService_faultHandler(event)"
+                       result="schemaService_resultHandler(event)"
+                       resultFormat="e4x" showBusyCursor="true"/>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import flash.net.URLRequest;
+            import flash.net.navigateToURL;
+            
+            import mx.collections.ArrayCollection;
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            import spark.events.IndexChangeEvent;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.TextInputSizeEnum;
+            import flatspark.utils.AwesomeUtils;
+               
+            public var uploadWindow:UploadWindow;
+            private var url:String;
+            private var upload_url:String;
+            
+            [Bindable]
+            private var dpSchemaList : ArrayCollection;
+            
+            [Bindable]
+            public var deviceProfiles:ArrayCollection;
+            
+            public function update(_url : String) : void {
+                url = _url + '/schema?';
+                upload_url = _url+ '/upload?';
+            }
+            
+            public function refresh_if_required() : void {
+                if (!dpSchemaList) {
+                    if (devProfileList.selectedIndex > 0) {
+                        get_schema('get-schema')
+                    }
+                }
+            }
+            private function get_schema(_action: String): void {
+                if (!url) {
+                    return;
+                }
+            
+                if (!dpSchemaList) {
+                    dpSchemaList = new ArrayCollection()
+                }
+                var req : XML = parentApplication.getRequestCapPayload()
+                if (req == null) {
+                    if (_action == 'get-schema') {
+                        reset();
+                    }
+                } else {
+                    schemaService.url = url;
+                    schemaService.send({action:_action, payload:req});
+                    enable(true);
+                }
+            }
+            
+            public function reset() : void {
+                if (dpSchemaList) {
+                    dpSchemaList.removeAll()
+                    dpSchemaList.refresh()
+                    dpSchemaList = null;
+                }
+                enable(false);
+            }
+            
+            public function enable (enalble : Boolean) : void {
+                btnSync.enabled = enalble;
+                btnDownload.enabled = enalble;
+                cbSelAll.selected = false;
+            }
+            
+            protected function creationCompleteHandler(event:FlexEvent):void
+            {
+                url = null;
+                dpSchemaList = null;
+                deviceProfiles = parentApplication.get_dev_profiles()
+                reset();
+            }
+            
+            private function get_selected(mode:String) : XML {
+                var str : String = '<schemas>';
+                var count:int = 0;
+                
+                for each (var item : Object in dpSchemaList) {
+                    if (item.selected) {
+                        if (mode == 'add' && item.add == 'ignored') {
+                            continue;
+                        }
+                        str +=  '<schema>' + item.schema + '@' + item.version + '</schema>';
+                        count++;
+                    }
+                }
+                if (count == 0) {
+                    return null
+                }
+                str += '</schemas>';
+                return new XML(str);
+            }
+            
+            protected function schema_clickHandler(mode : String) : void
+            {
+                var sc_xml : XML = get_selected(mode);
+                if (sc_xml == null) {
+                    Alert.show('Please select at least one schema');
+                    return;
+                }             
+                var req_xml:XML = parentApplication.getRequestSchemaPayload(sc_xml);
+                
+                if (req_xml == null) {
+                    reset();
+                } else {
+                    schemaService.url = url;
+                    schemaService.send({action:mode, payload:req_xml});
+                }
+            }
+            
+            protected function schemaService_faultHandler(event:FaultEvent):void
+            {
+                Alert.show('Something went wrong, returned errored response !!', 'Http Error');
+            }
+            
+            protected function schemaService_resultHandler(event:ResultEvent):void
+            {
+                var result : XML = event.result as XML;
+                if (result == null) {
+                    Alert.show('Something went wrong, schema request', 'Http Error');
+                    return;
+                }
+                var response : Response = new Response(result);
+                
+                if (response.type == 'download') {
+                    if (!response.errored) {
+                        var u:URLRequest = new URLRequest(response.msg);
+                        navigateToURL(u,"_blank");
+                    } else {
+                        Alert.show("Download Error", response.msg);
+                    }
+                } else if (response.type == 'get') {           
+                    if (!response.errored && response.xml) {
+                        dpSchemaList.removeAll();
+                        cbSelAll.selected = false;
+                        for each (var schema : XML in response.xml.children()) {
+                            var name:String = schema.hasOwnProperty('@name') ? schema.@name : '';
+                            var ver:String = schema.hasOwnProperty('@version') ? schema.@version: '';
+                            var unmatched:String = schema.hasOwnProperty('@unmatched') ? schema.@unmatched : '';
+                            dpSchemaList.addItem({selected: false, schema: name, version: ver, unmatched: unmatched});
+                        }
+                        dpSchemaList.refresh();
+                        enable(true);
+                    } else {
+                        Alert.show(response.msg);
+                    }
+                } else if (response.type == 'add') {
+                    if (!response.errored) {
+                        uploadWindow = UploadWindow(PopUpManager.createPopUp(this, UploadWindow, true))
+                        uploadWindow.title = 'Schema-Upload';
+                        uploadWindow.init(upload_url);
+                        PopUpManager.centerPopUp(uploadWindow)
+                        return;
+                    }
+                }
+            }
+            
+            private function listFilter(item:Object):Boolean {
+                var target : String;
+                if(item.hasOwnProperty("schema")) {
+                    target = item["schema"].toString().toLowerCase() 
+                    return target.indexOf(txtFilter.text.toLowerCase()) != -1;
+                }
+                return false;
+            }
+            
+            protected function btnFilter_clickHandler():void
+            {
+                dpSchemaList.filterFunction = listFilter;
+                dpSchemaList.refresh();
+            }
+            
+            protected function cbSelAll_changeHandler():void
+            {
+                for each (var item : Object in lstSchema.dataProvider) {
+                    item.selected = cbSelAll.selected;
+                }
+                dpSchemaList.filterFunction = listFilter;
+                dpSchemaList.refresh();
+            }
+            
+            protected function unmatchSelAll_changeHandler():void
+            {
+                for each (var item : Object in lstSchema.dataProvider) {
+                    if (item.unmatched == '[out-of-sync]') {
+                        item.selected = unmatchSelAll.selected;
+                    }
+                }
+                dpSchemaList.filterFunction = listFilter;
+                dpSchemaList.refresh();
+            }
+            
+            protected function showMIB_changeHandler():void
+            {
+                if (showMIB.selected) {
+                    get_schema('get-all-schema'); 
+                } else {
+                    get_schema('get-schema')
+                }
+            }
+            
+            protected function devProfile_changeHandler(event:IndexChangeEvent):void {
+                if (devProfileList.selectedIndex == 0) {
+                    reset()
+                } else {
+                    parentApplication.set_devProfile(devProfileList.selectedIndex);
+                    get_schema('get-schema')
+                }
+            }
+        ]]>
+    </fx:Script>
+    <s:VGroup width="100%" height="100%" padding="2">
+        <s:HGroup width="100%">
+            <s:Form id="formDev" width="100%" height="100%"
+                    fontFamily="Avenir,Verdana">
+                <s:FormItem label="Device Profile">
+                    <s:DropDownList id="devProfileList" width="200"
+                                    height="{TextInputSizeEnum.Small}"
+                                    change="devProfile_changeHandler(event)"
+                                    dataProvider="{deviceProfiles}"/>
+                </s:FormItem>
+             </s:Form> 
+        </s:HGroup>   
+         <s:HGroup padding="5" width="100%">
+            <s:CheckBox id="cbSelAll" label="Select All" selected="false" change="cbSelAll_changeHandler()"/>
+            <s:Spacer width="10%"/>
+            <s:CheckBox id="unmatchSelAll" label="Select out-of-sync" selected="false" change="unmatchSelAll_changeHandler()"/>
+            <s:Spacer width="10%"/>
+            <s:CheckBox id="showMIB" label="Show MIBs" selected="false" change="showMIB_changeHandler()"/>
+            <s:Spacer width="80%"/>
+            <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
+        </s:HGroup>
+        <s:List id="lstSchema" dataProvider="{dpSchemaList}" width="100%" height="100%"
+                itemRenderer="itemrenderers.SchemaListRenderer" borderVisible="false">
+        </s:List>
+        <s:HGroup direction="rtl" padding="10" width="100%">
+            <components:ButtonIcon id="btnSync" width="100"
+                                   label="Sync" brand="{BrandColorEnum.Success}"
+                                   toolTip="Retrieve selected models from device and sync to YTOOL database"
+                                   click="schema_clickHandler('add-schema')"
+                                   iconFont="{AwesomeUtils.fa_upload}"/>
+            <components:ButtonIcon id="btnDownload" label="Download"
+                                   click="schema_clickHandler('download-schema')"
+                                   width="100"
+                                   toolTip="Retrieve selected models from device and download"
+                                   brand="{BrandColorEnum.Success}"
+                                   iconFont="{AwesomeUtils.fa_download}"/>
+        </s:HGroup>
+    </s:VGroup>
+</s:Group>

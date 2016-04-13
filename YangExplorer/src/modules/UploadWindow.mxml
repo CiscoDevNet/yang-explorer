@@ -309,6 +309,11 @@
                 } else if (response.type == 'init') {
                     if (!response.errored) {
                         addUploadedFiles(response.xml)
+                        this.visible = true;
+                        if (this.title == 'Schema-Upload') {
+                            callLater(btnUpload_clickHandler, null);
+                        }
+
                     } else {
                         Alert.show(response.msg, "Error");
                     }

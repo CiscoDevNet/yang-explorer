@@ -116,6 +116,15 @@ def _compile_dependecies(user, modules, session=None):
 
     logging.debug('_compile_dependecies: done')
 
+def _clean_oldfiles(dirpath, fname):
+    if '@' in fname: fname = fname.split('@')[0]
+    for file in os.listdir(dirpath):
+        fn = os.path.basename(file.split('@')[0])
+        fn = fn.split('.yang')[0]
+        if fn == fname:
+            f = os.path.join(dirpath, file)
+            os.remove(f)
+
 def commit_files(user, session):
     """ Moves compiled yang moudles to user's yang directory """
 
@@ -148,6 +157,8 @@ def commit_files(user, session):
         logging.debug('Committing ' + yang_src_path)
         if os.path.exists(yang_src_path):
             logging.debug('Commit ' + yang_dst_path)
+            _clean_oldfiles(yangdst, base)
+            _clean_oldfiles(cxmldst, base)
             os.rename(yang_src_path, yang_dst_path)
             os.rename(cxmlpath, cxml_dst_path)
             module = ET.Element('module')

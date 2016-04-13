@@ -13,6 +13,7 @@ Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
+import os
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.conf.urls.static import static
@@ -24,4 +25,4 @@ urlpatterns = [
     url(r'^explorer/', include('explorer.urls')),
     url(r'^crossdomain.xml$', 'security.policy_handler', name='policy_handler'),
     url(r'^$', RedirectView.as_view(url='/static/YangExplorer.html')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static('/download/', document_root=os.path.join(settings.BASE_DIR,'data'))

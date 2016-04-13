@@ -32,9 +32,10 @@ from explorer.utils.adapter import Adapter
 from explorer.utils.collection import Collection
 from explorer.utils.misc import ServerSettings
 from explorer.utils.admin import ModuleAdmin
+from explorer.utils.schema import get_schema, download_schema, add_schema
 import explorer.utils.uploader as Uploader
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 @csrf_exempt
@@ -249,3 +250,25 @@ def module_handler(request):
 
     logging.debug("module_handler: exit")
     return render_to_response('loader.xml', {'nodes': lst}, RequestContext(request))
+
+def schema_handler(request):
+    '''
+    Handle schema request from UI.
+    '''
+    logging.debug("schema_handler: enter")
+    req = request.GET.get('payload', '')
+    action = request.GET.get('action', '')
+    logging.debug('Recieved schema Request (%s)' % action)
+
+    if not request.user.is_authenticated():
+        logging.error('User must be logged in !!')
+        return HttpResponse(Response.error(action, 'Unauthorized'))
+    if action == 'get-schema':
+        return get_schema(request, req)
+    elif action == 'get-all-schema':
+        return get_schema(request, req, all=True)
+    elif action == 'download-schema':
+        return download_schema(request, req)
+    elif action == 'add-schema':
+        return add_schema(request, req)
+

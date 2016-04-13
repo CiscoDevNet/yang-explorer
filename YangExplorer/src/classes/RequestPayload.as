@@ -91,6 +91,16 @@ package classes
             return str;
         }
         
+        public function toSchemaString(schemaStr : String) : String {
+            var str : String = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            str += '<payload version="3" protocol="' + protocol + '">\n';
+            str += _toDeviceString();
+            str += '<keyvalue/>\n';
+            str += schemaStr;
+            str += '</payload>'
+            return str;
+        }
+
         public function toString(rpc:String = '') : String {
             
             var kvStr : String = '';

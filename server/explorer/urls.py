@@ -26,5 +26,6 @@ urlpatterns = [
     url(r'^upload', views.upload_handler, name='upload_handler'),
     url(r'^admin', views.admin_handler, name='admin_handler'),
     url(r'^netconf', views.request_handler, name='request_handler'),
+    url(r'^schema', views.schema_handler, name='schema_handler'),
     url(r'^userprofiles', profile_view.profile_handler, name='profile_handler'),
 ]
