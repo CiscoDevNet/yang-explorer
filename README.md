@@ -104,29 +104,31 @@ limitations under the License.
 ####3.2 Running with ip-address (Shared server)
 #####Start Server:
 ```bash
-   cd <install-root>/yang-explorer
+   # Determine <ip-address> using if-config
    
-   vi start.sh
-   (replace localhost with ip-address)
-   
-   [sudo] ./start.sh
+   # Add ip-address/port in YangExplorer.html after following line:
+   cd <install-root>/yang-explorer/server/static
+      vi YangExplorer.html
+      var flashvars = {}; 
++     flashvars.host = '<ip-address>';
++     flashvars.port = '8088';
+
+   # save & quit
+
+   # Update ip-address in startup script
+      cd <install-root>/yang-explorer
+      vi start.sh
+      (update HOST variable with <ip-address>)
+   # save & quit
+      
+   ./start.sh
 
    Note: sudo may be required if you did not use virtualenv during installation.
 ```
 
 #####Start Explorer:
 ```bash
-   cd <install-root>/yang-explorer/server/static
-   vim YangExplorer.html
-   
-   Add ip-address/port in YangExplorer.html after following line:
-      
-      var flashvars = {}; 
-
-+     flashvars.host = '1.2.3.4'; 
-+     flashvars.port = '8088';
-
-   http://1.2.3.4:8088/static/YangExplorer.html
+   http://<ip-address>:8088/static/YangExplorer.html
 ```
 
 ###4. Caveats
