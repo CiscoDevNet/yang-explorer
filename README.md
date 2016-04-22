@@ -126,7 +126,7 @@ limitations under the License.
 +     flashvars.host = '1.2.3.4'; 
 +     flashvars.port = '8088';
 
-   http://localhost:8088/static/YangExplorer.html
+   http://1.2.3.4:8088/static/YangExplorer.html
 ```
 
 ###4. Caveats
