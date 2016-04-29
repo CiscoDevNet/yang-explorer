@@ -19,6 +19,7 @@ limitations under the License.
 import os
 import logging
 import lxml.etree as ET
+from django.core.cache import cache
 
 
 class Cxml:
@@ -35,6 +36,9 @@ class Cxml:
         else:
             self.cxml = None
             logging.error('File %s does not exists' % filename)
+
+    def getroot(self):
+        return self.cxml.getroot()
 
     def toxpath(self, path):
         path_elems = path.split('/')
@@ -87,7 +91,7 @@ class Cxml:
         if self.cxml is None:
             return root
 
-        cxml_root = self.cxml.getroot()
+        cxml_root = self.getroot()
 
         if path == '':
             node = self.get_lazy_node_internal(cxml_root)
@@ -215,3 +219,9 @@ class Cxml:
 
         return [(ns.get('prefix', ''), ns.get('module', ''), ns.text)
                 for ns in self.cxml.getroot() if ns.tag == 'namespace']
+
+
+def get_cxml(filename):
+    """ Create and return CXML object from File or LocalCache """
+    cxml = Cxml(filename)
+    return cxml

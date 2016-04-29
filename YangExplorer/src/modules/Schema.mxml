@@ -43,7 +43,6 @@ limitations under the License.
             import classes.Response;
             
             import flatspark.enums.BrandColorEnum;
-            import flatspark.enums.TextInputSizeEnum;
             import flatspark.utils.AwesomeUtils;
                
             public var uploadWindow:UploadWindow;
@@ -135,7 +134,7 @@ limitations under the License.
             {
                 var sc_xml : XML = get_selected(mode);
                 if (sc_xml == null) {
-                    Alert.show('Please select at least one schema');
+                    Alert.show('Please select at least one model');
                     return;
                 }             
                 var req_xml:XML = parentApplication.getRequestSchemaPayload(sc_xml);
@@ -161,7 +160,12 @@ limitations under the License.
                     return;
                 }
                 var response : Response = new Response(result);
-                
+
+                if (response.errored) {
+                    Alert.show(response.msg, 'Error');
+                    return;
+                }
+
                 if (response.type == 'download') {
                     if (!response.errored) {
                         var u:URLRequest = new URLRequest(response.msg);
@@ -169,7 +173,7 @@ limitations under the License.
                     } else {
                         Alert.show("Download Error", response.msg);
                     }
-                } else if (response.type == 'get') {           
+                } else if (response.type == 'get') {
                     if (!response.errored && response.xml) {
                         dpSchemaList.removeAll();
                         cbSelAll.selected = false;
@@ -194,7 +198,7 @@ limitations under the License.
                     }
                 }
             }
-            
+
             private function listFilter(item:Object):Boolean {
                 var target : String;
                 if(item.hasOwnProperty("schema")) {
@@ -229,16 +233,7 @@ limitations under the License.
                 dpSchemaList.filterFunction = listFilter;
                 dpSchemaList.refresh();
             }
-            
-            protected function showMIB_changeHandler():void
-            {
-                if (showMIB.selected) {
-                    get_schema('get-all-schema'); 
-                } else {
-                    get_schema('get-schema')
-                }
-            }
-            
+
             protected function devProfile_changeHandler(event:IndexChangeEvent):void {
                 if (devProfileList.selectedIndex == 0) {
                     reset()
@@ -250,24 +245,20 @@ limitations under the License.
         ]]>
     </fx:Script>
     <s:VGroup width="100%" height="100%" padding="2">
-        <s:HGroup width="100%">
-            <s:Form id="formDev" width="100%" height="100%"
-                    fontFamily="Avenir,Verdana">
-                <s:FormItem label="Device Profile">
-                    <s:DropDownList id="devProfileList" width="200"
-                                    height="{TextInputSizeEnum.Small}"
-                                    change="devProfile_changeHandler(event)"
-                                    dataProvider="{deviceProfiles}"/>
-                </s:FormItem>
-             </s:Form> 
-        </s:HGroup>   
+        <s:HGroup width="100%" paddingLeft="5">
+            <s:DropDownList id="devProfileList" width="200"
+                            prompt="Select Device Profile"
+                            toolTip="Select device profile"
+                            change="devProfile_changeHandler(event)"
+                            dataProvider="{deviceProfiles}"/>
+            <mx:LinkButton label="Refresh" click="devProfile_changeHandler(null)"/>
+            <mx:LinkButton label="Create device profile" click="parentApplication.create_profile()"  color="blue"/>
+        </s:HGroup>  
          <s:HGroup padding="5" width="100%">
             <s:CheckBox id="cbSelAll" label="Select All" selected="false" change="cbSelAll_changeHandler()"/>
             <s:Spacer width="10%"/>
             <s:CheckBox id="unmatchSelAll" label="Select out-of-sync" selected="false" change="unmatchSelAll_changeHandler()"/>
-            <s:Spacer width="10%"/>
-            <s:CheckBox id="showMIB" label="Show MIBs" selected="false" change="showMIB_changeHandler()"/>
-            <s:Spacer width="80%"/>
+            <s:Spacer width="90%"/>
             <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
         </s:HGroup>
         <s:List id="lstSchema" dataProvider="{dpSchemaList}" width="100%" height="100%"
@@ -276,7 +267,7 @@ limitations under the License.
         <s:HGroup direction="rtl" padding="10" width="100%">
             <components:ButtonIcon id="btnSync" width="100"
                                    label="Sync" brand="{BrandColorEnum.Success}"
-                                   toolTip="Retrieve selected models from device and sync to YTOOL database"
+                                   toolTip="Retrieve selected models from device and sync to YangExplorer database"
                                    click="schema_clickHandler('add-schema')"
                                    iconFont="{AwesomeUtils.fa_upload}"/>
             <components:ButtonIcon id="btnDownload" label="Download"

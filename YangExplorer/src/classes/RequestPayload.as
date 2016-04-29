@@ -100,6 +100,15 @@ package classes
             str += '</payload>'
             return str;
         }
+        
+        public function toCommitString() : String {
+            var saved : String = format;
+            format = FMT_RAW;
+            var str : String = '<rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"><commit/></rpc>';
+            str = toString(str);
+            format = saved;
+            return str;
+        }
 
         public function toString(rpc:String = '') : String {
             
@@ -122,6 +131,8 @@ package classes
                         kvStr += '<node path="' + path + '" flag="get"/>\n'
                     } else if (value == '<empty>') {
                         kvStr += '<node path="' + path + '" flag="empty"' + optionString(option) + '/>\n';
+                    } else if (value == '<rpc>') {
+                        kvStr += '<node path="' + path + '" flag="rpc"' + optionString(option) + '/>\n';
                     } else if (value != '') {
                         kvStr += '<node path="' + path + '"' + optionString(option) + '>' + value + '</node>\n';
                     } else {

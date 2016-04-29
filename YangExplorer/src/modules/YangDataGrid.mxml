@@ -29,6 +29,7 @@
                      itemClick="itemClickHandler(event)"
                      itemRollOver="lastRollOverIndex = event.rowIndex"
                      cacheAsBitmap="true"
+                     scroll="adg_scrollHandler()"
                      >
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -48,6 +49,7 @@
             import mx.events.AdvancedDataGridEvent;
             import mx.events.DataGridEventReason;
             import mx.events.ListEvent;
+            import mx.events.ScrollEvent;
             import mx.rpc.events.FaultEvent;
             import mx.rpc.events.ResultEvent;
             
@@ -504,6 +506,12 @@
                     this.validateNow();
                 }
             }
+            
+            protected function adg_scrollHandler():void
+            {
+                this.invalidateDisplayList();
+            }
+            
         ]]>
     </fx:Script>
 </mx:AdvancedDataGrid>

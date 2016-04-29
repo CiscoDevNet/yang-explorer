@@ -19,10 +19,8 @@
 
 
 import logging
-import xml.etree.ElementTree as ET
+import explorer.utils.cxml as cxml
 from explorer.utils.admin import ModuleAdmin
-
-logging.basicConfig(level=logging.INFO)
 
 rpc_xmlns = 'urn:ietf:params:xml:ns:netconf:base:1.0'
 rpc_template = '''<rpc message-id="{msg_id}" xmlns="{rpc_ns}">
@@ -134,7 +132,7 @@ def process_xml(tree, d, node, prefix, ns, mode):
     elif type_ in ['module','choice', 'case', 'input', 'output']:
         for child in node:
             msg += process_xml(tree, d, child, prefix, '', mode)
-    elif type_ in ['list', 'container']:
+    elif type_ in ['list', 'container', 'rpc']:
         (val, option, found) = pop_keyvalue(d, prefix, mode)
 
         for child in node:
@@ -253,21 +251,21 @@ def gen_netconf(username, request, mode):
             logging.debug('file %s.xml not found !!' % name)
             continue
 
-        with open(filename, 'r') as f:
-            tree = ET.parse(f).getroot()
-            logging.info("Root node %s" % tree.get('name'))
-            # get root namespace for module
-            ns = get_namespace(tree)
+        cx = cxml.get_cxml(filename)
+        tree = cx.getroot()
+        logging.info("Root node %s" % tree.get('name'))
 
-            # get derived namespaces
-            prefixes  = module.get_namespace_pfx()
-            for pfx in prefixes:
-                ns += get_namespace(tree, pfx)
+        ns = get_namespace(tree)
 
-            # start processing CXML
-            for child in tree:
-                if child.tag != 'namespace':
-                    msg += process_xml(tree, kvDict, child, name, ns, mode)
+        # get derived namespaces
+        prefixes = module.get_namespace_pfx()
+        for pfx in prefixes:
+            ns += get_namespace(tree, pfx)
+
+        # start processing CXML
+        for child in tree:
+            if child.tag != 'namespace':
+                msg += process_xml(tree, kvDict, child, name, ns, mode)
 
     # Finally build RPC header
     rpc += build_rpc(request, msg, mode)

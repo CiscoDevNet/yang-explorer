@@ -41,19 +41,19 @@ class Parser(object):
 
         with open(filename, 'r') as f:
             for line in f:
-                if self.module == None:
+                if self.module is None:
                     res = module_re.match(line)
                     if res is not None:
                         self.module = res.group(1).strip()
 
-                if self.revision == None:
+                if self.revision is None:
                     res = revision_re.match(line)
                     if res is not None:
                         self.revision = res.group(1).strip()
                         break
 
         if self.module is None:
-            logging.error('Could not parse modulename, uploaded file may be currupted !!')
+            logging.error('Could not parse modulename, uploaded file may be corrupted !!')
 
     def get_filename(self):
         """

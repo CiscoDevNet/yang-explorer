@@ -78,7 +78,7 @@ class NCClient(object):
     def _is_connected(self):
         """ Check if session is connected """
 
-        return self.handle != None
+        return self.handle is not None
 
     def _unknown_host_cb(self, host, fp):
         return True
@@ -120,29 +120,29 @@ class NCClient(object):
     def run(self, payload):
         """ Entry routing for this class """
 
-        if payload is  None or payload == '':
+        if payload is None or payload == '':
             raise InvalidNetConfRPC('Invalid RPC message!!')
 
         reply = ET.Element('reply')
         if not self._is_connected():
             if not self.connect():
-                reply.text = 'NetConf Session could not be established {%s}</error>' % str(self)
+                reply.text = 'NetConf Session could not be established {%s}' % str(self)
                 return reply
 
         result = self.execute(payload)
-        self.disconnect()
-
         if result is None:
-            logging.debug("Failed to get reply")
             reply.text = 'Failed to get reply !!'
+            logging.error(reply.text)
         else:
             try:
-                xml = ET.fromstring(result)
-                reply.append(xml)
-                logging.debug("RECIEVE: \n=====\n%s\n=====\n" % ET.tostring(xml, pretty_print=True))
+                response = ET.fromstring(result)
+                reply.append(response)
+                logging.debug("RECEIVE: \n=====\n%s\n=====\n" % ET.tostring(response, pretty_print=True))
             except:
-                reply.text = 'no data'
+                reply.text = 'No data received from netconf agent (device)'
                 logging.exception('Faild to encode to XML: ' + str(result))
+
+        self.disconnect()
         return reply
 
     def get_capability(self):
@@ -152,14 +152,14 @@ class NCClient(object):
         reply = ET.Element('reply')
         if not self._is_connected():
             if not self.connect():
-                reply.text = 'NetConf Session could not be established {%s}</error>' % str(self)
+                reply.text = 'NetConf Session could not be established {%s}' % str(self)
                 return reply
 
         self.disconnect()
         caps = self.handle.server_capabilities
         if caps:
             reply.text = '\n'.join(caps)
-            logging.debug('Received device capabilities ..')
+            logging.info('Received device capabilities ..')
         return reply
 
     def disconnect(self):
@@ -188,7 +188,7 @@ class RestClient(object):
         payload = msg['data']
         reply = ET.Element('reply')
 
-        logging.debug("@%s %s" % (method, url))
+        logging.info("@%s %s" % (method, url))
 
         try:
             if method in ['GET', 'DELETE']:

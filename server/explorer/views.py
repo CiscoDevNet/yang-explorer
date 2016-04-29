@@ -26,7 +26,6 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
-from explorer.utils.cxml import Cxml
 from explorer.utils.misc import Response
 from explorer.utils.adapter import Adapter
 from explorer.utils.collection import Collection
@@ -34,8 +33,9 @@ from explorer.utils.misc import ServerSettings
 from explorer.utils.admin import ModuleAdmin
 from explorer.utils.schema import get_schema, download_schema, add_schema
 import explorer.utils.uploader as Uploader
+import explorer.utils.cxml as cxml
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 
 
 @csrf_exempt
@@ -210,12 +210,15 @@ def request_handler(request):
         if isinstance(reply_xml, str):
             return HttpResponse(Response.success(mode, reply_xml))
 
-    elif mode in ['get-cap', 'run-rpc']:
+    elif mode in ['get-cap', 'run-rpc', 'run-edit-commit', 'run-commit']:
         payload = request.GET.get('payload', '')
         logging.debug('run: ' + payload)
         reply_xml = Adapter.run_request(request.user.username, payload)
 
     return HttpResponse(Response.success(mode, 'ok', reply_xml))
+
+
+node_t = '<node name="{0}" path="{0}" type="module"><node name="Loading .." type="__yang_placeholder" /></node>'
 
 
 def module_handler(request):
@@ -233,27 +236,28 @@ def module_handler(request):
             # Request for root models
             modules = ModuleAdmin.get_modulelist(username)
             modules.sort()
-            path = ''
+            for m in modules:
+                lst.append(node_t.format(m.split('@')[0]))
         else:
             modules = [path.split('/')[0]]
-
-        for module in modules:
-            filename = ModuleAdmin.cxml_path(username, module)
-            if filename is not None:
-                logging.debug("module_handler: loading " + filename)
-                module = Cxml(filename)
-                nodes = module.get_lazy_node(path)
-                lst.extend([ET.tostring(node) for node in nodes])
-            else:
-                logging.error("module_handler: %s not found !!" + module)
+            for module in modules:
+                filename = ModuleAdmin.cxml_path(username, module)
+                if filename is not None:
+                    logging.debug("module_handler: loading " + filename)
+                    module = cxml.get_cxml(filename)
+                    nodes = module.get_lazy_node(path)
+                    lst.extend([ET.tostring(node) for node in nodes])
+                else:
+                    logging.error("module_handler: %s not found !!" + module)
 
     logging.debug("module_handler: exit")
     return render_to_response('loader.xml', {'nodes': lst}, RequestContext(request))
 
+
 def schema_handler(request):
-    '''
+    """
     Handle schema request from UI.
-    '''
+    """
     logging.debug("schema_handler: enter")
     req = request.GET.get('payload', '')
     action = request.GET.get('action', '')

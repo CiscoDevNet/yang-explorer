@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexProperties enableServiceManager="false" flexServerFeatures="0" flexServerType="16" fmlDataModelLocation=".model/YangExplorer.fml" serverContextRoot="" serverRoot="//vmware-host/Shared Folders/Downloads" serverRootURL="http://localhost:8088/" toolCompile="true" useServerFlexSDK="false" version="2"/>
+<flexProperties enableServiceManager="false" flexServerFeatures="0" flexServerType="16" fmlDataModelLocation=".model/YangExplorer.fml" serverContextRoot="" serverRoot="/Users/prgohite/Downloads" serverRootURL="http://localhost:8088/" toolCompile="true" useServerFlexSDK="false" version="2"/>

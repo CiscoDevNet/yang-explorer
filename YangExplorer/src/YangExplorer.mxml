@@ -51,6 +51,8 @@
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
+            import flash.net.navigateToURL;
+            
             import mx.collections.ArrayCollection;
             import mx.core.FlexGlobals;
             import mx.events.IndexChangedEvent;
@@ -114,7 +116,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.2.0 (Beta)';
+            public var VERSION : String = '0.2.1 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -161,11 +163,31 @@
                 if (response.type == 'rpc') {
                     txtScript.text = response.msg;
                     tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                } else if (response.type == 'run-edit-commit') {
+                    handleEditCommitResponse(response);
+                } else if (response.type == 'run-commit'){
+                    txtConsole.text += '\n\n===== COMMIT =====:\n\n';
+                    txtConsole.text += response.xml.children()[0].toXMLString();
+                    txtConsole.scroller.verticalScrollBar.maximum;
                 } else {
                     txtConsole.text = response.xml.children()[0].toXMLString();
                     txtConsole.scroller.verticalScrollBar.maximum;
                 }
                 updateStatus('Recieved HTTP Result for request: ' + response.type)
+            }
+            
+            private function handleEditCommitResponse(response : Response) : void {
+                var text : String = response.xml.children()[0].toXMLString();
+
+                if (text.indexOf("<ok/>") > 0) {
+                    txtConsole.text = '\n===== EDIT-CONFIG =====:\n\n'
+                    txtConsole.text += text;
+                    txtConsole.scroller.verticalScrollBar.maximum;
+                    callLater(runCommit, null);
+                } else {
+                    txtConsole.text = text;
+                    txtConsole.scroller.verticalScrollBar.maximum;
+                }
             }
             
             private function onServiceResult(event:ResultEvent):void
@@ -229,8 +251,8 @@
                         adgOp.editable = true;
                         
                         // for ios-xe default target datastore is 'running'
-                        if (lstDevPlatform.selectedIndex == 1) {
-                            cbTgtDs.selectedIndex = 0;
+                        if (lstDevPlatform.selectedIndex == 3) {
+                            cbTgtDs.selectedIndex = 2;
                         } else {
                             cbTgtDs.selectedIndex = 0;
                         }
@@ -377,6 +399,19 @@
                 return new XML(strPayload);
             }
             
+            public function getRequestCommitPayload() : XML
+            {
+                if (!setDeviceSettings(true)) {
+                    return null;
+                }
+                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+                var strPayload: String = ncReq.toCommitString();
+                if (strPayload == '') {
+                    return null;
+                }
+                return new XML(strPayload);
+            }
+            
             public function getRequestSchemaPayload(schemas: String) : XML
             {
                 if (!setDeviceSettings(true)) {
@@ -436,21 +471,43 @@
                 
                 return  XML(strPayload);
             }
+            
+            public function runCommit() : void {
+                runScript('run-commit');
+            }
 
             private function runScript(mode:String) : void {
                 var req : XML = null;
 
-                if (mode == 'get-cap') {
-                    req = getRequestCapPayload()
-                } else {
-                    req = getRequestPayload(true)
+                switch (mode) {
+                    case 'get-cap':
+                        txtConsole.text = 'Waiting for result ... '
+                        req = getRequestCapPayload();
+                        break;
+
+                    case 'run-commit':
+                        req = getRequestCommitPayload();
+                        break;
+
+                    default:
+                        req = getRequestPayload(true);
+                        if (!req) {
+                            return
+                        }
+                        var str : String = req.toString();
+                        if (cbEdit.selected && str.indexOf('<edit-config>') > 0 && str.indexOf('<candidate/>') > 0) {
+                             mode = 'run-edit-commit';
+                        } else if (adg.getMode() == YangUtil.EDIT_CONFIG && 
+                                   str.indexOf('candidate') > 0 && str.indexOf('flag="rpc"') <= 0) {
+                             mode = 'run-edit-commit';
+                        }
+                        txtConsole.text = 'Waiting for result ... '
                 }
 
                 if (req != null) {
                     runService.url = NC_URL
                     runService.send({payload:req, mode:mode})
-                    tnResults.selectedIndex = TAB_CONSOLE_VIEW
-                    txtConsole.text = 'Waiting for result ... '
+                    tnResults.selectedIndex = TAB_CONSOLE_VIEW;
                     updateStatus('Run request sent to server. please wait ..')
                 } 
             }
@@ -589,6 +646,7 @@
             {
                 txtScript.text = '';
                 txtConsole.text = '';
+                cbEdit.selected = false;
                 txtScript.editable = false;
                 txtConsole.editable = false;
                 updateStatus('Clear completed')
@@ -766,6 +824,10 @@
                     }
                 }
             }
+            
+            public function create_profile() : void {
+                navigateToURL(new URLRequest(ADMIN_URL + '/explorer/deviceprofile/add/'));
+            }
         ]]>
     </fx:Script>
     
@@ -887,13 +949,17 @@
                                             <s:FormLayout gap="-5"/>
                                         </s:layout> 
                                         <s:FormItem label="    Profile">
-                                            <s:DropDownList id="lstDevProfile" width="120"
-                                                            change="lstDevProfile_changeHandler()"
-                                                            dataProvider="{deviceProfiles}"/>
+                                            <s:HGroup>
+                                                <s:DropDownList id="lstDevProfile" width="120"
+                                                                change="lstDevProfile_changeHandler()"
+                                                                dataProvider="{deviceProfiles}"/>
+                                                <mx:LinkButton label="Create device profile" click="create_profile()"  color="blue"/>
+                                            </s:HGroup>
                                         </s:FormItem>
                                         <s:FormItem label="   Platform">
                                             <s:ComboBox id="lstDevPlatform" width="120"
-                                                            dataProvider="{devicePlatforms}"/>
+                                                            dataProvider="{devicePlatforms}"
+                                                            change="updateForm()"/>
                                         </s:FormItem>
                                         <s:HGroup>
                                             <s:FormItem label="IP Address">
@@ -1004,11 +1070,16 @@
                         <mx:VBox width="100%" height="100%" label=" Collections ">
                             <modules:Collections id="collections" width="100%" height="100%"/>
                         </mx:VBox>
-                        <mx:VBox width="100%" height="100%" label=" Manage ">
-                            <modules:Admin id="mgmt" width="100%" height="100%"/>
-                        </mx:VBox>
-                        <mx:VBox width="100%" height="100%" label=" Schema ">
-                            <modules:Schema id="schema" width="100%" height="100%"/>
+                        <mx:VBox width="100%" height="100%" label=" Manage Models ">
+                        <mx:TabNavigator id="tnManage" width="100%" height="100%"
+                                         creationPolicy="all" fontFamily="Avenir">
+                            <mx:VBox width="100%" height="100%" label=" Workspace " toolTip="Manage Yang Models in YangExplorer Database">
+                                <modules:Admin id="mgmt" width="100%" height="100%"/>
+                            </mx:VBox>
+                            <mx:VBox width="100%" height="100%" label=" Device " toolTip="Yang Models on Device">
+                                <modules:Schema id="schema" width="100%" height="100%"/>
+                            </mx:VBox>
+                        </mx:TabNavigator>
                         </mx:VBox>
                     </mx:TabNavigator>
                 </mx:Canvas>

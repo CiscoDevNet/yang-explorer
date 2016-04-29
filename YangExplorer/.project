@@ -19,17 +19,17 @@
 		<link>
 			<name>bin-debug</name>
 			<type>2</type>
-			<location>//vmware-host/Shared Folders/Downloads</location>
+			<location>/Users/prgohite/Downloads</location>
 		</link>
 		<link>
 			<name>bin-release</name>
 			<type>2</type>
-			<location>C:/Users/prgohite/GitHub/yang-explorer/server/static/YangExplorer</location>
+			<location>/Applications/Adobe Flash Builder 4.7/Adobe Flash Builder 4.7.app/Contents/MacOS/C::/Users/prgohite/GitHub/yang-explorer/server/static/YangExplorer</location>
 		</link>
 		<link>
 			<name>bin-release1</name>
 			<type>2</type>
-			<location>//vmware-host/Shared Folders/Downloads/YangExplorer</location>
+			<location>/Users/prgohite/Downloads/YangExplorer</location>
 		</link>
 	</linkedResources>
 </projectDescription>

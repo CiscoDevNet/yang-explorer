@@ -103,7 +103,7 @@ class Adapter(object):
                            device['user'], device['passwd'], params)
 
         # If rpc is not provided, return capabilities
-        if rpc is None or rpc  == '':
+        if rpc is None or rpc == '':
             return session.get_capability()
 
         logging.debug("run_netconf: " + ET.tostring(rpc))
