@@ -146,13 +146,28 @@ limitations under the License.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 
 #####5.2.2 Adding/Deleing Yang Models:
-###### Upload using yang-explorer user interface
+###### Upload using yang-explorer user interface (TBD: screen shot is out-of-date)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
-   - Click **Manage** tab
+   - Click **Manage Models** tab
+   - Click **Workspace** tab
    - Click **Add** button
       - Click **Browse** and select models to upload
       - Click *Upload*
       - **Clear** button can be used clear models in upload window
+   - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in explorer area
+   - Click Delete button to delete selected models from user account
+
+###### Sync from Device
+   - Click **Manage Models** tab
+   - Click **Device** tab
+      - Select a device from profile list
+         - YangExplorer will list yang models on device
+      - Select models to Sync to YangExplorer Workspace
+      - **Sync** button to Sync Models to YangExplorer
+      - You may encounter these error during sync:
+         - Missing models: Select missing models from the list and try sync again
+         - Duplicate models: In workspace tab, select duplicate models and delete
+   - Click **Workspace** tab
    - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in explorer area
    - Click Delete button to delete selected models from user account
 
@@ -232,14 +247,17 @@ limitations under the License.
 Device profiles can be created to quickly populate device info from drop-down list in yang-explorer.
 
    *Note: You can use default user login (guest/guest)*
-   - Click **Admin** button in YangExplorer
-   - Login login as guest or your own login
-   - On admin page, click *Device profiles* link
+   - Click **"Create device profile"** link on **Build -> Device Settings**
+   - (OR) Click **"Create device profile"** link on **Manage Models -> Device**
+   - (OR) Click **Admin** button in YangExplorer
+      - Login login as guest or your own login
+      - On admin page, click *Device profiles* link
    - On User Profiles page, click *Add device profiles* link (top-right)
    - Add device credentials (device login info is not secured)
       - Add netconf credentials (Required for connecting to netconf server)
       - Add restconf credentials (Not used currently)
    - click *Save*
+   - 
 
 #####5.3.3 Creating Collection:
 
