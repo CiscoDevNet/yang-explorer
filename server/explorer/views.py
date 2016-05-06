@@ -261,7 +261,7 @@ def schema_handler(request):
     logging.debug("schema_handler: enter")
     req = request.GET.get('payload', '')
     action = request.GET.get('action', '')
-    logging.debug('Recieved schema Request (%s)' % action)
+    logging.debug('Received schema Request (%s)' % action)
 
     if not request.user.is_authenticated():
         logging.error('User must be logged in !!')

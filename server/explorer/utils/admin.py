@@ -34,13 +34,17 @@ class ModuleAdmin:
 
         modules = ET.Element('modulelist')
         user = User.objects.filter(username=username)
+        mlist = list()
         for _file in glob.glob(os.path.join(ServerSettings.yang_path(username), '*.yang')):
+            mlist.append(os.path.basename(_file))
+
+        mlist.sort()
+        for fname in mlist:
             module = ET.Element('module')
-            module.text = os.path.basename(_file)
+            module.text = os.path.basename(fname)
             name = module.text.split('.yang')[0]
             if UserProfile.objects.filter(user=user, module=name).exists():
                 module.set('subscribed', 'true')
-
             modules.append(module)
 
         logging.debug("ModuleAdmin.get_modules: returning (%d) modules .. exit" % len(modules))
