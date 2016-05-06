@@ -53,11 +53,13 @@ limitations under the License.
    - virtualenv (recommended)
 ```bash
    Ubuntu: sudo apt-get install virtualenv
+   Fedora: sudo dnf install python-virtualenv
    MAC: sudo pip install virtualenv
 ```
    - graphviz (http://www.graphviz.org/Download.php)
 ```bash
    Ubuntu: sudo apt-get install graphviz
+   Fedora: sudo dnf install graphviz
    MAC: brew install graphviz
 ```
    - Browser with latest flash plugin (tested with google chrome)
@@ -76,6 +78,7 @@ limitations under the License.
    dependency packages:
    
    Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev zlib1g-dev
+   Fedora: sudo dnf install libxml2-devel libxslt-devel python-devel zlib-devel
 ```
 ####2.2 Update exising installtion
 
