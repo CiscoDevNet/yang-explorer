@@ -1,5 +1,5 @@
 """
-    Netconf example by yang-explorer (https://github.com/CiscoDevNet/yang-explorer)
+    Netconf python example by yang-explorer (https://github.com/CiscoDevNet/yang-explorer)
 
     Installing python dependencies:
     > pip install lxml ncclient
