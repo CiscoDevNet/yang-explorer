@@ -116,7 +116,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.2.1 (Beta)';
+            public var VERSION : String = '0.3.0 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -159,7 +159,7 @@
                     txtConsole.text = 'Errored';
                     return;
                 }
-                
+
                 if (response.type == 'rpc') {
                     txtScript.text = response.msg;
                     tnResults.selectedIndex = TAB_SCRIPT_VIEW;
@@ -197,8 +197,6 @@
                 updateStatus('Recieved HTTP Result for request type ' + response.type);
                 
                 switch(response.type) {
-                    case 'run-rpc':
-                    case 'get-cap':
                     case 'rpc':
                         if (!response.errored) {
                             if (response.xml) {
@@ -208,6 +206,19 @@
                                     ;
                             }
                             tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                        }
+                        break;
+                    case 'run-rpc':
+                    case 'get-cap':
+                    case 'gen-script':
+                        if (!response.errored) {
+                            if (response.xml) {
+                                txtConsole.text = response.xml.toString();
+                            } else {
+                                txtConsole.text = response.msg
+                                    ;
+                            }
+                            tnResults.selectedIndex = TAB_CONSOLE_VIEW;
                         }
                         break;
                     case 'session':
@@ -374,14 +385,9 @@
                         return false;
                     }
                 } else {
-                    if (runnable) {
-                        ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
-                        ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
-                                                 txtNCUser.text, txtNCPwd.text)
-                    } else {
-                        ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
-                        ncReq.setNetconfSettings('', '', '', '');
-                    }
+                    ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
+                    ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
+                                             txtNCUser.text, txtNCPwd.text)
                 }
                 return true
             }
@@ -619,6 +625,7 @@
                 btnSave.enabled = enable
                 btnCap.enabled = enable
                 btnRPC.enabled = enable
+                btnGenScript.enabled = enable
             }
             
             public function updateStatus(msg : String) : void
@@ -641,7 +648,24 @@
                 txtNCPwd.text = '';
                 txtNCPort.text = rbtnNetConf.selected ? NETCONF_PORT : RESTCONF_PORT;
             }
-            
+
+            protected function btnGenScript_clickHandler():void
+            {
+                var req : XML; 
+                
+                if (!rbtnNetConf.selected) {
+                    Alert.show('Script option is only supported for netconf protocol', 'Invalid Request');
+                    return;
+                }
+                req = getRequestPayload(false);
+                if (req != null) {
+                    moduleService.url = NC_URL
+                    moduleService.send({payload:req, mode:'gen-script'})
+                    updateStatus('Request for rpc encoding sent to server')
+                }
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW
+            }
+
             protected function btnClear_clickHandler(event:MouseEvent):void
             {
                 txtScript.text = '';
@@ -1020,12 +1044,20 @@
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="RPC"
                                                            brand="{BrandColorEnum.Success}"
-                                                           click="btnGenRPC_clickHandler()"/>
+                                                           click="btnGenRPC_clickHandler()"
+                                                           toolTip="Generate RPC encoding"/>
+                                    <components:ButtonIcon id="btnGenScript" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="Script"
+                                                           brand="{BrandColorEnum.Success}"
+                                                           click="btnGenScript_clickHandler()"
+                                                           toolTip="Generate python script"/>
                                     <components:ButtonIcon id="btnCap" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Capabilities"
                                                            brand="{BrandColorEnum.Success}"
-                                                           click="runScript('get-cap')"/>
+                                                           click="runScript('get-cap')"
+                                                           toolTip="Fetch device capability"/>
                                 </s:HGroup>
                                 <mx:TabNavigator id="tnResults" width="100%" height="100%"
                                                  creationPolicy="all" fontFamily="Avenir">

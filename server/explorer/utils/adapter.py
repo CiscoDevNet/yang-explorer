@@ -21,9 +21,11 @@ import json
 import logging
 from collections import OrderedDict
 import lxml.etree as ET
+from django.template.loader import render_to_string
 from explorer.utils.netconf import gen_netconf
 from explorer.utils.restconf import gen_restconf
 from explorer.utils.runner import NCClient, RestClient
+from explorer.utils.ncparse import NetconfParser
 
 
 class Adapter(object):
@@ -43,7 +45,10 @@ class Adapter(object):
                 auth['platform'] = child.get('platform', None)
             elif tag == 'netconf-auth':
                 auth['host'] = child.get('host', None)
-                auth['port'] = int(child.get('port', 830))
+                auth['port'] = child.get('port', 830)
+                if auth['port']:
+                    auth['port'] = int(auth['port'])
+
                 auth['user'] = child.get('user', None)
                 auth['passwd'] = child.get('passwd', None)
             elif tag == 'raw':
@@ -146,7 +151,6 @@ class Adapter(object):
             logging.error('gen_rpc: Invalid payload, protocol missing !!')
             return None
 
-        rpc = None
         if protocol == 'restconf':
             res = Adapter._gen_rpc(username, request)
             ''' returns json '''
@@ -157,6 +161,52 @@ class Adapter(object):
         logging.info('gen_rpc: Generated : ' + rpc)
         ''' returns xml '''
         return ET.fromstring(rpc)
+
+    @staticmethod
+    def gen_script(username, payload):
+        """
+        Generate Netconf / Restconf RPC
+        """
+        payload = payload.replace('<metadata>', '')
+        payload = payload.replace('</metadata>', '')
+
+        _, device, fmt, rpc = Adapter.parse_request(payload)
+        if fmt == 'xpath' and rpc == '':
+            rpc = Adapter.gen_rpc(username, payload)
+
+        if rpc is None:
+            logging.error('gen_script: Invalid RPC Generated')
+            return None
+
+        parser = NetconfParser(rpc)
+        op = parser.get_operation()
+        data = ET.tostring(parser.get_data(), pretty_print=True)
+        datastore = parser.get_datastore()
+
+        # setup template args
+        args = dict()
+        args['data'] = data.strip()
+        args['datastore'] = datastore
+        args['host'] = device.get('host', '<address>')
+        args['port'] = device.get('port', '830')
+        args['user'] = device.get('user', '<username>')
+        args['passwd'] = device.get('passwd', '<password>')
+        args['platform'] = device.get('platform', 'csr')
+
+        if op == 'get':
+            args['nccall'] = 'm.get(payload).xml'
+        elif op == 'get-config':
+            args['nccall'] = "m.get_config(source='%s', filter=payload).xml" % datastore
+        elif op == 'edit-config':
+            args['nccall'] = "m.edit_config(target='%s', config=payload).xml" % datastore
+        else:
+            args['nccall'] = "m.dispatch(ET.fromstring(payload)).xml"
+
+        # generate script
+        rendered = render_to_string('pyscript.py', args)
+        script = ET.Element('script')
+        script.text = ET.CDATA(rendered)
+        return script
 
     @staticmethod
     def _gen_rpc(username, request, mode = ''):

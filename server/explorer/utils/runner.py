@@ -158,7 +158,7 @@ class NCClient(object):
         self.disconnect()
         caps = self.handle.server_capabilities
         if caps:
-            reply.text = '\n'.join(caps)
+            reply.text = '\n\n'.join(caps)
             logging.info('Received device capabilities ..')
         return reply
 
