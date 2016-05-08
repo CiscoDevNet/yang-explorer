@@ -187,11 +187,20 @@ class Adapter(object):
         args = dict()
         args['data'] = data.strip()
         args['datastore'] = datastore
-        args['host'] = device.get('host', '<address>')
+        args['host'] = device.get('host', '')
         args['port'] = device.get('port', '830')
-        args['user'] = device.get('user', '<username>')
-        args['passwd'] = device.get('passwd', '<password>')
+        args['user'] = device.get('user', '')
+        args['passwd'] = device.get('passwd', '')
         args['platform'] = device.get('platform', 'csr')
+
+        if not args['host']:
+            args['host'] = '<address>'
+
+        if not args['user']:
+            args['user'] = '<username>'
+
+        if not args['passwd']:
+            args['passwd'] = '<passwd>'
 
         if op == 'get':
             args['nccall'] = 'm.get(payload).xml'

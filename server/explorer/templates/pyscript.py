@@ -5,7 +5,7 @@
     > pip install lxml ncclient
 
     Running script: (save as example.py)
-    > python example.py -a {{host}} -u {{user}} -p {{passwd}} --port {{port}}
+    > python example.py -a {{host|safe}} -u {{user|safe}} -p {{passwd|safe}} --port {{port}}
 """
 
 import lxml.etree as ET
