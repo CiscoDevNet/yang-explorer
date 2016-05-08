@@ -191,7 +191,7 @@ class Adapter(object):
         args['port'] = device.get('port', '830')
         args['user'] = device.get('user', '')
         args['passwd'] = device.get('passwd', '')
-        args['platform'] = device.get('platform', 'csr')
+        args['platform'] = device.get('platform', '')
 
         if not args['host']:
             args['host'] = '<address>'
@@ -201,6 +201,9 @@ class Adapter(object):
 
         if not args['passwd']:
             args['passwd'] = '<passwd>'
+
+        if not args['platform']:
+             args['platform'] = 'csr'
 
         if op == 'get':
             args['nccall'] = 'm.get(payload).xml'
