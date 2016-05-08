@@ -18,7 +18,7 @@ limitations under the License.
    **Features**
    - Upload / Compile yang models from User Interface Or Command Line
    - Build NetConf RPC
-   - Generate Python example code 
+   - Generate Python example code **[new]**
    - Execute RPC against real netconf server
    - Save created RPCs to collections for later use
    - Build dependency graph for models
@@ -224,12 +224,15 @@ limitations under the License.
    export NCCLIENT_TIMEOUT=120
 ```
 
-##### 5.2.6 Generating python example:
+##### 5.2.6 Generating Python example:
    - Create a netconf / xml RPC
     - Create RPC using *5.2.4*
     - (OR) Provide custom netconf XML (Click custom RPC Checkbox)
 
    - Click **Script** button under **Build** tab
+   - Click **Copy** button to copy generated code into system clipboard
+   - Save content as a python script (say example.py)
+   - Run python script from command line using given instruction in script header comments.
  
 ##### 5.2.7 Saving RPCs to Collection:
    - Create RPC using *5.2.4*
