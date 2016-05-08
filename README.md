@@ -29,7 +29,7 @@ limitations under the License.
 #####Screenshots:
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/graph.png)
-
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/script.png)
 
 ###2. Installation
 ####2.1 First time installation
