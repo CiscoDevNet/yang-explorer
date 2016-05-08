@@ -88,7 +88,7 @@ class NCClient(object):
 
         try:
             # timeout is configurable as environment variable
-            timeout = int(os.getenv("NCCLIENT_TIMEOUT", 30))
+            timeout = int(os.getenv("NCCLIENT_TIMEOUT", 90))
             self.handle = manager.connect(host=self.host,
                                           port=self.port,
                                           username=self.username,
@@ -192,10 +192,10 @@ class RestClient(object):
 
         try:
             if method in ['GET', 'DELETE']:
-                method_func =  eval('requests.' + method.lower())
+                method_func = eval('requests.' + method.lower())
                 response = method_func(url, headers=params, auth=self.auth)
             elif method in ['POST', 'PUT', 'PATCH']:
-                method_func =  eval('requests.' + method.lower())
+                method_func = eval('requests.' + method.lower())
                 response = method_func(url, data=json.dumps(payload), headers=params, auth=self.auth)
             else:
                 reply.text = 'Invalid Rest Method ' + method

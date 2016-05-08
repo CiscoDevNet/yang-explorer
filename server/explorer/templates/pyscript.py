@@ -36,7 +36,7 @@ if __name__ == '__main__':
                          port=args.port,
                          username=args.username,
                          password=args.password,
-                         timeout=60,
+                         timeout=90,
                          hostkey_verify=False,
                          device_params={'name': '{{platform}}'}) as m:
 
