@@ -200,7 +200,7 @@ class Adapter(object):
             args['user'] = '<username>'
 
         if not args['passwd']:
-            args['passwd'] = '<passwd>'
+            args['passwd'] = '<password>'
 
         if not args['platform']:
              args['platform'] = 'csr'

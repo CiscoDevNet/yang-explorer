@@ -140,7 +140,7 @@ class ModuleAdmin:
             if request == 'subscribe':
                 if not is_browsable(username, name):
                     logging.debug('Module %s can not be subscribed ' % (module.text))
-                    return False, 'Module %s  can not be subscribed, not a main module !!' % name
+                    continue
 
                 if not UserProfile.objects.filter(user=user, module=name).exists():
                     profile = UserProfile(user=user, module=name)
