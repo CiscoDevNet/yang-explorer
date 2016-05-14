@@ -19,6 +19,7 @@ limitations under the License.
    - Upload / Compile yang models from User Interface Or Command Line
    - Build NetConf RPC
    - Generate Python example code **[new]**
+   - Search yang xpaths **[new]**
    - Execute RPC against real netconf server
    - Save created RPCs to collections for later use
    - Build dependency graph for models
