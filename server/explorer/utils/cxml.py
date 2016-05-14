@@ -19,7 +19,6 @@ limitations under the License.
 import os
 import logging
 import lxml.etree as ET
-from django.core.cache import cache
 
 
 class Cxml:
@@ -41,10 +40,13 @@ class Cxml:
         return self.cxml.getroot()
 
     def toxpath(self, path):
-        path_elems = path.split('/')
-        xpath = '[@name="%s"]' % path_elems[0]
-        for elem in path_elems[1:]:
-            xpath += '/node[@name="%s"]' % elem
+        if path:
+            path_elems = path.split('/')
+            xpath = '[@name="%s"]' % path_elems[0]
+            for elem in path_elems[1:]:
+                xpath += '/node[@name="%s"]' % elem
+        else:
+            xpath = '/'
         return xpath
 
     def get_lazy_node_internal(self, cxml_element, base=''):
@@ -213,12 +215,178 @@ class Cxml:
 
         return tree
 
+    def get_lazy_subtree(self, base, path):
+        """
+        Returns yang explorer compatible lazy subtree xml. A lazy
+        tree  returns a cxml nested tree from base to requested
+        node.
+
+        Other node along the path returned as _placeholder_
+        nodes for on-demand loading in client tree.
+        """
+
+        tree = self.get_lazy_node(base)
+        if not path:
+            return tree
+
+        path_elems = path.split('/')
+        xpath = ''
+        subpath = base
+        for elems in path_elems[1:]:
+            subpath += '/' + elems
+            logging.info('Query: ' + subpath)
+            nodes = self.get_lazy_node(subpath)
+            if not xpath:
+                xpath = 'node[@name="%s"]' % elems
+            else:
+                xpath += '/node[@name="%s"]' % elems
+            temp = tree.find(xpath)
+            if temp is not None and nodes:
+                tree.find(xpath).remove(tree.find(xpath)[0])
+                for child in nodes:
+                    tree.find(xpath).append(child)
+            else:
+                logging.error('Error: %s not found' % xpath)
+                break
+        return tree
+
     def get_namespaces(self):
         if self.cxml is None:
             return []
 
         return [(ns.get('prefix', ''), ns.get('module', ''), ns.text)
                 for ns in self.cxml.getroot() if ns.tag == 'namespace']
+
+
+class CxmlIterator(object):
+    """ XPath Iterator for Cxml
+        @params filename:string - cxml file path
+        @params include-keys: bool - include keys in xpath
+        @params include-prefixes:list - list of included namespaces/prefixes
+        @params include-default:bool - include xpath with root-prefix
+        @params add-root-prefix:bool - add root-prefix in xpath
+    """
+    def __init__(self, filename, cxml=None, options={}):
+        if cxml:
+            self.handle = cxml
+        else:
+            self.handle = ET.parse(filename)
+        self.inc_keys = options.get('include-keys', False)
+        self.inc_prefixes = options.get('include-prefixes', [])
+        self.inc_default = options.get('include-default', False)
+        self.add_root_prefix = options.get('add-root-prefix', False)
+        self.current = self.handle.getroot()
+        self.prefix = self.current.get('prefix', None)
+        self.path = [self.current.get('name')]
+
+    def __iter__(self):
+        return self
+
+    def reset(self):
+        self.current = self.handle.getroot()
+        self.prefix = self.current.get('prefix', None)
+        self.path = [self.current.get('name')]
+
+    def _get_next_parent(self):
+        _parent = self.current.getparent()
+        while _parent is not None:
+            uncle = _parent.getnext()
+            if uncle is None:
+                _parent = _parent.getparent()
+                self.path.pop()
+                continue
+            if self._filter(uncle):
+                _parent = _parent.getparent()
+                continue
+            return uncle
+        return _parent
+
+    def _set_xpath(self):
+        _name = self.current.get('name', None)
+
+        # add keys in xpath if required
+        if self.inc_keys and self.current.get('type', '') == 'list':
+            _keys = self.current.get('key', '')
+            _name += '[' + _keys + ']'
+
+        # add default prefix in xpath if required
+        if self.add_root_prefix and ':' not in _name:
+            _name = self.prefix + ':' + _name
+
+        # append to xpath list
+        self.path.append(_name)
+
+    def _get_prefix(self, node):
+        name = node.get('name', None)
+        return name.split(':')[0] if ':' in name else None
+
+    def _filter(self, node):
+        """ Filter xpath """
+        if not self.inc_prefixes:
+            return False
+
+        pfx = self._get_prefix(node)
+        if pfx is not None:
+            return pfx not in self.inc_prefixes
+        return False
+
+    def next(self):
+        # Depth First Traversal
+
+        # Look for children first
+        if len(self.current):
+            for child in self.current.findall('node'):
+                if self._filter(child):
+                    continue
+                self.current = child
+                self._set_xpath()
+                if self.has_prefix():
+                    return '/'.join(self.path), self.current
+                return self.next()
+
+        # Look for siblings next
+        _next = self.current.getnext()
+        self.path.pop()
+        while _next is not None:
+            if self._filter(_next):
+                _next = _next.getnext()
+                continue
+            self.current = _next
+            self._set_xpath()
+            if self.has_prefix():
+                return '/'.join(self.path), self.current
+            return self.next()
+
+        # Look for parent last
+        _parent = self._get_next_parent()
+        if _parent is None:
+            raise StopIteration()
+
+        self.path.pop()
+        if not self._filter(_parent):
+            self.current = _parent
+            self._set_xpath()
+
+        if self.has_prefix():
+            return '/'.join(self.path), self.current
+        return self.next()
+
+    def has_prefix(self):
+        if not self.inc_prefixes:
+            return True
+
+        if self.inc_default:
+            if self.add_root_prefix:
+                if not any(not elem.startswith(self.prefix + ':') for elem in self.path[1:]):
+                    return True
+            else:
+                if not any(':' in elem for elem in self.path[1:]):
+                    return True
+
+        for i_pfx in self.inc_prefixes:
+            if any(elem.startswith(i_pfx + ':') for elem in self.path):
+                return True
+        return False
 
 
 def get_cxml(filename):

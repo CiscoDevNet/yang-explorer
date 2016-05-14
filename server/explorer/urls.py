@@ -28,4 +28,5 @@ urlpatterns = [
     url(r'^netconf', views.request_handler, name='request_handler'),
     url(r'^schema', views.schema_handler, name='schema_handler'),
     url(r'^userprofiles', profile_view.profile_handler, name='profile_handler'),
+    url(r'^search', views.search_handler, name='search_handler'),
 ]

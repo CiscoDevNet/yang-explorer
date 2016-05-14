@@ -33,6 +33,7 @@ from explorer.utils.misc import ServerSettings
 from explorer.utils.admin import ModuleAdmin
 from explorer.utils.schema import get_schema, download_schema, add_schema
 import explorer.utils.uploader as Uploader
+import explorer.utils.search as Search
 import explorer.utils.cxml as cxml
 
 logging.basicConfig(level=logging.INFO)
@@ -235,7 +236,7 @@ def module_handler(request):
     lst = []
     if request.user.is_authenticated():
         path = request.GET.get('node', '')
-
+        deep = request.GET.get('deep', '')
         username = request.user.username
         if path == 'root':
             # Request for root models
@@ -250,7 +251,7 @@ def module_handler(request):
                 if filename is not None:
                     logging.debug("module_handler: loading " + filename)
                     module = cxml.get_cxml(filename)
-                    nodes = module.get_lazy_node(path)
+                    nodes = module.get_lazy_subtree(path, deep)
                     lst.extend([ET.tostring(node) for node in nodes])
                 else:
                     logging.error("module_handler: %s not found !!" + module)
@@ -280,3 +281,25 @@ def schema_handler(request):
     elif action == 'add-schema':
         return add_schema(request, req)
 
+
+def search_handler(request):
+    """
+    Args:
+        request: Django HTTP request header
+
+    Returns: HTTP response with search results
+    """
+    if not request.user.is_authenticated():
+        return HttpResponse(Response.error(None, 'User must be logged in'))
+
+    query = request.GET.get('query', '')
+    mode = request.GET.get('mode', '')
+    if not query:
+        rc, result = False, 'Invalid or empty query'
+    else:
+        rc, result = Search.search(request.user.username, query)
+
+    if not rc:
+        return HttpResponse(Response.error(mode, result))
+
+    return HttpResponse(Response.success(mode, 'ok', xml=result))

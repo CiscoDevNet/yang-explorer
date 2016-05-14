@@ -76,12 +76,13 @@
     <s:DataGrid id="dgProperty" width="100%" height="100%"
                 dataProvider="{dpDgProperty}" fontSize="14"
                 sortableColumns="false" variableRowHeight="true"
-                fontFamily="Avenir"> 
+                fontFamily="Avenir"
+                editable="true"> 
         <s:columns>
             <s:ArrayList>
-                <s:GridColumn width="100" dataField="Property"
+                <s:GridColumn width="100" dataField="Property" editable="false"
                               headerText="Property"/>
-                <s:GridColumn dataField="Value" headerText="Value"/>
+                <s:GridColumn dataField="Value" headerText="Value" editable="true"/>
             </s:ArrayList>
         </s:columns>
     </s:DataGrid>

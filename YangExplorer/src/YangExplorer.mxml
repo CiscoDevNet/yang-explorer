@@ -75,6 +75,7 @@
             
             import modules.LoginWindow;
             import modules.SaveWindow;
+            import modules.SearchWindow;
 
             
             public var YTOOL_HOST:String = 'localhost:8088';
@@ -96,7 +97,7 @@
             /* Default ports */
             public static const SSH_PORT:String = '22';
             public static const NETCONF_PORT:String = '830';
-            public static const RESTCONF_PORT:String = '8008';
+            public static const RESTCONF_PORT:String = '80';
             public static const HELP_URL:String = "https://github.com/CiscoDevNet/yang-explorer";
 
             /* Global settings */
@@ -116,7 +117,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.3.0 (Beta)';
+            public var VERSION : String = '0.4.0 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -340,7 +341,7 @@
                         case 'module-tree':
                             // Load test case tree
                             adg.treeXml = XML(child.module.toString())
-                            adg.setOpenNodes()
+                            adg.setOpenNodes(null)
                             adg.processXML(null)
                             updateForm()
                             break
@@ -464,7 +465,7 @@
 
                 try { 
                     var xml : XML = XML(strPayload);
-                } catch (e) {
+                } catch (e : Object) {
                     Alert.show('Invalid custom RPC', 'RPC');
                     return null;
                 }
@@ -710,9 +711,9 @@
                 // Create a non-modal TitleWindow container.
                 var user : String = btnLogin.label
                 
-                loginWindow = LoginWindow(PopUpManager.createPopUp(this, LoginWindow, true))
-                loginWindow.targetComponent = btnLogin
-                PopUpManager.centerPopUp(loginWindow)
+                loginWindow = LoginWindow(PopUpManager.createPopUp(this, LoginWindow, true));
+                loginWindow.targetComponent = btnLogin;
+                PopUpManager.centerPopUp(loginWindow);
                 
                 if (user == 'Login') {
                     loginWindow.title = 'Login'
@@ -851,6 +852,16 @@
             
             public function create_profile() : void {
                 navigateToURL(new URLRequest(ADMIN_URL + '/explorer/deviceprofile/add/'));
+            }
+            
+            // Search Window
+            public var searchWindow:SearchWindow;
+            public function searchHandler(query : String) : void {
+                searchWindow = SearchWindow(PopUpManager.createPopUp(this, SearchWindow, true))
+                searchWindow.open_callback = adg.loadXpath;
+                PopUpManager.centerPopUp(searchWindow);
+                searchWindow.search(query);
+                adg.setFocus();
             }
         ]]>
     </fx:Script>
@@ -1004,32 +1015,6 @@
                                         </s:HGroup>	
                                     </s:Form>
                                 </mx:VBox>
-                                <!--<mx:VBox width="100%" height="100%" label="Protocol Settings">
-                                    <s:Form id="formNC" width="100%" height="100%"
-                                            fontFamily="Avenir">
-                                        <s:layout>
-                                            <s:FormLayout gap="-5"/>
-                                        </s:layout>
-                                        <s:HGroup>
-                                            <s:FormItem label="IP Address">
-                                                <s:TextInput id="txtNCIpAddr" width="120"
-                                                             fontFamily="Avenir"/>
-                                            </s:FormItem>
-                                            <s:FormItem label="Port">
-                                                <s:TextInput id="txtNCPort" width="50"
-                                                             fontFamily="Avenir" text="830"/>
-                                            </s:FormItem>	
-                                        </s:HGroup>
-                                        <s:FormItem label="Username">
-                                            <s:TextInput id="txtNCUser" width="120"
-                                                         fontFamily="Avenir"/>
-                                        </s:FormItem>
-                                        <s:FormItem label="Password">
-                                            <s:TextInput id="txtNCPwd" width="120"
-                                                         fontFamily="Avenir"/>
-                                        </s:FormItem>
-                                    </s:Form>
-                                </mx:VBox>-->
                             </mx:TabNavigator>
                             <mx:VBox width="100%" height="60%" label="Encoding">
                                 <s:HGroup width="100%" height="10%" horizontalAlign="right"

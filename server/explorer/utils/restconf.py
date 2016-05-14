@@ -302,9 +302,9 @@ def gen_restconf(username, request, mode):
     name, op, path, data = parse_url(username, request, mode)
 
     if platform == 'IOS-XE':
-        url = "/api/"+target+'/'+path
+        url = "/restconf/api/" + target + '/'+path
     else:
-        url = "/restconf/data/"+target+'/'+path
+        url = "/restconf/data/"+ target + '/'+path
 
     hdr = {}
     print("OP "+str(op))

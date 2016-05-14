@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <!--
+    Copyright 2015, Cisco Systems, Inc
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+    http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+    
+    @author: Pravin Gohite, Jennifer Chou, Cisco Systems, Inc.
+-->
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx" 
+               width="700" height="450" 
+               xmlns:components="flatspark.components.*"
+               skinClass="flatspark.skins.TitleWindowSkin"
+               close="PopUpManager.removePopUp(this);"
+               creationComplete="creationCompleteHandler(event)"
+               title="Search"
+               xmlns:ns="http://flex.apache.org/experimental/ns">
+    <s:layout>
+        <s:VerticalLayout/>
+    </s:layout>
+    <fx:Declarations>
+        <s:HTTPService id="searchService" fault="searchService_faultHandler(event)"
+                       result="searchService_resultHandler(event)"
+                       resultFormat="e4x" showBusyCursor="true"/>
+    </fx:Declarations>
+    <fx:Script>
+        <![CDATA[
+            import mx.collections.ArrayCollection;
+            import mx.events.FlexEvent;
+            import mx.managers.PopUpManager;
+            import mx.rpc.events.FaultEvent;
+            import mx.rpc.events.ResultEvent;
+            
+            import spark.components.Alert;
+            
+            import classes.Response;
+            
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.TextInputSizeEnum;
+            import flatspark.utils.AwesomeUtils;
+
+            [Bindable]
+            public var xpath_list : ArrayCollection;
+            public var h_modules: ArrayCollection;
+            private var url : String;
+            private var columnIndex : int = -1;
+            private var rowIndex : int = -1;
+            public var open_callback : Function;
+
+            protected function creationCompleteHandler(event:FlexEvent):void {
+                xpath_list = new ArrayCollection();
+                searchService.url = parentApplication.global.get_url() + '/search'
+            }
+
+            public function btnOpen_clickHandler():void {
+                if (open_callback != null) {
+                    trace('btnOpen_clickHandler: ' + dgSearch.selectedItem.Xpath);
+                    open_callback(dgSearch.selectedItem.Xpath);
+                }
+                PopUpManager.removePopUp(this);
+            }
+
+            public function btnSearch_clickHandler() : void {
+                var xml:XML;
+                
+                if (txtSearch.text == null || txtSearch.text.length < 2) {
+                    Alert.show('Atleast two characters are required !!', 'Info');
+                    return;
+                }
+                searchService.send({mode:'search', query: txtSearch.text});
+            }
+
+            protected function searchService_faultHandler(event:FaultEvent):void
+            {
+                xpath_list.refresh();
+            }
+            
+            protected function searchService_resultHandler(event:ResultEvent):void
+            {
+                var result:XML = event.result as XML;
+                
+                if (result == null) {
+                    return;
+                }
+                
+                var response : Response = new Response(result);
+                
+                if (response.errored) {
+                    Alert.show(response.msg, 'Search Error');
+                    return;
+                }
+                xpath_list.removeAll();
+                var count : int = 0;
+                for each (var child : XML in response.xml.children()) {
+                    xpath_list.addItem({Module: child.attribute('module'), Xpath: child.toString()});
+                    count++;
+                }
+                xpath_list.refresh();
+                status.text = count.toString() + ' nodes found.';
+            }
+            
+            public function search(query : String) : void {
+                txtSearch.text = query;
+                btnSearch_clickHandler();
+            }
+            
+            protected function btnCpy_clickHandler(event:MouseEvent):void
+            {
+                var str : String = ''
+                if (dgSearch.selectedIndex < 0) {
+                    for each (var item : Object in xpath_list) {
+                        str += item.Xpath + '\n';
+                    }
+                } else {
+                    str += dgSearch.selectedItem.Xpath;
+                }
+                System.setClipboard(str);
+            }
+            
+        ]]>
+    </fx:Script>
+    
+    <s:VGroup width="100%" height="100%" fontFamily="Avenir, Verdana" padding="5">
+            <s:HGroup width="100%" horizontalAlign="right" padding="2">
+                <components:TextInputIcon id='txtSearch' width="300" enter="btnSearch_clickHandler()"
+                                          iconFont="{AwesomeUtils.fa_search}"
+                                          height="{TextInputSizeEnum.Small}"/>
+                <components:ButtonIcon id="btnSearch" label="Search"
+                                       width="80" click="btnSearch_clickHandler()"
+                                       brand="{BrandColorEnum.Success}"/>
+            </s:HGroup>
+            <s:DataGrid id="dgSearch" width="100%" height="100%"
+                                 doubleClickEnabled="true"
+                                 doubleClick="btnOpen_clickHandler()"
+                                 horizontalScrollPolicy="auto"
+                                 editable="true"
+                                 dataProvider="{xpath_list}"
+                                 >
+                <s:columns>
+                    <s:ArrayList>
+                        <s:GridColumn dataField="Module" width="125"/>
+                        <s:GridColumn dataField="Xpath" editable="true"/>
+                    </s:ArrayList>
+                </s:columns>
+            </s:DataGrid>
+            <s:HGroup padding="5" width="100%" horizontalAlign="right">
+                <s:Label id="status"/>
+                <s:Spacer width="100%"/>
+                <components:ButtonIcon id="btnOpen" label="Open"
+                                       width="100" click="btnOpen_clickHandler()"
+                                       brand="{BrandColorEnum.Success}"/>
+                <components:ButtonIcon label="Copy"
+                                       width="100" click="btnCpy_clickHandler(event)"
+                                       brand="{BrandColorEnum.Success}"/>
+                <components:ButtonIcon label="Close"
+                                       width="100" click="PopUpManager.removePopUp(this)"
+                                       brand="{BrandColorEnum.Success}"/>
+            </s:HGroup>
+    </s:VGroup>
+</s:TitleWindow>

@@ -30,6 +30,8 @@
                      itemRollOver="lastRollOverIndex = event.rowIndex"
                      cacheAsBitmap="true"
                      scroll="adg_scrollHandler()"
+                     headerRenderer="itemrenderers.YangTreeHeaderRenderer"
+                     draggableColumns="false"
                      >
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -53,7 +55,6 @@
             import mx.rpc.events.FaultEvent;
             import mx.rpc.events.ResultEvent;
             
-            import classes.YangEncoder;
             import classes.YangUtil;
             
             /* Tree view icon bindings */
@@ -121,10 +122,7 @@
             * just a reference to treeXML children
             */
             private var pendingNode:Object;
-            
-            
             private var dataCursor:IHierarchicalCollectionViewCursor;
-            
             
             override public function set dataProvider(value:Object):void
             {
@@ -205,6 +203,21 @@
                 addEventListener(AdvancedDataGridEvent.ITEM_EDIT_END, itemEditEndHandler);
             }
             
+            private function requestNode(root : XML, deep : String = '') : void {
+                pendingNode.xml = root;
+                var child:XML = pendingNode.xml.child(0)[0];
+                if (child && child.@type == '__yang_placeholder') {
+                    pendingNode.vscroll = verticalScrollPosition;
+                    var path:String = pendingNode.xml.@path;
+                    moduleService.url = url
+                    moduleService.contentType = "";
+                    pendingNode.select_path = null;
+                    moduleService.send({node:path, deep:deep});
+                } else {
+                    pendingNode.xml = null;
+                }
+            }
+            
             private function itemOpenHandler(event:AdvancedDataGridEvent):void {
                 if (pendingNode.xml != null) {
                     expandItem(event.item, false, false, false, event);
@@ -212,18 +225,7 @@
                                'Please Wait');
                     return;
                 }
-                
-                pendingNode.xml = event.item as XML;
-                var child:XML = pendingNode.xml.child(0)[0];
-                if (child && child.@type == '__yang_placeholder') {
-                    pendingNode.vscroll = verticalScrollPosition;
-                    var path:String = pendingNode.xml.@path;
-                    moduleService.url = url + "node=" + path;
-                    moduleService.contentType = "";
-                    moduleService.send();
-                } else {
-                    pendingNode.xml = null;
-                }
+                requestNode(event.item as XML);
             }
 
             private function treeLabelFunction(data:Object, column:AdvancedDataGridColumn):String {
@@ -281,7 +283,7 @@
                 return iconClass;
             }
 
-            public function setOpenNodes():void
+            public function setOpenNodes(path : String):void
             {
                 dataCursor.seek(CursorBookmark.FIRST);
                 
@@ -289,6 +291,12 @@
                 {
                     var node : XML = dataCursor.current as XML
                     
+                    if (path != null && node.attribute('path') == path) {
+                        this.selectedItem = dataCursor.current;
+                        if (this.selectedIndex - 10 > 0) {
+                            this.scrollToIndex(this.selectedIndex - 10);
+                        }
+                    }
                     if (node.hasOwnProperty('node') &&
                         node.node.@type != '__yang_placeholder') {
                         dataProvider.openNode(dataCursor.current);
@@ -451,10 +459,13 @@
                     pendingNode.xml.appendChild(nodes.node);
                     scrollToIndex(pendingNode.row);
                     verticalScrollPosition = pendingNode.vscroll;
+                    setOpenNodes(pendingNode.select_path);
                 }
                 pendingNode.xml = null;
                 pendingNode.vscroll = 0;
+                pendingNode.select_path = null;
                 this.validateNow();
+                this.invalidateDisplayList();
             }
 
             private function moduleService_faultHandler(event:FaultEvent):void {
@@ -462,6 +473,7 @@
                 parentApplication.updateStatus('Error: Received HTTP Fault for module request');
                 pendingNode.xml = null;
                 pendingNode.vscroll = 0;
+                pendingNode.select_path = null;
             }
             
             [Bindable]
@@ -511,7 +523,36 @@
             {
                 this.invalidateDisplayList();
             }
-            
+
+            public function loadXpath(xpath : String): void {
+                var names:Array = xpath.split('/');
+                var root : XML = treeXml;
+                var found : Boolean = true;
+                for (var i:int = 0; i < names.length; i++) {
+                    found = false;
+                    for each (var child:XML in root.node) {
+                        if (child.@name == names[i]) {
+                            root = child;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        var unresolved : String = '';
+                        for (; i < names.length; i++) {
+                            unresolved += '/' + names[i];
+                        }
+                        requestNode(root, unresolved);
+                        pendingNode.select_path = xpath;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    setOpenNodes(xpath);
+                }
+            }
         ]]>
     </fx:Script>
 </mx:AdvancedDataGrid>
