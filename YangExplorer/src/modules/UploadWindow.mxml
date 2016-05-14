@@ -305,6 +305,7 @@
                         parentApplication.refresh_mgmtArea();
                         parentApplication.refresh_explorerArea();
                         PopUpManager.removePopUp(this);
+                        parentApplication.tnManage.selectedIndex = 0;
                     }
                 } else if (response.type == 'init') {
                     if (!response.errored) {

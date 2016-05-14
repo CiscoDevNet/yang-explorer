@@ -117,7 +117,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.4.0 (Beta)';
+            public var VERSION : String = '0.4.1 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -382,7 +382,7 @@
             {
                 if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '') {
                     if (runnable) {
-                        Alert.show('Server credentials are not provided', 'Error')
+                        Alert.show('Server credentials are not provided', 'Error');
                         return false;
                     }
                 } else {
@@ -396,6 +396,7 @@
             public function getRequestCapPayload() : XML
             {
                 if (!setDeviceSettings(true)) {
+                    tnSettings.selectedIndex = 1;
                     return null;
                 }
                 ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
@@ -409,6 +410,7 @@
             public function getRequestCommitPayload() : XML
             {
                 if (!setDeviceSettings(true)) {
+                    tnSettings.selectedIndex = 1;
                     return null;
                 }
                 ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
@@ -460,6 +462,7 @@
                 
                 /* Include device info only if script is runnable */
                 if (!setDeviceSettings(runnable)) {
+                    tnSettings.selectedIndex = 1;
                     return null
                 }
 
@@ -863,6 +866,12 @@
                 searchWindow.search(query);
                 adg.setFocus();
             }
+            
+            protected function adg_focusInHandler(event:FocusEvent):void
+            {
+                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+            }
+            
         ]]>
     </fx:Script>
     
@@ -901,6 +910,7 @@
                                           styleName="myStyle"
                                           sortItemRenderer="{null}"
                                           horizontalScrollPolicy="off"
+                                          focusIn="adg_focusInHandler(event)"
                                           >
                         <modules:columns>
                             <mx:AdvancedDataGridColumn width="300" dataField="@name" editable="false"
