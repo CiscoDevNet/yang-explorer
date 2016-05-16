@@ -65,7 +65,11 @@ limitations under the License.
         ]]>
     </fx:Script>
     <s:VGroup width="100%" height="100%" padding="2">
-        <mx:Image id="img" horizontalCenter="0" verticalCenter="0"/>
+        <s:Scroller width="100%" height="100%">
+            <s:Group>
+                <mx:Image id="img" horizontalCenter="0" verticalCenter="0"/>
+            </s:Group>
+        </s:Scroller>
         <s:HGroup width="100%" horizontalAlign="center" paddingBottom="5" paddingLeft="5"
                   paddingRight="5">
             <components:ButtonIcon width="80" label="Download" brand="{BrandColorEnum.Success}"
