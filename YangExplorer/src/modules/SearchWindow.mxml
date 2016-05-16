@@ -88,7 +88,7 @@
                     return;
                 }
                 searchService.send({mode:'search', query: txtSearch.text});
-                btnOpen.setFocus();
+                btnSearch.setFocus();
             }
 
             protected function searchService_faultHandler(event:FaultEvent):void
@@ -112,12 +112,18 @@
                 }
                 xpath_list.removeAll();
                 var count : int = 0;
+                var width : int = 750;
+                var xpath : String;
                 for each (var child : XML in response.xml.children()) {
-                    xpath_list.addItem({Module: child.attribute('module'), Xpath: child.toString()});
+                    xpath = child.toString();
+                    width = Math.max(width, xpath.length * 6);
+                    xpath_list.addItem({Module: child.attribute('module'), Xpath: xpath});
                     count++;
                 }
                 xpath_list.refresh();
                 status.text = count.toString() + ' nodes found.';
+                
+                resizeWindow(width);
             }
             
             public function search(query : String) : void {
@@ -142,9 +148,16 @@
                 System.setClipboard(str);
                 status.text = count.toString() + ' xpaths copied to clipboard.';
             }
+            
+            private function resizeWindow(width : int) : void {
+                width = Math.min(width, parentApplication.width - 50);
+                var pad : int = (parentApplication.width - width) / 2;
+                
+                this.x = parentApplication.x + pad;
+                this.width = width;
+            }
         ]]>
     </fx:Script>
-    
     <s:VGroup width="100%" height="100%" fontFamily="Avenir, Verdana" padding="5">
             <s:HGroup width="100%" horizontalAlign="right" padding="2">
                 <s:TextInput id='txtSearch' width="225" 

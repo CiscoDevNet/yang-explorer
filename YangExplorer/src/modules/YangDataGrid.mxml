@@ -294,18 +294,22 @@
                     if (path != null && node.attribute('path') == path) {
                         this.selectedItem = dataCursor.current;
                         if (this.selectedIndex - 10 > 0) {
+                            dataProvider.openNode(dataCursor.current);
                             this.scrollToIndex(this.selectedIndex - 10);
                         }
                     }
+
                     if (node.hasOwnProperty('node') &&
                         node.node.@type != '__yang_placeholder') {
-                        dataProvider.openNode(dataCursor.current);
+                        if (path == null || (node.hasOwnProperty('@path') && path.indexOf(node.@path) == 0)) {
+                            dataProvider.openNode(dataCursor.current);
+                        }
                     } else {
                         dataProvider.closeNode(dataCursor.current);
                     }
                     dataCursor.moveNext();
                 }
-                
+
                 dataCursor.seek(CursorBookmark.FIRST, verticalScrollPosition);
                 
                 // Refresh the data provider to properly display the newly opened nodes

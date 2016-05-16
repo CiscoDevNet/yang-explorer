@@ -47,10 +47,8 @@
             {
                 if (txtSearch.text.length >= 2) {
                     parentApplication.searchHandler(txtSearch.text);
-                    txtSearch.text = '';
                 }
             }
-            
         ]]>
     </fx:Script>
     <s:HGroup width="100%" height="100%" padding="1">

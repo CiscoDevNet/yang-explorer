@@ -117,7 +117,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.4.1 (Beta)';
+            public var VERSION : String = '0.4.2 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -793,7 +793,7 @@
             }
             
             public function setEncodingText(text : String, xml : Boolean) : void {
-                resetTreeView()
+                resetTreeView();
                 txtScript.text = text;
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW;
                 tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
