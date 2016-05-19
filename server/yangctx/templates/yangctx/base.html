@@ -1,0 +1,48 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8"/>
+<title>Command Center</title>
+<script src={% static "js/jquery-1.12.3.min.js" %}></script>
+<script src={% static "js/jquery-ui.js" %}></script>
+<script src={% static "js/jstree.min.js" %}></script>
+
+<link rel="stylesheet" href={% static "css/jstree-themes/default/style.min.css" %}>
+<link rel="stylesheet" href={% static "css/jquery-ui-themes/excite-bike/jquery-ui.css" %}>
+<link rel="stylesheet" href={% static "css/bootstrap.min.css" %}>
+{% block css %}
+<style>
+body {
+    padding-top: 5%;
+    padding-left: 1%;
+}
+</style>
+{% endblock css %}
+</head>
+
+<body>
+{% block mainmenu %}
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <ul id="ott-menu" class="ui-corner-all nav navbar-nav">
+      <li><a href="{% url 'yangctx:main' %}">Yang Context</a></li>
+    {% if user.is_superuser %}
+      <li><a href="/admin">Admin</a></li>
+    {% endif %}
+{% endblock mainmenu %}
+{% block extendmenu %}
+{% endblock extendmenu %}
+  </ul>
+</div>
+<div>
+{% block body %}
+{% endblock body %}
+</div>
+<script>
+$("#ott-menu").menu();
+</script>
+{% block scripts %}
+{% endblock scripts %}
+</body>
+</html>

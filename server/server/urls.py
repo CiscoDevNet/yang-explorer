@@ -25,4 +25,5 @@ urlpatterns = [
     url(r'^explorer/', include('explorer.urls')),
     url(r'^crossdomain.xml$', 'security.policy_handler', name='policy_handler'),
     url(r'^$', RedirectView.as_view(url='/static/YangExplorer.html')),
+    url(r'^yangctx/', include('yangctx.urls', namespace='yangctx')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static('/download/', document_root=os.path.join(settings.BASE_DIR,'data'))

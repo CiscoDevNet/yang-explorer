@@ -1,0 +1,34 @@
+{% extends "yangctx/base.html" %}
+
+{% block body %}
+{{ message }}
+
+<div id="jstree_yang_div">
+    <ul>
+      <li id="root_1">Root node 1
+        <ul>
+          <li id="child_node_1">Child node 1</li>
+          <li id="child_node_2">Child node 2</li>
+        </ul>
+      </li>
+      <li id="root_2">Root node 2</li>
+    </ul>
+</div>
+<button>demo button</button>
+{% endblock body %}
+{% block scripts %}
+<script>
+$(function () {
+    $(function () {
+        $('#jstree_yang_div').jstree();
+    });
+    $('#jstree_yang_div').on("changed.jstree", function (e, data) {
+      console.log(data.selected);
+    });
+    $('button').on('click', function () {
+        $('#jstree_yang_div').jstree("select_node", 'child_node_1');
+    });
+});
+
+</script>
+{% endblock scripts %}
