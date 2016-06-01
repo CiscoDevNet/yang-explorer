@@ -117,7 +117,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.4.2 (Beta)';
+            public var VERSION : String = '0.4.3 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -164,15 +164,10 @@
                 if (response.type == 'rpc') {
                     txtScript.text = response.msg;
                     tnResults.selectedIndex = TAB_SCRIPT_VIEW;
-                } else if (response.type == 'run-edit-commit') {
-                    handleEditCommitResponse(response);
-                } else if (response.type == 'run-commit'){
-                    txtConsole.text += '\n\n===== COMMIT =====:\n\n';
-                    txtConsole.text += response.xml.children()[0].toXMLString();
-                    txtConsole.scroller.verticalScrollBar.maximum;
                 } else {
                     txtConsole.text = response.xml.children()[0].toXMLString();
                     txtConsole.scroller.verticalScrollBar.maximum;
+                    tnResults.selectedIndex = TAB_CONSOLE_VIEW;
                 }
                 updateStatus('Recieved HTTP Result for request: ' + response.type)
             }
@@ -495,21 +490,10 @@
                         req = getRequestCapPayload();
                         break;
 
-                    case 'run-commit':
-                        req = getRequestCommitPayload();
-                        break;
-
-                    default:
+                    case 'run-rpc':
                         req = getRequestPayload(true);
                         if (!req) {
                             return
-                        }
-                        var str : String = req.toString();
-                        if (cbEdit.selected && str.indexOf('<edit-config>') > 0 && str.indexOf('<candidate/>') > 0) {
-                             mode = 'run-edit-commit';
-                        } else if (adg.getMode() == YangUtil.EDIT_CONFIG && 
-                                   str.indexOf('candidate') > 0 && str.indexOf('flag="rpc"') <= 0) {
-                             mode = 'run-edit-commit';
                         }
                         txtConsole.text = 'Waiting for result ... '
                 }

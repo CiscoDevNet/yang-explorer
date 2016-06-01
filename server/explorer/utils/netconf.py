@@ -40,7 +40,9 @@ def build_rpc(request, payload, operation):
     elif operation == 'edit-config':
         datastore = '<target><' + target + '/></target>\n'
         payload = '<config xmlns:xc="' + rpc_xmlns  + '">\n' +  payload + '</config>\n'
-        payload = '<edit-config>\n'  + datastore + payload + '</edit-config>'
+        payload = '<edit-config>\n'+ datastore + payload + '</edit-config>'
+        if target == 'candidate':
+            payload += '<commit/>\n'
     elif operation == 'get':
         payload = '<filter>\n' + payload + '</filter>\n'
         payload = '<get>\n' + payload + '</get>'

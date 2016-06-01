@@ -2,3 +2,4 @@ v/
 *.py[co]
 *~
 server/data/db.sqlite3
+server/static/graph*
