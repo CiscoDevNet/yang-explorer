@@ -10,3 +10,4 @@ markupsafe
 lxml==3.4.4
 graphviz==0.4.9
 ncclient==0.4.7
+pyang==1.6.0
