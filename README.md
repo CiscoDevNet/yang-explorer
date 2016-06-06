@@ -45,7 +45,6 @@ limitations under the License.
    
    Ubuntu: sudo pip install --upgrade setuptools
 ```
-   - pyang (https://github.com/mbj4668/pyang)
    - virtualenv (recommended)
 ```bash
    Ubuntu: sudo apt-get install virtualenv
