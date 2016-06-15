@@ -59,7 +59,7 @@ class Parser(object):
         """
         Returns yang file name with version suffix.
         """
-        if self.revision is not None:
+        if self.revision:
             return self.module + '@' + self.revision + '.yang'
         return self.module + '.yang'
 

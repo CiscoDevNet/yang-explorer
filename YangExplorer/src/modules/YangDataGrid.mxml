@@ -211,7 +211,7 @@
                     var path:String = pendingNode.xml.@path;
                     moduleService.url = url
                     moduleService.contentType = "";
-                    pendingNode.select_path = null;
+                    pendingNode.select_path = path;
                     moduleService.send({node:path, deep:deep});
                 } else {
                     pendingNode.xml = null;
@@ -301,7 +301,7 @@
 
                     if (node.hasOwnProperty('node') &&
                         node.node.@type != '__yang_placeholder') {
-                        if (path == null || (node.hasOwnProperty('@path') && path.indexOf(node.@path) == 0)) {
+                        if (path == null || (node.hasOwnProperty('@path') && path.indexOf(node.@path + '/') == 0)) {
                             dataProvider.openNode(dataCursor.current);
                         }
                     } else {

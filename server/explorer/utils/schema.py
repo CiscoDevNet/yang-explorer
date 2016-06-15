@@ -1,10 +1,20 @@
-##############################################################
-# Netconf schema download 
-#
-# March 2016, Jennifer Chou 
-#
-# Copyright (c) 2016, Cisco Systems Inc
-##############################################################
+"""
+Copyright 2015, Cisco Systems, Inc
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+@author: Jennifer Chou , Cisco Systems, Inc.
+"""
 import os, glob
 from datetime import datetime
 import logging
@@ -37,7 +47,7 @@ rpc = ET.Element("rpc")
 rpc.set("message-id", "101")
 rpc.set("xmlns", "urn:ietf:params:xml:ns:netconf:base:1.0")
 
-def get_schema(request, req, all=False):
+def get_schema(request, req, all=True):
     '''
     This API get yang schema from device
     '''
@@ -121,7 +131,11 @@ def download_yang(request, req):
         rpc.append(get_sc)
         modules.append(module)
         schema = Adapter.run_netconf(request.user.username, device, rpc)
-        fname = os.path.join(session_dir, id+'.yang')
+        if id.endswith('@'):
+            fname = os.path.join(session_dir, sfile + '.yang')
+        else:
+            fname = os.path.join(session_dir, id + '.yang')
+        
         with open(fname, 'w') as f:
             f.write(schema[0][0].text)
         rpc.remove(get_sc)
@@ -166,10 +180,11 @@ def add_schema(request, req):
     return HttpResponse(Response.success('add', 'ok', xml=modules))
 
 def validate_schema(user, name, version):
-    if version is None:
+    if not version:
         fn = os.path.join(ServerSettings.yang_path(user), name + '.yang')
     else:
-        fn = os.path.join(ServerSettings.yang_path(user), name+'@'+version+'.yang')
+        fn = os.path.join(ServerSettings.yang_path(user), name + '@'+ version + '.yang')
+    
     if os.path.exists(fn):
         return None 
 

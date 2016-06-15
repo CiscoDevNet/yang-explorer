@@ -38,7 +38,6 @@ import explorer.utils.cxml as cxml
 
 logging.basicConfig(level=logging.INFO)
 
-
 @csrf_exempt
 def login_handler(request):
     """ HTTP Request handler function for user login / logout requests """
