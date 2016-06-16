@@ -26,16 +26,18 @@ from explorer.utils.misc import ServerSettings
 from django.conf import settings
 from explorer.utils.misc import Response
 from explorer.utils.adapter import Adapter
+from explorer.utils.yang import Parser
+import explorer.utils.uploader as Uploader
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-
-get_schema_rpc = '''
-<rpc message-id="101"
-     xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+get_schema_list_rpc = '''
+<rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <get>
     <filter type="subtree">
       <netconf-state xmlns=
-      "urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+        "urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
         <schemas/>
       </netconf-state>
     </filter>
@@ -43,15 +45,20 @@ get_schema_rpc = '''
 </rpc>
 '''
 
-rpc = ET.Element("rpc")
-rpc.set("message-id", "101")
-rpc.set("xmlns", "urn:ietf:params:xml:ns:netconf:base:1.0")
+get_schema_rpc = '''
+<rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <get-schema xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring">
+    <identifier/>
+  </get-schema>
+</rpc>
+'''
+
 
 def get_schema(request, req, all=True):
-    '''
+    """
     This API get yang schema from device
-    '''
-    logging.debug('Get Yang Schema')
+    """
+    logger.debug('Get Yang Schema')
 
     req = req.replace('<metadata>', '')
     req = req.replace('</metadata>', '')
@@ -60,7 +67,7 @@ def get_schema(request, req, all=True):
     if device.get('host', None) is None:
         return HttpResponse(Response.error('get', 'no host info'))
 
-    rpc_xml= ET.fromstring(get_schema_rpc)
+    rpc_xml= ET.fromstring(get_schema_list_rpc)
     xml = Adapter.run_netconf(request.user.username, device, rpc_xml) 
     if xml is None:
         return HttpResponse(Response.error('get', 'failed to get schema'))
@@ -91,62 +98,88 @@ def get_schema(request, req, all=True):
 
     return HttpResponse(Response.success('get', 'ok', xml=schemas))
 
+
+def download_helper(username, device, dest, rpc, models):
+    """Download list of models in destination directory from device"""
+    if not models:
+        return
+
+    logger.info('Downloading ' + str(models))
+
+    identifier = rpc[0][0]
+    dep_models = set()
+
+    # dowload all models in the list
+    for modelname in models:
+        identifier.text = modelname.split('@')[0]
+        fname = os.path.join(dest, identifier.text + '.yang')
+
+        if not os.path.exists(fname):
+            schema = Adapter.run_netconf(username, device, rpc)
+
+            # write to file
+            with open(fname, 'w') as f:
+                f.write(schema[0][0].text)
+
+            # calculate dependency
+            parser = Parser(fname)
+            dep_models |= set(parser.get_dependency())
+
+    # recursively download dependency
+    download_helper(username, device, dest, rpc, dep_models)
+
+
 def download_yang(request, req):
-    '''
+    """
     This API download yang schema from device
-    '''
-    logging.debug('Download Yang Schema')
+    """
+    logger.debug('Download Yang Schema')
 
     req = req.replace('<metadata>', '')
     req = req.replace('</metadata>', '')
 
     protocol, device, fmt, payload = Adapter.parse_request(req)
     if device.get('host', None) is None:
-        return HttpResponse(Response.error('download', 'no host info'))
+        return HttpResponse(Response.error('download', 'Netconf agent address missing!!'))
 
-    session_dir = ServerSettings.schema_path(request.session.session_key)
-    if not os.path.exists(session_dir):
-        os.makedirs(session_dir)
-    if not os.path.exists(session_dir):
-        return HttpResponse(Response.error('download', 'No session directory'))
+    # clear session directory if it exists
+    Uploader.clear_upload_files(None, request.session.session_key)
 
-    for fname in os.listdir(session_dir):
-        if fname.endswith('.yang'):
-            fn = os.path.join(session_dir, fname)
-            os.remove(fn)
+    # create session directory if it does not exist
+    session_dir = Uploader.create_session_storage(request.session.session_key)
+    if session_dir is None:
+        logger.error('download_yang: Invalid session')
+        return HttpResponse(Response.error('download', 'Invalid session_id'))
 
+    # extact list of models from request
+    req_xml = ET.fromstring(req)
+    models = [sc.text.strip() for sc in req_xml.find('schemas')]
+
+    # download all models recursively
+    rpc = ET.fromstring(get_schema_rpc)
+    download_helper(request.user.username, device, session_dir, rpc, models)
+
+    # prepare list of downloaded models
     modules = ET.Element('modules')
-    reqxml = ET.fromstring(req)
-    schemas = reqxml.find('schemas')
-    for sc in schemas:
-        id = sc.text
-        module = ET.Element('module')
-        get_sc = ET.Element('get-schema')
-        get_sc.set("xmlns", "urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring")
-        identifier = ET.Element("identifier")
-        sfile = id.split('@')[0]
-        identifier.text = sfile
-        module.text = id+'.yang'
-        get_sc.append(identifier)
-        rpc.append(get_sc)
-        modules.append(module)
-        schema = Adapter.run_netconf(request.user.username, device, rpc)
-        if id.endswith('@'):
-            fname = os.path.join(session_dir, sfile + '.yang')
-        else:
-            fname = os.path.join(session_dir, id + '.yang')
-        
-        with open(fname, 'w') as f:
-            f.write(schema[0][0].text)
-        rpc.remove(get_sc)
+    for _file in glob.glob(os.path.join(session_dir, '*.yang')):
 
+        # see if we need to rename file with revision date
+        parser = Parser(_file)
+        new_fname = os.path.join(session_dir, parser.get_filename())
+        if _file != new_fname:
+            os.rename(_file, new_fname)
+
+        module = ET.Element('module')
+        module.text = os.path.basename(new_fname)
+        modules.append(module)
     return modules
 
+
 def download_schema(request, req):
-    '''
+    """
     This API download yang schema from device and bundle it
-    '''
-    logging.debug('Download Schemas')
+    """
+    logger.debug('Download Schemas')
 
     modules = download_yang(request, req)    
 
@@ -168,16 +201,19 @@ def download_schema(request, req):
         os.remove(zfile)
     os.chdir(homedir)
 
-    url = '\nhttp://' + http_host + '/' + 'download/session/' + request.session.session_key + '/' + zfname
+    url = '\nhttp://' + http_host + '/' + 'download/session/'
+    url += request.session.session_key + '/' + zfname
     return HttpResponse(Response.success('download', msg=url))
 
+
 def add_schema(request, req):
-    '''
-    This API download yang schema from device 
-    '''
-    logging.debug('Add Schemas')
+    """
+    This API download yang schema from device
+    """
+    logger.debug('Add Schemas')
     modules = download_yang(request, req)
     return HttpResponse(Response.success('add', 'ok', xml=modules))
+
 
 def validate_schema(user, name, version):
     if not version:

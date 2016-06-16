@@ -36,7 +36,9 @@ import explorer.utils.uploader as Uploader
 import explorer.utils.search as Search
 import explorer.utils.cxml as cxml
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 @csrf_exempt
 def login_handler(request):
@@ -59,13 +61,13 @@ def login_handler(request):
                 if request.session.session_key is not None and request.session.session_key != '':
                     session_dir = ServerSettings.session_path(request.session.session_key)
                     if os.path.exists(session_dir):
-                        logging.debug('Cleaning ' + session_dir)
+                        logger.debug('Cleaning ' + session_dir)
                         shutil.rmtree(session_dir)
                 logout(request)
             except:
-                logging.exception("Failed")
+                logger.exception("Failed")
             else:
-                logging.debug('Logout success!!')
+                logger.debug('Logout success!!')
         return HttpResponse(Response.success(action, 'ok', session))
     return HttpResponse(Response.error('unknown', 'Invalid request!!'))
 
@@ -84,16 +86,16 @@ def upload_handler(request):
     """ HTTP Request handler function to upload yang models """
 
     mode = request.GET.get('mode', '')
-    logging.debug(request.method + ':Received upload request .. ' + mode)
+    logger.debug(request.method + ':Received upload request .. ' + mode)
 
     if not request.user.is_authenticated():
-        logging.warning('User must be logged in !!')
+        logger.warning('User must be logged in !!')
         return HttpResponse(Response.error(mode, 'Unauthorized'))
 
     if not ServerSettings.user_aware():
         if not request.user.has_perm('explorer.delete_yangmodel') or \
                 not request.user.has_perm('explorer.change_yangmodel'):
-            logging.warning('Unauthorized upload request .. ')
+            logger.warning('Unauthorized upload request .. ')
             return HttpResponse(Response.error(mode, 'User does not have permission to upload !!'))
 
     if request.method == 'POST':
@@ -104,14 +106,14 @@ def upload_handler(request):
             module = ET.Element('module')
             module.text = _file
             rval = Response.success('upload', 'ok', xml=module)
-            logging.debug(rval)
+            logger.debug(rval)
             return HttpResponse(rval)
         return HttpResponse(Response.error('upload', 'Failed to upload'))
     elif request.method == 'GET':
         if mode == 'sync':
             filename = request.GET.get('file', '')
             index = request.GET.get('index', '')
-            logging.info('Received sync request for ' + filename + ', index ' + index)
+            logger.info('Received sync request for ' + filename + ', index ' + index)
             success, response = Uploader.sync_file(request.user.username,
                                                    request.session.session_key,
                                                    filename, index)
@@ -148,7 +150,7 @@ def admin_handler(request):
         return HttpResponse(Response.error(None, 'Invalid admin Request'))
 
     action = request.GET.get('action', '')
-    logging.info('Received admin request %s for user %s' % (action, request.user.username))
+    logger.info('Received admin request %s for user %s' % (action, request.user.username))
 
     if action in ['subscribe', 'unsubscribe', 'delete', 'graph']:
         payload = request.GET.get('payload', None)
@@ -170,7 +172,7 @@ def request_handler(request):
     mode = request.GET.get('mode', '')
     reply_xml = None
 
-    logging.info('request_handler: Received Request: (%s)' % mode)
+    logger.info('request_handler: Received Request: (%s)' % mode)
 
     if mode == 'get-collection-list':
         reply_xml = Collection.list()
@@ -188,8 +190,8 @@ def request_handler(request):
     elif mode == 'add-collection':
         metadata = request.GET.get('metadata', '')
         payload = request.GET.get('payload', '')
-        logging.debug('metadata: ' + metadata)
-        logging.debug('payload: ' + payload)
+        logger.debug('metadata: ' + metadata)
+        logger.debug('payload: ' + payload)
         if not Collection.add(metadata, payload):
             return HttpResponse(Response.error(mode, 'Failed'))
 
@@ -217,7 +219,7 @@ def request_handler(request):
 
     elif mode in ['get-cap', 'run-rpc', 'run-edit-commit', 'run-commit']:
         payload = request.GET.get('payload', '')
-        logging.debug('run: ' + payload)
+        logger.debug('run: ' + payload)
         reply_xml = Adapter.run_request(request.user.username, payload)
 
     return HttpResponse(Response.success(mode, 'ok', reply_xml))
@@ -231,7 +233,7 @@ def module_handler(request):
     Handle module request from UI. Response from this request builds
     UI Explorer tree
     """
-    logging.debug("module_handler: enter")
+    logger.debug("module_handler: enter")
     lst = []
     if request.user.is_authenticated():
         path = request.GET.get('node', '')
@@ -248,14 +250,14 @@ def module_handler(request):
             for module in modules:
                 filename = ModuleAdmin.cxml_path(username, module)
                 if filename is not None:
-                    logging.debug("module_handler: loading " + filename)
+                    logger.debug("module_handler: loading " + filename)
                     module = cxml.get_cxml(filename)
                     nodes = module.get_lazy_subtree(path, deep)
                     lst.extend([ET.tostring(node) for node in nodes])
                 else:
-                    logging.error("module_handler: %s not found !!" + module)
+                    logger.error("module_handler: %s not found !!" + module)
 
-    logging.debug("module_handler: exit")
+    logger.debug("module_handler: exit")
     return render_to_response('loader.xml', {'nodes': lst}, RequestContext(request))
 
 
@@ -263,13 +265,13 @@ def schema_handler(request):
     """
     Handle schema request from UI.
     """
-    logging.debug("schema_handler: enter")
+    logger.debug("schema_handler: enter")
     req = request.GET.get('payload', '')
     action = request.GET.get('action', '')
-    logging.debug('Received schema Request (%s)' % action)
+    logger.debug('Received schema Request (%s)' % action)
 
     if not request.user.is_authenticated():
-        logging.error('User must be logged in !!')
+        logger.error('User must be logged in !!')
         return HttpResponse(Response.error(action, 'Unauthorized'))
     if action == 'get-schema':
         return get_schema(request, req)

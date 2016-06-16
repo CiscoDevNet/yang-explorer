@@ -32,12 +32,16 @@ class Parser(object):
     def __init__(self, filename):
         self.module = None
         self.revision = None
+        self.imports = []
+        self.includes = []
 
         if not os.path.exists(filename):
             return
 
         module_re = re.compile("""^\s*[sub]*module\s+['"]?\s*([\w+[\-\w+]+)\s*['"]?\s*""")
         revision_re = re.compile("""^\s*revision\s+['"]?\s*(\w+-\w+-\w+)\s*['"]?\s*""")
+        import_re = re.compile("""^\s*import\s+['"]?\s*([\w+[\-\w+]+)\s*['"]?\s*""")
+        include_re = re.compile("""^\s*include\s+['"]?\s*([\w+[\-\w+]+)\s*['"]?\s*""")
 
         with open(filename, 'r') as f:
             for line in f:
@@ -45,26 +49,42 @@ class Parser(object):
                     res = module_re.match(line)
                     if res is not None:
                         self.module = res.group(1).strip()
+                        continue
 
-                if self.revision is None:
-                    res = revision_re.match(line)
-                    if res is not None:
-                        self.revision = res.group(1).strip()
-                        break
+                imp = import_re.match(line)
+                if imp is not None:
+                    self.imports.append(imp.group(1).strip())
+                    continue
+
+                inc = include_re.match(line)
+                if inc is not None:
+                    self.includes.append(inc.group(1).strip())
+                    continue
+
+                res = revision_re.match(line)
+                if res is not None:
+                    self.revision = res.group(1).strip()
+                    break
 
         if self.module is None:
             logging.error('Could not parse modulename, uploaded file may be corrupted !!')
 
     def get_filename(self):
         """
-        Returns yang file name with version suffix.
+        Returns: yang file name with version suffix.
         """
         if self.revision:
             return self.module + '@' + self.revision + '.yang'
         return self.module + '.yang'
 
+    def get_dependency(self):
+        """
+        Returns: List of dependency (yang imports and includes)
+        """
+        return self.imports + self.includes
+
     def __str__(self):
-        return self.get_filename()
+        return self.get_filename() + ' -> ' + str(self.get_dependency())
 
 
 class Compiler(object):
@@ -228,7 +248,7 @@ class Compiler(object):
             if depfile is not None:
                 deplist.append(depfile)
             else:
-                logging.warning("get_dependencies: Dependency (%s) not satisfied, compilation will fail !!" %  _file)
+                logging.warning("get_dependencies: Dependency (%s) not satisfied, compilation may fail !!" %  _file)
 
         logging.debug("get_dependencies: Computed " + str(deplist))
         return deplist

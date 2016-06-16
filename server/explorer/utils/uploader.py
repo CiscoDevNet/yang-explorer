@@ -114,6 +114,7 @@ def _compile_dependecies(user, modules, session=None):
 
     logging.debug('_compile_dependecies: done')
 
+
 def _clean_oldfiles(dirpath, fname):
     if '@' in fname: fname = fname.split('@')[0]
     for file in os.listdir(dirpath):
@@ -122,6 +123,7 @@ def _clean_oldfiles(dirpath, fname):
         if fn == fname:
             f = os.path.join(dirpath, file)
             os.remove(f)
+
 
 def commit_files(user, session):
     """ Moves compiled yang moudles to user's yang directory """
@@ -198,6 +200,26 @@ def get_upload_files(user, session):
 
     return True, modules
 
+def create_session_storage(session):
+    """
+    Create session storage directory for storing session private files
+    Args:
+        session: session id for user
+
+    Returns: None
+    """
+    directory = ServerSettings.session_path(session)
+    try:
+        if not os.path.exists(directory):
+            logging.debug('Creating session storage ..')
+            os.makedirs(directory)
+            if not os.path.exists(directory):
+                logging.error('Failed to create session storage ..')
+                return None
+    except:
+        return None
+
+    return directory
 
 def clear_upload_files(user, session):
     """ Delete uploaded yang files which are not committed """
