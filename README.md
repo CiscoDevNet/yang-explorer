@@ -140,7 +140,7 @@ limitations under the License.
 #####5.2.1 Login:
    YangExplorer uses user accounts to manage workspaces. You can create a user account using admin page (See 5.3.1 Creating User Account) or use the predefined login (guest/guest). You must login (click on the Login button on top right corner)
 
-   You can use guest login (guest/guest) or newly created account.
+   You can use guest login **(guest/guest)** or newly created account.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 
 #####5.2.2 Adding/Deleing Yang Models:
@@ -186,7 +186,8 @@ limitations under the License.
    All models must be compiled successfully, in case of any error none of the models will be uploaded to yang-explorer.
    
 #####5.2.3 Generating the model dependency graph:
-   - Click **Manage** tab
+   - Click **Manage Models** tab
+   - Click **Workspace** tab
       - Select one or more model name to get dependency graph
       - If no models are selected, all subscribed model will be used to generate graph
    - Click Graph buttons to generate graph
