@@ -40,6 +40,7 @@ limitations under the License.
             import classes.Response;
             
             import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
             import flatspark.utils.AwesomeUtils;
             
             private var url:String;
@@ -230,6 +231,7 @@ limitations under the License.
                 }
                 dpModuleList.refresh();
                 enable(true);
+                showStatus();
             }
             
             private function listFilter(item:Object):Boolean {
@@ -245,6 +247,7 @@ limitations under the License.
             {
                 dpModuleList.filterFunction = listFilter;
                 dpModuleList.refresh();
+                showStatus();
             }
             
             protected function cbSelAll_changeHandler():void
@@ -254,6 +257,7 @@ limitations under the License.
                 }
                 dpModuleList.filterFunction = listFilter;
                 dpModuleList.refresh();
+                showStatus();
             }
             
             protected function btnGraph_clickHandler(event:MouseEvent):void
@@ -279,38 +283,57 @@ limitations under the License.
                 graphWindow.init(parentApplication.global.get_root_url(), module);
                 PopUpManager.centerPopUp(graphWindow)
             }
+            
+            private function showStatus() : void {
+                if (dpModuleList) {
+                    status.text = 'Showing ' + dpModuleList.length.toString() + ' models'
+                } else {
+                    status.text = "";
+                }
+            }
         ]]>
     </fx:Script>
     <s:VGroup width="100%" height="100%" padding="2">
         <s:HGroup padding="5" width="100%">
-            <s:CheckBox id="cbSelAll" label="Select All" selected="false" change="cbSelAll_changeHandler()"/>
+            <s:CheckBox id="cbSelAll" label="Select All" selected="false"
+                        change="cbSelAll_changeHandler()"
+                        skinClass="flatspark.skins.CheckBoxSkin"/>
             <s:Spacer width="100%"/>
+            <s:VGroup paddingTop="6">
+                <s:Label id="status"/>
+            </s:VGroup>
             <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
         </s:HGroup>
         <s:List id="lstModule" dataProvider="{dpModuleList}" width="100%" height="100%"
                 itemRenderer="itemrenderers.ModulelistRenderer" borderVisible="false">
         </s:List>
-        <s:HGroup direction="rtl" padding="10" width="100%">
+        <s:HGroup width="100%" padding="10" direction="rtl">
+            <s:Spacer width="100%"/>
             <components:ButtonIcon id="btnAdd" width="100"
-                                   label="Add" brand="{BrandColorEnum.Success}"
+                                   label="Add" brand="{BrandColorEnum.Primary}"
                                    click="btnUpload_clickHandler()"
+                                   height="{ButtonSizeEnum.Small}"
                                    iconFont="{AwesomeUtils.fa_upload}"/>
             <components:ButtonIcon id="btnSub" label="Subscribe"
                                    click="btnSub_clickHandler(true)"
                                    width="100"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"/>
             <components:ButtonIcon id="btnUnSub" label="Un-Subscribe"
                                    click="btnSub_clickHandler(false)"
                                    width="100"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"/>
             <components:ButtonIcon id="btnDel" label="Delete"
                                    click="btnDel_clickHandler(event)"
                                    width="100"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"/>
             <components:ButtonIcon id="btnGraph" label="Graph"
                                    click="btnGraph_clickHandler(event)"
                                    width="100"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"/>
         </s:HGroup>
     </s:VGroup>
 </s:Group>

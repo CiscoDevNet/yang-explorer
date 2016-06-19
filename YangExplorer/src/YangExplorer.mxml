@@ -71,6 +71,8 @@
             
             import flatspark.enums.BrandColorEnum;
             import flatspark.enums.ButtonSizeEnum;
+            import flatspark.enums.TextInputSizeEnum;
+            import flatspark.skins.CheckBoxSkin;
             import flatspark.utils.AwesomeUtils;
             
             import modules.LoginWindow;
@@ -117,7 +119,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.4.4 (Beta)';
+            public var VERSION : String = '0.4.5 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -577,6 +579,26 @@
                     collections.reset()
                     enableAllButtons(false)
                 }
+                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+                tnSettings.selectedIndex = TAB_SETTING_VIEW;
+            }
+            
+            public function logout() : void {
+                btnLogin.label = 'Login';
+                btnLogin.toolTip = 'Click to login';
+                reset_netconfSettings(true);
+                btnClear_clickHandler(null);
+                resetTreeView();
+                enableAllButtons(false)
+            }
+            
+            public function session_expired(r : Response) : Boolean {
+                if (r.type == 'session-expired') {
+                    Alert.show(r.msg, 'Session Expired');
+                    logout();
+                    return true;
+                }
+                return false;
             }
             
             public function onCreationComplete():void {
@@ -867,20 +889,20 @@
                                        fontFamily="Avenir" fontWeight="bold"/>
                 <s:Spacer width="95%"/>
                 <components:ButtonIcon id="btnHelp" width="100" height="{ButtonSizeEnum.Small}"
-                                       label="Help" brand="{BrandColorEnum.Success}"
+                                       label="Help" brand="{BrandColorEnum.Info}"
                                        click="navigateToURL(new URLRequest(HELP_URL))"
                                        iconFont="{AwesomeUtils.fa_github}"/>
                 <components:ButtonIcon id="btnAdmin" width="100" height="{ButtonSizeEnum.Small}"
-                                       label="Admin" brand="{BrandColorEnum.Success}"
+                                       label="Admin" brand="{BrandColorEnum.Primary}"
                                        click="navigateToURL(new URLRequest(ADMIN_URL))"
                                        iconFont="{AwesomeUtils.fa_users}"/>
                 <components:ButtonIcon id="btnRefresh" width="80" height="{ButtonSizeEnum.Small}"
-                                       label="Refresh" brand="{BrandColorEnum.Success}"
+                                       label="Refresh" brand="{BrandColorEnum.Primary}"
                                        click="btnRefresh_clickHandler(event)"
                                        iconFont="{AwesomeUtils.fa_refresh}"
                                        toolTip="Reload content from server"/>	
                 <components:ButtonIcon id="btnLogin" width="100" height="{ButtonSizeEnum.Small}"
-                                       label="Login" brand="{BrandColorEnum.Success}"
+                                       label="Login" brand="{BrandColorEnum.Primary}"
                                        click="btnLogin_clickHandler(event)"
                                        iconFont="{AwesomeUtils.fa_user}"/>
             </mx:ApplicationControlBar>
@@ -928,18 +950,18 @@
                                        toolTip="Convert to oper mode"/>
                         <s:Spacer width="100%"/>
                         <components:ButtonIcon id="btnIAdd" width="80" height="{ButtonSizeEnum.Small}"
-                                               label="Add" brand="{BrandColorEnum.Success}"
+                                               label="Add" brand="{BrandColorEnum.Primary}"
                                                click="adg.addInstance()"
                                                enabled="false"
                                                iconFont="{AwesomeUtils.fa_plus}"/>
                         <components:ButtonIcon id="btnIDelete" width="80" height="{ButtonSizeEnum.Small}"
-                                               label="Delete" brand="{BrandColorEnum.Success}"
+                                               label="Delete" brand="{BrandColorEnum.Primary}"
                                                click="adg.deleteInstance()"
                                                enabled="false"
                                                iconFont="{AwesomeUtils.fa_minus}"
                                                toolTip="Reload content from server"/>
                         <components:ButtonIcon id="btnReset" width="80" height="{ButtonSizeEnum.Small}"
-                                               label="Reset" brand="{BrandColorEnum.Success}"
+                                               label="Reset" brand="{BrandColorEnum.Primary}"
                                                click="resetTreeView()"
                                                iconFont="{AwesomeUtils.fa_repeat}"
                                                toolTip="Reset user data from explorer windows."/>
@@ -961,13 +983,17 @@
                                             <s:FormLayout gap="-5"/>
                                         </s:layout> 
                                         <s:FormItem id="fSourceDS" label="Source Datastore">
-                                            <s:ComboBox id="cbSrcDs" width="120"
-                                                        dataProvider="{netconfDataSrc}"
-                                                        fontFamily="Avenir"/>
+                                            <s:DropDownList id="cbSrcDs" width="150"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            dataProvider="{netconfDataSrc}"
+                                                            skinClass="flatspark.skins.DropDownListSkin"
+                                                            fontFamily="Avenir,Verdana"/>
                                         </s:FormItem>
                                         <s:FormItem id="fTargetDS" label="Target Datastore">
-                                            <s:ComboBox id="cbTgtDs" width="120"
-                                                        dataProvider="{netconfDataSrc}"/>
+                                            <s:DropDownList id="cbTgtDs" width="150"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            skinClass="flatspark.skins.DropDownListSkin"
+                                                            dataProvider="{netconfDataSrc}"/>
                                         </s:FormItem>
                                     </s:Form>
                                 </mx:VBox>
@@ -977,36 +1003,41 @@
                                         <s:layout>
                                             <s:FormLayout gap="-5"/>
                                         </s:layout> 
-                                        <s:FormItem label="    Profile">
+                                        <s:FormItem label="Profile">
                                             <s:HGroup>
-                                                <s:DropDownList id="lstDevProfile" width="120"
+                                                <s:DropDownList id="lstDevProfile" width="150"
                                                                 change="lstDevProfile_changeHandler()"
-                                                                dataProvider="{deviceProfiles}"/>
+                                                                dataProvider="{deviceProfiles}"
+                                                                height="{TextInputSizeEnum.Small}"
+                                                                skinClass="flatspark.skins.DropDownListSkin"/>
                                                 <mx:LinkButton label="Create device profile" click="create_profile()"  color="blue"/>
                                             </s:HGroup>
                                         </s:FormItem>
-                                        <s:FormItem label="   Platform">
-                                            <s:ComboBox id="lstDevPlatform" width="120"
+                                        <s:FormItem label="Platform">
+                                            <s:DropDownList id="lstDevPlatform" width="150"
                                                             dataProvider="{devicePlatforms}"
-                                                            change="updateForm()"/>
+                                                            change="updateForm()"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            skinClass="flatspark.skins.DropDownListSkin"/>
                                         </s:FormItem>
-                                        <s:HGroup>
-                                            <s:FormItem label="IP Address">
-                                                <s:TextInput id="txtNCIpAddr" width="120"
-                                                            />
-                                            </s:FormItem>
-                                            <s:FormItem label="        Port">
-                                                <s:TextInput id="txtNCPort" width="50" text="830"/>
-                                            </s:FormItem>
-                                        </s:HGroup>
-                                        <s:HGroup>
-                                            <s:FormItem label=" Username ">
-                                                <s:TextInput id="txtNCUser" width="120"/>
-                                            </s:FormItem>
-                                            <s:FormItem label="Password">
-                                                <s:TextInput id="txtNCPwd" width="120"/>
-                                            </s:FormItem>
-                                        </s:HGroup>	
+                                        <s:FormItem label="Host">
+                                            <s:HGroup>
+                                                <components:TextInputIcon id="txtNCIpAddr" width="150"/>
+                                                <s:VGroup paddingTop="10">
+                                                    <s:Label text="Port" fontWeight="bold" verticalAlign="middle"/>
+                                                </s:VGroup>
+                                                <components:TextInputIcon id="txtNCPort" width="75"/>
+                                            </s:HGroup>
+                                        </s:FormItem>
+                                        <s:FormItem label="Username">
+                                            <s:HGroup>
+                                                <components:TextInputIcon id="txtNCUser" width="150"/>
+                                                <s:VGroup paddingTop="10">
+                                                    <s:Label text="Password" fontWeight="bold" verticalAlign="middle"/>
+                                                </s:VGroup>
+                                                <components:TextInputIcon id="txtNCPwd" width="150"/>
+                                            </s:HGroup>
+                                        </s:FormItem>
                                     </s:Form>
                                 </mx:VBox>
                             </mx:TabNavigator>
@@ -1022,19 +1053,19 @@
                                     <components:ButtonIcon id="btnGenRPC" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="RPC"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="btnGenRPC_clickHandler()"
                                                            toolTip="Generate RPC encoding"/>
                                     <components:ButtonIcon id="btnGenScript" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Script"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="btnGenScript_clickHandler()"
                                                            toolTip="Generate python script"/>
                                     <components:ButtonIcon id="btnCap" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Capabilities"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="runScript('get-cap')"
                                                            toolTip="Fetch device capability"/>
                                 </s:HGroup>
@@ -1042,38 +1073,40 @@
                                                  creationPolicy="all" fontFamily="Avenir">
                                     <mx:VBox width="100%" height="100%" label="Encoding">
                                         <s:TextArea id="txtScript" width="100%" height="100%"
-                                                    editable="false" fontFamily="Avenir"
+                                                    editable="false" fontFamily="Menlo, Avenir"
                                                     fontSize="12" fontStyle="italic"
                                                     lineBreak="explicit"/>
                                     </mx:VBox>
                                     <mx:VBox width="100%" height="100%" label="Console">
                                         <s:TextArea id="txtConsole" width="100%" height="100%"
-                                                    editable="false" fontFamily="Avenir"
+                                                    editable="false" fontFamily="Menlo, Avenir"
                                                     fontSize="12" fontStyle="italic"
                                                     lineBreak="explicit"/>
                                     </mx:VBox>
                                 </mx:TabNavigator>
                                 <s:HGroup width="100%" height="10%" paddingBottom="10"
                                           paddingLeft="10" paddingRight="10">
-                                    <s:CheckBox id="cbEdit" label="Custom RPC" selected="false" change="cbEdit_changeHandler(event)"/>
+                                    <s:CheckBox id="cbEdit" label="Custom RPC" selected="false"
+                                                change="cbEdit_changeHandler(event)"
+                                                skinClass="flatspark.skins.CheckBoxSkin"/>
                                     <s:Spacer width="100%"/>
-                                    <components:ButtonIcon id="btnRPC" width="80"
+                                    <components:ButtonIcon id="btnRPC" width="100"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Run"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="runScript('run-rpc')"/>
-                                    <components:ButtonIcon id="btnSave" width="80"
+                                    <components:ButtonIcon id="btnSave" width="100"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Save"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="btnSave_clickHandler(event)"/>
-                                    <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
+                                    <components:ButtonIcon width="100" height="{ButtonSizeEnum.Small}"
                                                            label="Clear"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="btnClear_clickHandler(event)"/>
-                                    <components:ButtonIcon width="60" height="{ButtonSizeEnum.Small}"
+                                    <components:ButtonIcon width="100" height="{ButtonSizeEnum.Small}"
                                                            label="Copy"
-                                                           brand="{BrandColorEnum.Success}"
+                                                           brand="{BrandColorEnum.Primary}"
                                                            click="btnCopy_clickHandler(event)"/>
                                 </s:HGroup>
                             </mx:VBox>

@@ -115,7 +115,7 @@
                                       />
         </s:FormItem>
         <s:FormItem label="Password:" includeIn="Login">
-            <components:TextInputIcon id='txtPassword' displayAsPassword="true" text='guest'
+            <components:TextInputIcon id='txtPassword' displayAsPassword="true"
                                       enter="btnLogin_clickHandler(null)"
                                       iconFont="{AwesomeUtils.fa_key}"
                                       />
@@ -123,9 +123,11 @@
         <s:FormItem direction="rtl">
             <!-- Set label of the control based on the view state.-->
             <components:ButtonIcon id='btnLogin' label.Login = "Login" label.Logout="Logout"
-                                   width="100" click="btnLogin_clickHandler(event)"
+                                   width="100"
+                                   click="btnLogin_clickHandler(event)"
                                    height="{ButtonSizeEnum.Small}"
-                                   brand="{BrandColorEnum.Success}" direction="rtl"/>
+                                   brand="{BrandColorEnum.Primary}"
+                                   />
         </s:FormItem>
     </s:Form> 
 </s:TitleWindow>

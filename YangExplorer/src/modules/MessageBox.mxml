@@ -30,7 +30,9 @@
     <fx:Script>
         <![CDATA[
             import mx.managers.PopUpManager;
+            
             import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
 
             // Handle the close button and Cancel button.
             private function handleCloseEvent():void {
@@ -47,11 +49,13 @@
         <s:HGroup width="100%" horizontalAlign="right">
             <components:ButtonIcon width="80"
                                    label="Copy"
-                                   brand="{BrandColorEnum.Success}"
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"
                                    click="System.setClipboard(txtLog.text);"/>
             <components:ButtonIcon width="80"
                                    label="Close"
-                                   brand="{BrandColorEnum.Success}"
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"
                                    click="handleCloseEvent()"/>
         </s:HGroup>
     </s:VGroup>

@@ -72,7 +72,7 @@ limitations under the License.
         </s:Scroller>
         <s:HGroup width="100%" horizontalAlign="center" paddingBottom="5" paddingLeft="5"
                   paddingRight="5">
-            <components:ButtonIcon width="80" label="Download" brand="{BrandColorEnum.Success}"
+            <components:ButtonIcon width="80" label="Download" brand="{BrandColorEnum.Primary}"
                                    click="PopUpManager.removePopUp(this);navigateToURL(new URLRequest(graph_url))"/>
         </s:HGroup>
     </s:VGroup>

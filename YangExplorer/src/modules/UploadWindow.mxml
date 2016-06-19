@@ -352,13 +352,13 @@
             <s:Spacer width="100%"/>
             <components:ButtonIcon id="btnBrowse" label="Browse" click="btnBrowseFile_clickHandler()"
                                    width="100"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   brand="{BrandColorEnum.Primary}"/>
             <components:ButtonIcon id="btnUpload" label="Upload"
                                    width="100" click="btnUpload_clickHandler()"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   brand="{BrandColorEnum.Primary}"/>
             <components:ButtonIcon id="btnClear" label="Clear"
                                    width="100" click="btnClear_clickHandler()"
-                                   brand="{BrandColorEnum.Success}"/>
+                                   brand="{BrandColorEnum.Primary}"/>
         </s:HGroup>
     </s:VGroup>
 </s:TitleWindow>

@@ -46,7 +46,8 @@
             
             import classes.Response;
             
-            import flatspark.enums.BrandColorEnum;	
+            import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
             
             // Handle the close button and Cancel button.
             private function handleClose():void {
@@ -121,11 +122,13 @@
         <s:FormItem label="Description">
             <s:TextArea id="txtDesc"  width="250"/>
         </s:FormItem> 
-        <s:FormItem direction="rtl">
-            <s:HGroup>
+        <s:FormItem>
+            <s:HGroup  width="100%" direction="rtl">
                 <components:ButtonIcon id="btnSubmit" label="Submit"
                                        click="handleSubmit()"
-                                       brand="{BrandColorEnum.Success}"/>
+                                       width="100"
+                                       height="{ButtonSizeEnum.Small}"
+                                       brand="{BrandColorEnum.Primary}"/>
             </s:HGroup>
         </s:FormItem> 
     </s:Form>

@@ -35,6 +35,7 @@
             
             import flatspark.enums.BrandColorEnum;
             import flatspark.enums.ButtonSizeEnum;
+            import flatspark.utils.AwesomeUtils;
 
             private var url:String;
 
@@ -87,8 +88,9 @@
             protected function collectionService_resultHandler(event:ResultEvent):void
             {
                 var response : Response = new Response(XML(event.result));
+                
                 if (response.errored) {
-                    Alert.show(response.toString(), 'Error');
+                    Alert.show(response.msg, 'Error');
                     return;
                 }
 
@@ -222,14 +224,15 @@
                doubleClickEnabled="true" doubleClick="lstCollection_doubleClickHandler(event)">
         </s:List>
         <s:HGroup width="100%" layoutDirection="rtl" padding="10">
-            <components:ButtonIcon id="btnDelete" width="15%"
-                                   height="{ButtonSizeEnum.Small}"
+            <components:ButtonIcon id="btnDelete" width="100"
                                    label="Delete" enabled="false"
-                                   brand="{BrandColorEnum.Success}"
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"
                                    click="btnDelete_clickHandler(event)"/>
-            <components:ButtonIcon id="btnLoad" width="15%"
-                                   height="{ButtonSizeEnum.Small}" label="Load" enabled="false"
-                                   brand="{BrandColorEnum.Success}"
+            <components:ButtonIcon id="btnLoad" width="100"
+                                   label="Load" enabled="false"
+                                   height="{ButtonSizeEnum.Small}"
+                                   brand="{BrandColorEnum.Primary}"
                                    click="btnLoad_clickHandler(event)"/>
         </s:HGroup>
     </s:VGroup>

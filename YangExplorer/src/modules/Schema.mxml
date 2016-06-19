@@ -43,8 +43,10 @@ limitations under the License.
             import classes.Response;
             
             import flatspark.enums.BrandColorEnum;
+            import flatspark.enums.ButtonSizeEnum;
+            import flatspark.skins.DropDownListSkin;
             import flatspark.utils.AwesomeUtils;
-               
+
             public var uploadWindow:UploadWindow;
             private var url:String;
             private var upload_url:String;
@@ -59,7 +61,15 @@ limitations under the License.
                 url = _url + '/schema?';
                 upload_url = _url+ '/upload?';
             }
-            
+
+            private function showStatus() : void {
+                if (dpSchemaList) {
+                    status.text = "Showing " + dpSchemaList.length.toString() + " models";
+                } else {
+                    status.text = "";
+                }
+            }
+
             public function refresh_if_required() : void {
                 if (!dpSchemaList) {
                     if (devProfileList.selectedIndex > 0) {
@@ -67,11 +77,12 @@ limitations under the License.
                     }
                 }
             }
+
             private function get_schema(_action: String): void {
                 if (!url) {
                     return;
                 }
-            
+                
                 if (!dpSchemaList) {
                     dpSchemaList = new ArrayCollection()
                 }
@@ -86,7 +97,7 @@ limitations under the License.
                     enable(true);
                 }
             }
-            
+
             public function reset() : void {
                 if (dpSchemaList) {
                     dpSchemaList.removeAll()
@@ -95,19 +106,20 @@ limitations under the License.
                 }
                 enable(false);
             }
-            
+
             public function enable (enalble : Boolean) : void {
                 btnSync.enabled = enalble;
                 btnDownload.enabled = enalble;
                 cbSelAll.selected = false;
             }
-            
+
             protected function creationCompleteHandler(event:FlexEvent):void
             {
                 url = null;
                 dpSchemaList = null;
                 deviceProfiles = parentApplication.get_dev_profiles()
                 reset();
+                showStatus();
             }
             
             private function get_selected(mode:String) : XML {
@@ -136,7 +148,7 @@ limitations under the License.
                 if (sc_xml == null) {
                     Alert.show('Please select at least one model');
                     return;
-                }             
+                }            
                 var req_xml:XML = parentApplication.getRequestSchemaPayload(sc_xml);
                 
                 if (req_xml == null) {
@@ -149,20 +161,28 @@ limitations under the License.
             
             protected function schemaService_faultHandler(event:FaultEvent):void
             {
+                devProfileList.selectedIndex = 0;
                 Alert.show('Something went wrong, returned errored response !!', 'Http Error');
             }
-            
+
             protected function schemaService_resultHandler(event:ResultEvent):void
             {
                 var result : XML = event.result as XML;
                 if (result == null) {
                     Alert.show('Something went wrong, schema request', 'Http Error');
+                    devProfileList.selectedIndex = 0;
                     return;
                 }
+
                 var response : Response = new Response(result);
+                if (parentApplication.session_expired(response)) {
+                    devProfileList.selectedIndex = 0;
+                    return;
+                }
 
                 if (response.errored) {
                     Alert.show(response.msg, 'Error');
+                    devProfileList.selectedIndex = 0;
                     return;
                 }
 
@@ -185,6 +205,7 @@ limitations under the License.
                         }
                         dpSchemaList.refresh();
                         enable(true);
+                        showStatus();
                     } else {
                         Alert.show(response.msg);
                     }
@@ -198,7 +219,7 @@ limitations under the License.
                     }
                 }
             }
-
+            
             private function listFilter(item:Object):Boolean {
                 var target : String;
                 if(item.hasOwnProperty("schema")) {
@@ -212,6 +233,7 @@ limitations under the License.
             {
                 dpSchemaList.filterFunction = listFilter;
                 dpSchemaList.refresh();
+                showStatus();
             }
             
             protected function cbSelAll_changeHandler():void
@@ -221,6 +243,7 @@ limitations under the License.
                 }
                 dpSchemaList.filterFunction = listFilter;
                 dpSchemaList.refresh();
+                showStatus();
             }
             
             protected function unmatchSelAll_changeHandler():void
@@ -232,6 +255,7 @@ limitations under the License.
                 }
                 dpSchemaList.filterFunction = listFilter;
                 dpSchemaList.refresh();
+                showStatus();
             }
 
             protected function devProfile_changeHandler(event:IndexChangeEvent):void {
@@ -241,6 +265,7 @@ limitations under the License.
                     parentApplication.set_devProfile(devProfileList.selectedIndex);
                     get_schema('get-schema')
                 }
+                showStatus();
             }
         ]]>
     </fx:Script>
@@ -248,34 +273,43 @@ limitations under the License.
         <s:HGroup width="100%" paddingLeft="5">
             <s:DropDownList id="devProfileList" width="200"
                             prompt="Select Device Profile"
-                            toolTip="Select device profile"
                             change="devProfile_changeHandler(event)"
-                            dataProvider="{deviceProfiles}"/>
+                            dataProvider="{deviceProfiles}"
+                            height="{ButtonSizeEnum.Small}"
+                            skinClass="flatspark.skins.DropDownListSkin"/>
             <mx:LinkButton label="Refresh" click="devProfile_changeHandler(null)"/>
             <mx:LinkButton label="Create device profile" click="parentApplication.create_profile()"  color="blue"/>
-        </s:HGroup>  
-         <s:HGroup padding="5" width="100%">
-            <s:CheckBox id="cbSelAll" label="Select All" selected="false" change="cbSelAll_changeHandler()"/>
+        </s:HGroup>   
+        <s:HGroup padding="2" width="100%">
+            <s:CheckBox id="cbSelAll" label="Select All" selected="false"
+                        change="cbSelAll_changeHandler()"
+                        skinClass="flatspark.skins.CheckBoxSkin"/>
             <s:Spacer width="10%"/>
-            <s:CheckBox id="unmatchSelAll" label="Select out-of-sync" selected="false" change="unmatchSelAll_changeHandler()"/>
-            <s:Spacer width="90%"/>
-            <s:TextInput id="txtFilter" prompt="filter" enter="btnFilter_clickHandler()"/>
+            <s:CheckBox id="unmatchSelAll" label="Select out-of-sync" selected="false"
+                        change="unmatchSelAll_changeHandler()"
+                        skinClass="flatspark.skins.CheckBoxSkin"/>
+            <s:Spacer width="80%"/>
+            <s:TextInput id="txtFilter" prompt="Filter" enter="btnFilter_clickHandler()"/>
         </s:HGroup>
         <s:List id="lstSchema" dataProvider="{dpSchemaList}" width="100%" height="100%"
                 itemRenderer="itemrenderers.SchemaListRenderer" borderVisible="false">
         </s:List>
-        <s:HGroup direction="rtl" padding="10" width="100%">
+        <s:HGroup width="100%" padding="10" direction="rtl">
+            <s:Label id="status"/>
+            <s:Spacer width="100%"/>
             <components:ButtonIcon id="btnSync" width="100"
-                                   label="Sync" brand="{BrandColorEnum.Success}"
+                                   label="Sync" brand="{BrandColorEnum.Primary}"
                                    toolTip="Retrieve selected models from device and sync to YangExplorer database"
                                    click="schema_clickHandler('add-schema')"
-                                   iconFont="{AwesomeUtils.fa_upload}"/>
+                                   iconFont="{AwesomeUtils.fa_refresh}"
+                                   height="{ButtonSizeEnum.Small}"/>
             <components:ButtonIcon id="btnDownload" label="Download"
                                    click="schema_clickHandler('download-schema')"
                                    width="100"
                                    toolTip="Retrieve selected models from device and download"
-                                   brand="{BrandColorEnum.Success}"
-                                   iconFont="{AwesomeUtils.fa_download}"/>
+                                   brand="{BrandColorEnum.Primary}"
+                                   iconFont="{AwesomeUtils.fa_download}"
+                                   height="{ButtonSizeEnum.Small}"/>
         </s:HGroup>
     </s:VGroup>
 </s:Group>

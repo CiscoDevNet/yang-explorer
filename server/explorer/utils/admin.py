@@ -23,6 +23,9 @@ from explorer.utils.yang import Compiler
 from explorer.utils.dygraph import DYGraph
 from explorer.utils.misc import ServerSettings
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class ModuleAdmin:
     @staticmethod
@@ -30,7 +33,7 @@ class ModuleAdmin:
         """
         Return list of modules available to user + subscribed
         """
-        logging.info("ModuleAdmin.get_modules: enter")
+        logger.debug("ModuleAdmin.get_modules: enter")
 
         modules = ET.Element('modulelist')
         user = User.objects.filter(username=username)
@@ -47,12 +50,12 @@ class ModuleAdmin:
                 module.set('subscribed', 'true')
             modules.append(module)
 
-        logging.debug("ModuleAdmin.get_modules: returning (%d) modules .. exit" % len(modules))
+        logger.info("ModuleAdmin.get_modules: returning (%d) modules .. exit" % len(modules))
         return modules
 
     @staticmethod
     def find_matching(target, directory, modules):
-        logging.debug('Searching target %s in %s' % (target, directory))
+        logger.debug('Searching target %s in %s' % (target, directory))
         if not modules:
             modules = [os.path.basename(_file) for _file in glob.glob(os.path.join(directory, '*.yang'))]
 
@@ -81,7 +84,7 @@ class ModuleAdmin:
         """
         users = User.objects.filter(username=username)
         if not users:
-            logging.warning("ModuleAdmin.admin_action: Invalid user " + username)
+            logger.warning("ModuleAdmin.admin_action: Invalid user " + username)
             return []
 
         modules = []
@@ -94,10 +97,10 @@ class ModuleAdmin:
 
     @staticmethod
     def admin_action(username, payload, request):
-        logging.debug("ModuleAdmin.admin_action: enter (%s -> %s)" % (username, request))
+        logger.info("ModuleAdmin.admin_action: enter (%s -> %s)" % (username, request))
 
         if payload is None:
-            logging.error('ModuleAdmin.admin_action: invalid payload in request !!')
+            logger.error('ModuleAdmin.admin_action: invalid payload in request !!')
             return False, "Invalid payload !!"
 
         modified = False
@@ -108,7 +111,7 @@ class ModuleAdmin:
 
         users = User.objects.filter(username=username)
         if not users:
-            logging.error("ModuleAdmin.admin_action: invalid user " + username)
+            logger.error("ModuleAdmin.admin_action: invalid user " + username)
             return False, 'Unknown User %s !!' % username
 
         user = users[0]
@@ -119,14 +122,14 @@ class ModuleAdmin:
         for module in modules:
             name = module.text.split('.yang')[0]
 
-            logging.debug("ModuleAdmin.admin_action: %s ->  %s" % (request, name))
+            logger.debug("ModuleAdmin.admin_action: %s ->  %s" % (request, name))
 
             # delete modules from user profile
             if request in ['delete', 'unsubscribe']:
                 if UserProfile.objects.filter(user=user, module=name).exists():
                     profile = UserProfile.objects.filter(user=user, module=name)
                     profile.delete()
-                    logging.debug('Module %s deleted for user %s' % (module.text, username))
+                    logger.debug('Module %s deleted for user %s' % (module.text, username))
 
             # delete yang and cxml files for delete request
             if request == 'delete':
@@ -139,22 +142,22 @@ class ModuleAdmin:
 
             if request == 'subscribe':
                 if not is_browsable(username, name):
-                    logging.debug('Module %s can not be subscribed ' % (module.text))
+                    logger.debug('Module %s can not be subscribed ' % (module.text))
                     continue
 
                 if not UserProfile.objects.filter(user=user, module=name).exists():
                     profile = UserProfile(user=user, module=name)
                     profile.save()
-                    logging.debug('User %s subscribed to %s module ..' % (username, module.text))
+                    logger.debug('User %s subscribed to %s module ..' % (username, module.text))
                 else:
-                    logging.debug('User %s already subscribed to %s module ' % (username, module.text))
+                    logger.debug('User %s already subscribed to %s module ' % (username, module.text))
 
         # if any yang model modified, delete dependency file
         if modified:
             _file = os.path.join(ServerSettings.yang_path(username), 'dependencies.xml')
             if os.path.exists(_file):
                 os.remove(_file)
-                logging.debug('Deleted dependency file %s (user: %s)' % (_file, username))
+                logger.debug('Deleted dependency file %s (user: %s)' % (_file, username))
 
         return True, None
 
@@ -191,5 +194,5 @@ def is_browsable(username, module):
             if root.find('node'):
                 browsable = True
         except:
-            logging.error('is_browsable: Exception in parse -> ' + cxml_path)
+            logger.error('is_browsable: Exception in parse -> ' + cxml_path)
     return browsable

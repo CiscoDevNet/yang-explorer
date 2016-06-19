@@ -18,7 +18,6 @@ limitations under the License.
 import os, glob
 from datetime import datetime
 import logging
-import shutil
 import lxml.etree as ET
 from zipfile import ZipFile
 from django.http import HttpResponse
