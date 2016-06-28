@@ -85,7 +85,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'modules',
+        'LOCATION': 'yxcache',
         'TIMEOUT': 600
     }
 }

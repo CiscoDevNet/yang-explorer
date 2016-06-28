@@ -78,3 +78,8 @@ class ServerSettings(object):
         """ Path to schema path """
         return os.path.join(settings.BASE_DIR, 'data', 'session', session)
 
+    @staticmethod
+    def annotation_path(user):
+        """ Path to schema path """
+        return os.path.join(settings.BASE_DIR, 'data', 'annotation')
+

@@ -35,6 +35,7 @@ from explorer.utils.schema import get_schema, download_schema, add_schema
 import explorer.utils.uploader as Uploader
 import explorer.utils.search as Search
 import explorer.utils.cxml as cxml
+from  explorer.utils.annotations import annotate
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -256,7 +257,7 @@ def module_handler(request):
                     logger.debug("module_handler: loading " + filename)
                     module = cxml.get_cxml(filename)
                     nodes = module.get_lazy_subtree(path, deep)
-                    lst.extend([ET.tostring(node) for node in nodes])
+                    lst.extend([ET.tostring(node) for node in annotate(nodes)])
                 else:
                     logger.error("module_handler: %s not found !!" + module)
 

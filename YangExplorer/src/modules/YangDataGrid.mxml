@@ -32,6 +32,7 @@
                      scroll="adg_scrollHandler()"
                      headerRenderer="itemrenderers.YangTreeHeaderRenderer"
                      draggableColumns="false"
+                     styleFunction="myStyleFunc"
                      >
     <fx:Declarations>
         <!-- Place non-visual elements (e.g., services, value objects) here -->
@@ -556,6 +557,13 @@
                 if (found) {
                     setOpenNodes(xpath);
                 }
+            }
+
+            public function myStyleFunc(node:Object, col:AdvancedDataGridColumn):Object {
+                if (col.dataField == '@name' && node.hasOwnProperty('@color')) {
+                    return {color:int(node.attribute('color')), fontWeight: 'bold'};
+                }
+                return null;
             }
         ]]>
     </fx:Script>
