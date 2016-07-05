@@ -110,9 +110,7 @@ class Adapter(object):
         # If rpc is not provided, return capabilities
         if rpc is None or rpc == '':
             return session.get_capability()
-
-        logging.debug("run_netconf: " + ET.tostring(rpc))
-        return session.run(ET.tostring(rpc))
+        return session.run(rpc)
 
     @staticmethod
     def run_restconf(username, device, msg):

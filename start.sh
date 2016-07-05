@@ -18,6 +18,11 @@ if [ -f "v/bin/activate" ]; then
 	source v/bin/activate
 fi
 
+command -v pyang >/dev/null 2>&1 || {
+    echo "pyang not found.. please install pyang before continuing !!" >&2;
+    exit -1;
+}
+
 echo "Starting YangExplorer server .."
 echo "Use http://$HOST:$PORT/static/YangExplorer.html"
 echo ""
