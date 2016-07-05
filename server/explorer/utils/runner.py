@@ -23,6 +23,7 @@ import logging
 import lxml.etree as ET
 from ncclient import manager
 from ncclient.operations import RPCError
+from explorer.utils.ncparse import NetconfParser
 
 
 class NotConnectedError(Exception):
@@ -56,35 +57,17 @@ class NCClient(object):
         logging.debug('__init__: ' + self.__str__())
 
     def __str__(self):
-        return 'Host: %s, Port: %d, Username: %s, Params %s' % \
+        return 'Host: %s,Port: %d, Username: %s, Params %s' % \
                (self.host, self.port, self.username, self.params)
-
-    def _getchild(self, payload, tags):
-        """ get child tag """
-
-        for child in payload:
-            if child.xpath('local-name()') in tags:
-                return child
-        return None
-
-    def _get_datastore(self, payload):
-        """ Get datastore name from payload """
-
-        dsnode = self._getchild(payload, ['source', 'target'])
-        if dsnode is not None:
-            return dsnode.getchildren()[0].xpath('local-name()')
-        return None
-
-    def _is_connected(self):
-        """ Check if session is connected """
-
-        return self.handle is not None
 
     def _unknown_host_cb(self, host, fp):
         return True
 
     def connect(self):
         """ Establish netconf session """
+
+        if self.handle is not None:
+            return True
 
         try:
             # timeout is configurable as environment variable
@@ -105,44 +88,35 @@ class NCClient(object):
         logging.debug("Connected: %s" % self.__str__())
         return True
 
-    def execute(self, payload):
-        """ Execute RPC """
-
-        rpc = ET.fromstring(payload)
-        logging.debug("SEND: \n========\n%s\n========\n" % ET.tostring(rpc, pretty_print=True))
-        for action in rpc:
-            try:
-                reply = self.handle.dispatch(action)
-            except RPCError as e:
-                reply = e.info
-        return str(reply)
-
-    def run(self, payload):
-        """ Entry routing for this class """
-
-        if payload is None or payload == '':
-            raise InvalidNetConfRPC('Invalid RPC message!!')
-
+    def run(self, rpc):
         reply = ET.Element('reply')
-        if not self._is_connected():
-            if not self.connect():
-                reply.text = 'NetConf Session could not be established {%s}' % str(self)
-                return reply
+        if not self.connect():
+            reply.text = 'NetConf Session could not be established\n{%s}' % str(self)
+            return reply
 
-        result = self.execute(payload)
-        if result is None:
-            reply.text = 'Failed to get reply !!'
-            logging.error(reply.text)
-        else:
-            try:
-                response = ET.fromstring(result)
-                reply.append(response)
-                logging.debug("RECEIVE: \n=====\n%s\n=====\n" % ET.tostring(response, pretty_print=True))
-            except:
-                reply.text = 'No data received from netconf agent (device)'
-                logging.exception('Faild to encode to XML: ' + str(result))
+        parser = NetconfParser(rpc)
+        logging.debug("SEND: \n========\n%s\n========\n" % str(parser))
+
+        op = parser.get_operation()
+        data = ET.tostring(parser.get_data(), pretty_print=True)
+        datastore = parser.get_datastore()
+
+        try:
+            if op == 'get':
+                response = self.handle.get(data).xml
+            elif op == 'get-config':
+                response = self.handle.get_config(source=datastore, filter=data).xml
+            elif op == 'edit-config':
+                response = self.handle.edit_config(target=datastore, config=data).xml
+            else:
+                response = self.handle.dispatch(ET.fromstring(data)).xml
+
+            reply.append(ET.fromstring(response))
+        except RPCError as e:
+            reply.append(e._raw)
 
         self.disconnect()
+        logging.debug("RECEIVE: \n=====\n%s\n=====\n" % reply.text)
         return reply
 
     def get_capability(self):
@@ -150,10 +124,9 @@ class NCClient(object):
 
         logging.debug('get_capability ..')
         reply = ET.Element('reply')
-        if not self._is_connected():
-            if not self.connect():
-                reply.text = 'NetConf Session could not be established {%s}' % str(self)
-                return reply
+        if not self.connect():
+            reply.text = 'NetConf Session could not be established {%s}' % str(self)
+            return reply
 
         self.disconnect()
         caps = self.handle.server_capabilities

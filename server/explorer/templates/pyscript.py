@@ -11,6 +11,7 @@
 import lxml.etree as ET
 from argparse import ArgumentParser
 from ncclient import manager
+from ncclient.operations import RPCError
 
 payload = """
 {{data|safe}}
@@ -41,9 +42,12 @@ if __name__ == '__main__':
                          device_params={'name': '{{platform}}'}) as m:
 
         # execute netconf operation
-        response = {{nccall|safe}}{% if datastore == 'candidate' %}
-        m.commit(){% endif %}
+        try:
+            response = {{nccall|safe}}{% if datastore == 'candidate' %}
+            m.commit(){% endif %}
+            data = ET.fromstring(response)
+        except RPCError as e:
+            data = e._raw
 
         # beautify output
-        data = ET.fromstring(response)
         print(ET.tostring(data, pretty_print=True))
