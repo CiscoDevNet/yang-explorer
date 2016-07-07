@@ -1,17 +1,22 @@
 #/usr/bin/env bash
 
 show_help() {
-    echo 'Usage: bash setup.sh [-y]'
-    echo '       -y accept default yes to interactive prompt'
+    echo 'Usage: bash setup.sh [-y] [-a [<filename>]]'
+    echo '       -y [optional] accept default yes to interactive prompt'
     echo '          Setup may require user confirmation when running without'
     echo '          virtualenv or as superuser'
+    echo '       -a [<filename>] An annotation file name to install'
+    echo '       -r Uninstall annotation file'
 }
 
 OPTIND=1
 # Initialize our own variables:
 default_yes=0
 no_db=0
-while getopts "h?yn" opt; do
+ann_file=''
+remove_ann_file=0
+
+while getopts "h?yna:r" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -22,6 +27,13 @@ while getopts "h?yn" opt; do
         ;;
 
     n)  no_db=1
+        ;;
+
+    a)  ann_file=${OPTARG}
+        ;;
+
+    r)  remove_ann_file=1
+        ann_file=''
         ;;
     esac
 done
@@ -105,6 +117,7 @@ else
 	mkdir -p data/users
 	mkdir -p data/session
 	mkdir -p data/collections
+	mkdir -p data/annotation
 
 	if [ ! -d "data/users" ]; then
 		echo "Failed to create data directories !!"
@@ -117,6 +130,15 @@ else
 	echo "Creating default users .."
 	python manage.py setupdb
 	cd ..
+fi
+
+if [ "$ann_file" != "" ]  && [ -f $ann_file ]; then
+	mkdir -p server/data/annotation
+    cp $ann_file server/data/annotation/
+    echo "Annotation installed at data/annotation"
+elif [[ $remove_ann_file != 0 ]]; then
+	rm -f server/data/annotation/*.json
+    echo "Annotation uninstalled from data/annotation"
 fi
 
 add_model() {
