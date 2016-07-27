@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_delete, post_save
 from django.contrib.sessions.models import Session
 from django.conf import settings
+import lxml.etree as ET
 
 class Collection(models.Model):
     '''
@@ -54,7 +55,8 @@ class DeviceProfile(models.Model):
     '''
     Collection of device profiles
     '''
-    CHOICES = (('csr','csr'), ('nexus','nexus'), ('iosxe','iosxe'), ('iosxr','iosxr'), ('default','default'), ('other','other'))
+    config = ET.parse(os.path.join('static','global-config.xml')).getroot()
+    CHOICES = [(name.text, name.text) for name in config.findall('ncclient/platforms/name')]
     profile = models.CharField(max_length=128, primary_key=True)
     device = models.CharField(max_length=32, choices=CHOICES, default='csr')
     user = models.ForeignKey(User)

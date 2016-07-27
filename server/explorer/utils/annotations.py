@@ -39,21 +39,24 @@ def get_annotation_tree():
         print 'From cache..'
     return tree
 
-def annotate(nodes):
+
+def annotate(nodes, tree=None):
     """
     Args:
         nodes: list lxml element tree nodes with lazy tree instance
     Returns:
         Annotated nodes with attribute and value specified in annotation file
     """
-    tree = get_annotation_tree()
+    if not tree:
+        tree = get_annotation_tree()
+
     if tree and nodes:
         for node in nodes:
             xpath = node.get('path', '')
             instance = tree.search(xpath)
             if not instance:
                 continue
-
             for attr, value in instance.attrib.items():
                 node.set(attr, value)
+            annotate(list(node), tree)
     return nodes

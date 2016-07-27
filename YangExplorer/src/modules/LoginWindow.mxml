@@ -59,15 +59,13 @@
                 var response : Response = new Response(XML(event.result));
                 if (!response.errored) {
                     if (response.type == 'login') {
-                        targetComponent.label = response.xml.toString();
-                        parentApplication.global.user = response.xml.toString();
-                        targetComponent.toolTip = 'Click to Logout'
+                        targetComponent.toolTip = 'Click to Logout';
+                        parentApplication.setUserSession(response);
                     } else {
                         targetComponent.label = 'Login'
                         targetComponent.toolTip = 'Click to Login'
-                        parentApplication.global.user = '';
+                        parentApplication.setUserSession(null);
                     }
-                    parentApplication.loadUserProfile();
                 } else {
                     if (response.type == 'login') {
                         Alert.show('User authentication failed!!')
@@ -75,8 +73,7 @@
                         targetComponent.label = 'Login'
                         targetComponent.toolTip = 'Click to Login'
                     }
-                    parentApplication.global.user = ''
-                    parentApplication.loadUserProfile();
+                    parentApplication.setUserSession(null);
                 }
                 btnLogin.enabled = true
             }

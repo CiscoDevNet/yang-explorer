@@ -37,15 +37,6 @@
                        showBusyCursor="true"/>
         <s:HTTPService id="runService" fault="httpService_fault(event);"
                        result="onRunServiceResult(event)" resultFormat="text" showBusyCursor="true"/>
-        <mx:ArrayCollection id="devicePlatforms">
-            <fx:String></fx:String>
-            <fx:String>csr</fx:String>
-            <fx:String>nexus</fx:String>
-            <fx:String>iosxr</fx:String>
-            <fx:String>iosxe</fx:String>
-            <fx:String>default</fx:String>
-            <fx:String>other</fx:String>
-        </mx:ArrayCollection>
         <s:RadioButtonGroup id="netconfOpType" itemClick="netconfOpType_itemClickHandler()"/>
         <s:RadioButtonGroup id="protocolType" itemClick="protocolType_itemClickHandler()"/>
     </fx:Declarations>
@@ -119,7 +110,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.5.0 (Beta)';
+            public var VERSION : String = '0.5.1 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -135,6 +126,9 @@
             
             [Bindable]
             public var deviceProfiles:ArrayCollection =  new ArrayCollection([]);
+            
+            [Bindable]
+            public var devicePlatforms : ArrayCollection = new ArrayCollection([]);
 
             private var ncReq : RequestPayload
             private var selectedNode:XML;
@@ -222,8 +216,7 @@
                     case 'session':
                         if (!response.errored) {
                             if (response.type == 'session') {
-                                global.user = response.xml.toString();
-                                loadUserProfile();
+                                setUserSession(response);
                             }
                         }
                         break;
@@ -239,15 +232,18 @@
             
             public function updateUserProfiles(profiles:XML) : void
             {
-                deviceProfiles.removeAll()
-                deviceProfiles.addItem("")
-                for each (var item : XML in profiles.profile) {
-                    if (item.@type == 'device') {
-                        deviceProfiles.addItem(String(item.@name))
+                deviceProfiles.removeAll();
+                
+                if (profiles) {
+                    deviceProfiles.addItem("");
+                    for each (var item : XML in profiles.profile) {
+                        if (item.@type == 'device') {
+                            deviceProfiles.addItem(String(item.@name));
+                        }
                     }
+                    deviceProfiles.refresh();
+                    deviceProfilesXML = profiles;
                 }
-                deviceProfiles.refresh()
-                deviceProfilesXML = profiles
             }
             
             public function updateForm():void
@@ -557,6 +553,30 @@
                     schema.reset();
                 }
             }
+            
+            public function setUserSession(response : Response) : void {
+                if (response && response.xml.username.toString() != '') {
+                    global.user = response.xml.username.toString();
+                    btnLogin.label = global.user;
+                    updateDevicePlatforms(response.xml.global[0]);
+                } else {
+                    btnLogin.label = 'Login';
+                    global.user = '';
+                    updateDevicePlatforms(null);
+                    updateUserProfiles(null);
+                }
+                loadUserProfile();
+            }
+            
+            private function updateDevicePlatforms(config : XML) : void {
+                devicePlatforms.removeAll();
+                if (!config) {
+                    return;
+                }
+                for each (var item : XML in config.ncclient.platforms.name) {
+                    devicePlatforms.addItem(item.toString());
+                }
+            }
 
             public function loadUserProfile() : void
             {
@@ -586,6 +606,7 @@
             public function logout() : void {
                 btnLogin.label = 'Login';
                 btnLogin.toolTip = 'Click to login';
+                devicePlatforms.removeAll();
                 reset_netconfSettings(true);
                 btnClear_clickHandler(null);
                 resetTreeView();

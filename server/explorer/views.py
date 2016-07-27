@@ -41,10 +41,22 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
+def get_session_config(username):
+    session = ET.Element('session')
+    user = ET.Element('username')
+    user.text = username
+    session.append(user)
+    if username != '':
+        # Pass global static configuration data
+        _global = ET.parse(os.path.join('static', 'global-config.xml')).getroot()
+        session.append(_global)
+    return session
+
+
 @csrf_exempt
 def login_handler(request):
     """ HTTP Request handler function for user login / logout requests """
-    session = ET.Element('session')
     if request.POST:
         action = request.POST['action']
         if action == 'login':
@@ -54,10 +66,10 @@ def login_handler(request):
             if user is not None and user.is_active:
                 # Correct password, and the user is marked "active"
                 login(request, user)
-                session.text = username
             else:
                 return HttpResponse(Response.error('login', 'Authentication Failed'))
         else:
+            username = ''
             try:
                 if request.session.session_key is not None and request.session.session_key != '':
                     session_dir = ServerSettings.session_path(request.session.session_key)
@@ -69,6 +81,7 @@ def login_handler(request):
                 logger.exception("Failed")
             else:
                 logger.debug('Logout success!!')
+        session = get_session_config(username)
         return HttpResponse(Response.success(action, 'ok', session))
     return HttpResponse(Response.error('unknown', 'Invalid request!!'))
 
@@ -76,9 +89,11 @@ def login_handler(request):
 @csrf_exempt
 def session_handler(request):
     """ HTTP Request handler function to check if user session exists """
-    session = ET.Element('session')
+
     if request.user.is_authenticated():
-        session.text = request.user.username
+        session = get_session_config(request.user.username)
+    else:
+        session = get_session_config('')
     return HttpResponse(Response.success('session', 'ok', session))
 
 
