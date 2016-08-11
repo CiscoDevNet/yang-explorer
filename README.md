@@ -75,7 +75,7 @@ limitations under the License.
    Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev zlib1g-dev
    Fedora: sudo dnf install libxml2-devel libxslt-devel python-devel zlib-devel
 ```
-####2.2 Update exising installtion
+####2.2 Update exising installation
 
 ```bash
   cd <install-root>/yang-explorer
@@ -281,16 +281,34 @@ Collections can be used to save user generated RPCs on the server so that saved 
       - Provide description for this collection
    - click **Save**
 
-###6 Troubleshooting
-####6.1 Installation
-#####6.1.1 error for missing python.h or xmlversion.h
+###6 Misc Features
+####6.1 UI Model Tree annotations
+Targeted content in YangExplorer UI tree can be annotated in different color, usually to represent additional information about of the Yang model node.
+
+Installation:
+```bash
+  cd <install-root>/yang-explorer
+  bash setup.sh -a <path to annotation json file>
+```
+
+Please refresh browser to reflect changes. You should see UI model tree node name in different color as per annotation file.
+
+Uninstall:
+```bash
+  cd <install-root>/yang-explorer
+  bash setup.sh -r
+```
+
+###7 Troubleshooting
+####7.1 Installation
+#####7.1.1 error for missing python.h or xmlversion.h
    - Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev
    - Mac : xcode-select --install
 
-#####6.1.2 django.db.utils.OperationalError: near "񐁂򐁇N": syntax error
+#####7.1.2 django.db.utils.OperationalError: near "񐁂򐁇N": syntax error
    - http://stackoverflow.com/questions/33270297/django-db-utils-operationalerror-near-n-syntax-error
 
-#####6.1.3 After install if you are not able to login using guest/guest try one of the following
+#####7.1.3 After install if you are not able to login using guest/guest try one of the following
    - mv server/data/db.sqlite3 server/data/db.sqlite3_backup
    - bash setup.sh
    In end of setup.sh script log you should see something like this -
@@ -303,8 +321,8 @@ Collections can be used to save user generated RPCs on the server so that saved 
       Use start.sh to start yang-explorer server
 ```
 
-####6.2 Yang Model Upload
-#####6.2.1 Failure during upload of yang model
+####7.2 Yang Model Upload
+#####7.2.1 Failure during upload of yang model
    - Chrome browser is required currently to upload models using User Interface
    - Please see failure message, if dependent models are missing you will see specific error in message window.
 
