@@ -63,11 +63,11 @@ limitations under the License.
 ```bash
    git clone https://github.com/CiscoDevNet/yang-explorer.git
    cd yang-explorer
-   [sudo] bash setup.sh
+   bash setup.sh
 
    Note: sudo may be required if you do not use virtualenv.
 ```
-   See section 6 Troubleshooting for more:
+   See section 7 Troubleshooting for more:
 ```bash
    If you get installation error for missing python.h or xmlversion.h try installing
    dependency packages:
@@ -320,6 +320,23 @@ Uninstall:
       
       Use start.sh to start yang-explorer server
 ```
+
+#####7.1.4 Installation failed due to python 3 not supported
+   Python 3 is not supported by ncclient. Please install python 2.7 before proceeding futher. If python 2.7 is already installed on your system along with python 3, virtualenv may try to create python 3 environment. You can do following -
+   ```bash
+   cd YangExplorer
+   rm -rf v
+   
+   # find path to python 2.7 on your system
+   ➜  ~  which python2.7   
+   /usr/bin/python2.7
+   
+   # create a virtualenv with python 2.7, path may differ based on your installation
+   virtualenv -p /usr/bin/python2.7 v
+   
+   # rerun setup
+   setup.sh
+   ```
 
 ####7.2 Yang Model Upload
 #####7.2.1 Failure during upload of yang model
