@@ -90,7 +90,7 @@ limitations under the License.
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
-   [sudo] ./start.sh
+   [sudo] ./start.sh &
 
    Note: sudo may be required if you did not use virtualenv during installation.
 ```
