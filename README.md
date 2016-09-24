@@ -47,7 +47,7 @@ limitations under the License.
 ```
    - virtualenv (recommended)
 ```bash
-   Ubuntu: sudo apt-get install virtualenv
+   Ubuntu: sudo apt-get install python-virtualenv
    Fedora: sudo dnf install python-virtualenv
    MAC: sudo pip install virtualenv
 ```
@@ -90,7 +90,7 @@ limitations under the License.
 #####Start Server:
 ```bash
    cd <install-root>/yang-explorer
-   [sudo] ./start.sh
+   [sudo] ./start.sh &
 
    Note: sudo may be required if you did not use virtualenv during installation.
 ```
