@@ -127,11 +127,12 @@ class NCClient(object):
         if not self.connect():
             reply.text = 'NetConf Session could not be established {%s}' % str(self)
             return reply
-
         self.disconnect()
-        caps = self.handle.server_capabilities
-        if caps:
-            reply.text = '\n\n'.join(caps)
+        if self.handle.server_capabilities:
+            caps = sorted(self.handle.server_capabilities)
+            reply.text = '\n\n'.join((c for c in caps if c.startswith('urn:ietf:params:netconf:')))
+            reply.text += '\n'
+            reply.text += '\n\n'.join((c for c in caps if not c.startswith('urn:ietf:params:netconf:')))
             logging.info('Received device capabilities ..')
         return reply
 
