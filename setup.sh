@@ -103,10 +103,8 @@ else
             printf "Do you want to continue as root ? (n/N) "
             read response
 
-            if printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
+            if ! printf "%s\n" "$response" | grep -Eq "$(locale yesexpr)"
                 then
-                break;
-            else
                 exit 1;
             fi
         fi
