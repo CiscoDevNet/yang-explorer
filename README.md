@@ -31,6 +31,7 @@ limitations under the License.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/graph.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/script.png)
+   ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/netconf-operations.png)
 
 ###2. Installation
 ####2.1 First time installation
@@ -205,6 +206,11 @@ limitations under the License.
       - Enter data values for edit-config operation
       - Use **Reset** button on top-right bar to reset data in the model tree
 
+   - Update netconf operation for edit-config operations (optional advance option)
+    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/netconf-operations.png)
+      - Select **Operations** tab
+      - Select error-option
+      - Check / Uncheck lock option
    - Click **RPC** button under **Build** tab
 
 #####5.2.5 Executing RPCs:
