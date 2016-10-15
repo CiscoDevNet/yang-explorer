@@ -85,6 +85,23 @@ limitations under the License.
   git stash apply (if you have local changes)
   bash setup.sh
 ```
+####2.3 Backing up data
+
+   YangExplorer data can be backed up from data directory and it is portable to new servers -
+```bash
+   cp -r <install-root>/yang-explorer/server/data <backup-location>/data
+```
+
+   **Restore from backup location -**
+```bash
+   cd <install-root>/yang-explorer/server
+
+   # move current data to tmp location
+   mv data data_old
+   
+   # replace data from backup location
+   cp -r <backup-location>/data data
+```
 
 ###3. Running YangExplorer
 ####3.1 Running with localhost
