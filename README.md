@@ -206,7 +206,7 @@ limitations under the License.
       - Enter data values for edit-config operation
       - Use **Reset** button on top-right bar to reset data in the model tree
 
-   - Update netconf operation for edit-config operations (optional advance option)
+   - Update netconf operations for edit-config (optional advance option)
     ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/netconf-operations.png)
       - Select **Operations** tab
       - Select error-option
