@@ -88,7 +88,7 @@ class NCClient(object):
         logging.debug("Connected: %s" % self.__str__())
         return True
 
-    def run(self, rpc):
+    def run(self, rpc, lock=False):
         reply = ET.Element('reply')
         if not self.connect():
             reply.text = 'NetConf Session could not be established\n{%s}' % str(self)
@@ -100,23 +100,38 @@ class NCClient(object):
         op = parser.get_operation()
         data = ET.tostring(parser.get_data(), pretty_print=True)
         datastore = parser.get_datastore()
-
         try:
             if op == 'get':
                 response = self.handle.get(data).xml
             elif op == 'get-config':
                 response = self.handle.get_config(source=datastore, filter=data).xml
             elif op == 'edit-config':
-                response = self.handle.edit_config(target=datastore, config=data).xml
+                eoption = parser.get_error_option()
+                if lock:
+                    with self.handle.locked(datastore):
+                        response = self.handle.edit_config(target=datastore,
+                                                           error_option=eoption,
+                                                           config=data).xml
+                else:
+                    response = self.handle.edit_config(target=datastore,
+                                                error_option=eoption,
+                                                config=data).xml
             else:
                 response = self.handle.dispatch(ET.fromstring(data)).xml
 
-            reply.append(ET.fromstring(response))
+            reply = 'NETCONF REQUEST:\n'
+            reply += '================\n\n'
+            if op == 'edit-config':
+                reply += 'EDIT-CONFIG LOCK: %s\n\n' % str(lock)
+            reply += str(parser) + '\n\n'
+            reply += 'NETCONF RESPONSE:\n'
+            reply += '================\n\n'
+            reply += ET.tostring(ET.fromstring(response), pretty_print=True)
+            logging.debug("RECEIVE: \n=====\n%s\n=====\n" % response)
         except RPCError as e:
             reply.append(e._raw)
 
         self.disconnect()
-        logging.debug("RECEIVE: \n=====\n%s\n=====\n" % reply.text)
         return reply
 
     def get_capability(self):
@@ -130,9 +145,9 @@ class NCClient(object):
         self.disconnect()
         if self.handle.server_capabilities:
             caps = sorted(self.handle.server_capabilities)
-            reply.text = '\n\n'.join((c for c in caps if c.startswith('urn:ietf:params:netconf:')))
+            reply.text = '\n'.join((c for c in caps if c.startswith('urn:ietf:params:netconf:')))
             reply.text += '\n'
-            reply.text += '\n\n'.join((c for c in caps if not c.startswith('urn:ietf:params:netconf:')))
+            reply.text += '\n'.join((c for c in caps if not c.startswith('urn:ietf:params:netconf:')))
             logging.info('Received device capabilities ..')
         return reply
 

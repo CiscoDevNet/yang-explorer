@@ -29,7 +29,6 @@ rpc_template = '''<rpc message-id="{msg_id}" xmlns="{rpc_ns}">
 
 
 def build_rpc(request, payload, operation):
-
     source = request.get('source', 'running')
     target = request.get('target', 'candidate')
 
@@ -38,9 +37,13 @@ def build_rpc(request, payload, operation):
         payload = '<filter>\n' + payload + '</filter>\n'
         payload = '<get-config>\n' + datastore + payload + '</get-config>'
     elif operation == 'edit-config':
+        err_option = request.get('err-option', '')
         datastore = '<target><' + target + '/></target>\n'
+        options = ''
+        if err_option != '':
+            options = '<error-option>%s</error-option>\n' % err_option
         payload = '<config xmlns:xc="' + rpc_xmlns  + '">\n' +  payload + '</config>\n'
-        payload = '<edit-config>\n'+ datastore + payload + '</edit-config>'
+        payload = '<edit-config>\n'+ datastore + options + payload + '</edit-config>'
         if target == 'candidate':
             payload += '<commit/>\n'
     elif operation == 'get':

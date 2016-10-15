@@ -31,7 +31,7 @@ class NetconfParser(object):
         return '%s(%r, %r, %r)' % (self.__class__.__name__, self.rpc.__class__.__name__)
 
     def __str__(self):
-        return ET.tostring(self.rpc)
+        return ET.tostring(self.rpc, pretty_print=True)
 
     def get_namespace(self):
         """ Return netconf version namespace """
@@ -52,6 +52,17 @@ class NetconfParser(object):
         if op == 'get-config':
             source = self.rpc.find('{%s}get-config/{%s}source' % (ns,ns))
             return NetconfParser._get_tag(source[0])
+        return None
+
+    def get_error_option(self):
+        """ Return netconf datastore from rpc """
+        op = self.get_operation()
+        ns = self.get_namespace()
+        print self
+        if op == 'edit-config':
+            option = self.rpc.find('{%s}edit-config/{%s}error-option' % (ns,ns))
+            if option is not None:
+                return option.text
         return None
 
     def get_data(self):

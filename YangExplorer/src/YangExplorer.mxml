@@ -110,7 +110,7 @@
             
             /* Version string */
             [Bindable]
-            public var VERSION : String = '0.5.1 (Beta)';
+            public var VERSION : String = '0.6.0 (Beta)';
             
             /* Version string */
             [Bindable]
@@ -123,7 +123,14 @@
             [Bindable]
             public var netconfDataSrc:ArrayCollection = new ArrayCollection
                 (["Running","Startup","Candidate"]);
-            
+
+            [Bindable]
+            public var netconfErrOpt:ArrayCollection = new ArrayCollection
+                (["", "stop-on-error","continue-on-error","rollback-on-error"]);
+
+            [Bindable]
+            public var netconfEditLock:Boolean = false;
+
             [Bindable]
             public var deviceProfiles:ArrayCollection =  new ArrayCollection([]);
             
@@ -161,9 +168,14 @@
                     txtScript.text = response.msg;
                     tnResults.selectedIndex = TAB_SCRIPT_VIEW;
                 } else {
-                    txtConsole.text = response.xml.children()[0].toXMLString();
-                    txtConsole.scroller.verticalScrollBar.maximum;
+                    if (response.xml) {
+                        txtConsole.text = response.xml.children()[0].toXMLString();
+                    } else {
+                        txtConsole.text = response.msg;
+                    }
                     tnResults.selectedIndex = TAB_CONSOLE_VIEW;
+                    txtConsole.scroller.verticalScrollBar.value = txtConsole.scroller.verticalScrollBar.maximum;
+                    txtConsole.scroller.verticalScrollBar.validateNow();
                 }
                 updateStatus('Recieved HTTP Result for request: ' + response.type)
             }
@@ -185,9 +197,7 @@
             private function onServiceResult(event:ResultEvent):void
             {
                 var response : Response = new Response(XML(event.result));
-                
                 updateStatus('Recieved HTTP Result for request type ' + response.type);
-                
                 switch(response.type) {
                     case 'rpc':
                         if (!response.errored) {
@@ -207,8 +217,7 @@
                             if (response.xml) {
                                 txtConsole.text = response.xml.toString();
                             } else {
-                                txtConsole.text = response.msg
-                                    ;
+                                txtConsole.text = response.msg;
                             }
                             tnResults.selectedIndex = TAB_CONSOLE_VIEW;
                         }
@@ -254,7 +263,6 @@
                         cbSrcDs.selectedIndex = -1;
                         cbTgtDs.enabled = true;
                         adgOp.editable = true;
-                        
                         // for ios-xe default target datastore is 'running'
                         if (lstDevPlatform.selectedIndex == 3) {
                             cbTgtDs.selectedIndex = 2;
@@ -282,6 +290,7 @@
                         rbtnOper.selected = false;
                         rbtnConfig.selected = false;
                 }
+                updateNetconfOptions(lstDevProfile.selectedIndex);
             }
             
             public function updateProperty(node:XML) : void {
@@ -435,6 +444,11 @@
                 var strPayload : String = '';
                 
                 ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+                
+                if (cbErrOpt.selectedIndex >= 0) {
+                    ncReq.setErrorOption(cbErrOpt.selectedItem);
+                }
+                ncReq.setLockOption(cbEditLock.selected);
                 if (cbEdit.selected) {
                     if (txtScript.text != '') {
                         strPayload = txtScript.text;
@@ -663,21 +677,15 @@
             {
                 statusBar.text = 'Status : ' + msg
             }
-            
-/*            private function reset_deviceSettings():void
-            {
-                lstDevPlatform.selectedIndex = -1
-                txtIpAddr.text = txtUser.text = txtPwd.text = ''
-                lstDevProfile.selectedIndex = -1
-                txtPort.text = '22'				
-            }*/
-            
+
             private function reset_netconfSettings(default_settings: Boolean):void
             {
                 txtNCIpAddr.text = '';
                 txtNCUser.text = '';
                 txtNCPwd.text = '';
                 txtNCPort.text = rbtnNetConf.selected ? NETCONF_PORT : RESTCONF_PORT;
+                cbEditLock.selected = false;
+                cbErrOpt.selectedIndex = 0;
             }
 
             protected function btnGenScript_clickHandler():void
@@ -762,7 +770,41 @@
 
             protected function lstDevProfile_changeHandler():void
             {
-                populate_devProfile(lstDevProfile.selectedIndex)
+                populate_devProfile(lstDevProfile.selectedIndex);
+                updateNetconfOptions(lstDevProfile.selectedIndex);
+            }
+            
+            private function updateNetconfOptions(index : int) : void {
+                if (rbtnRestConf.selected) {
+                    cbErrOpt.enabled = false;
+                    cbEditLock.enabled = false;
+                    return;
+                }
+
+                cbEditLock.enabled = cbErrOpt.enabled = (adg.getMode() == YangUtil.EDIT_CONFIG || adg.getMode() == YangUtil.DEFAULT);
+                if (deviceProfilesXML == null || index < 0) {
+                    return
+                }
+
+                var profilename:String = deviceProfiles.getItemAt(index).toString()
+                for each (var item : XML in deviceProfilesXML.profile) {
+                    if (item.@type == 'device' && profilename == item.@name) {
+                        for each (var t : XML in item.options.option) {
+                            switch (String(t.@type)) {
+                            case "err-option":
+                                if (t.toString() == "continue-on-error") {
+                                    cbErrOpt.selectedIndex = 2;
+                                } else if (t.toString() == "rollback-on-error") {
+                                    cbErrOpt.selectedIndex = 3;
+                                }
+                                break;
+                            case "lock-option":
+                                cbEditLock.selected = (t.toString() == "True");
+                                break;
+                            }
+                        }
+                    }
+                }
             }
 
             private function populate_devProfile(index : int):void
@@ -772,13 +814,11 @@
                 }
                 
                 if (index <= 0) {
-                    //reset_deviceSettings()
                     reset_netconfSettings(true)
                     return
                 }
-                
+
                 var profilename:String = deviceProfiles.getItemAt(index).toString()
-                
                 for each (var item : XML in deviceProfilesXML.profile) {
                     if (item.@type == 'device' && profilename == item.@name) {
                         updateDevicePlatform(item.platform.toString())
@@ -837,7 +877,7 @@
                 txtScript.editable = cbEdit.selected;
                 tnResults.selectedIndex = TAB_SCRIPT_VIEW;
             }
-            
+
             protected function tnWorkflow_changeHandler(event:IndexChangedEvent):void
             {
                 switch (tnWorkflow.selectedIndex) {
@@ -874,7 +914,7 @@
                         txtNCPort.text = RESTCONF_PORT;
                     }
                 } else {
-                    if (txtNCPort.text == '8008') {
+                    if (txtNCPort.text == '80') {
                         txtNCPort.text = NETCONF_PORT;
                     }
                 }
@@ -1001,20 +1041,31 @@
                                     <s:Form id="formReq" width="100%" height="100%"
                                             fontFamily="Avenir">
                                         <s:layout>
-                                            <s:FormLayout gap="-5"/>
+                                            <s:FormLayout gap="-6"/>
                                         </s:layout> 
-                                        <s:FormItem id="fSourceDS" label="Source Datastore">
-                                            <s:DropDownList id="cbSrcDs" width="150"
+                                        <s:FormItem label="Source Datastore">
+                                            <s:DropDownList id="cbSrcDs" width="175"
                                                             height="{TextInputSizeEnum.Small}"
                                                             dataProvider="{netconfDataSrc}"
                                                             skinClass="flatspark.skins.DropDownListSkin"
                                                             fontFamily="Avenir,Verdana"/>
                                         </s:FormItem>
-                                        <s:FormItem id="fTargetDS" label="Target Datastore">
-                                            <s:DropDownList id="cbTgtDs" width="150"
+                                        <s:FormItem label="Target Datastore">
+                                            <s:DropDownList id="cbTgtDs" width="175"
                                                             height="{TextInputSizeEnum.Small}"
                                                             skinClass="flatspark.skins.DropDownListSkin"
                                                             dataProvider="{netconfDataSrc}"/>
+                                        </s:FormItem>
+                                        <s:FormItem label="Error Options">
+                                            <s:DropDownList id="cbErrOpt" width="175"
+                                                            height="{TextInputSizeEnum.Small}"
+                                                            skinClass="flatspark.skins.DropDownListSkin"
+                                                            dataProvider="{netconfErrOpt}"/>
+                                        </s:FormItem>
+                                        <s:FormItem label="Edit Config Lock">
+                                            <s:CheckBox id="cbEditLock" width="100"
+                                                            skinClass="flatspark.skins.CheckBoxSkin"
+                                                            selected="{netconfEditLock}"/>
                                         </s:FormItem>
                                     </s:Form>
                                 </mx:VBox>
@@ -1022,7 +1073,7 @@
                                     <s:Form id="formDev" width="100%" height="100%"
                                             fontFamily="Avenir">
                                         <s:layout>
-                                            <s:FormLayout gap="-5"/>
+                                            <s:FormLayout gap="-10"/>
                                         </s:layout> 
                                         <s:FormItem label="Profile">
                                             <s:HGroup>

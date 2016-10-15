@@ -235,12 +235,12 @@ def request_handler(request):
         reply_xml = Adapter.gen_script(request.user.username, req)
         if isinstance(reply_xml, str):
             return HttpResponse(Response.success(mode, reply_xml))
-
     elif mode in ['get-cap', 'run-rpc', 'run-edit-commit', 'run-commit']:
         payload = request.GET.get('payload', '')
         logger.debug('run: ' + payload)
         reply_xml = Adapter.run_request(request.user.username, payload)
-
+        if isinstance(reply_xml, str):
+            return HttpResponse(Response.success(mode, reply_xml))
     return HttpResponse(Response.success(mode, 'ok', reply_xml))
 
 

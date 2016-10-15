@@ -33,10 +33,10 @@ class Adapter(object):
     @staticmethod
     def parse_request(payload):
         """ Parse user request """
-
         request = ET.fromstring(payload)
         protocol = request.get('protocol', None)
         fmt = request.get('format', 'xpath')
+        lock = request.get('lock-option', 'False') == 'True'
         rpc = None
         auth = {}
         for child in request:
@@ -58,8 +58,7 @@ class Adapter(object):
                     rpc = child.text
             elif tag == 'keyvalue' and len(child):
                 rpc = ''
-
-        return protocol, auth, fmt, rpc
+        return protocol, auth, fmt, lock, rpc
 
     @staticmethod
     def run_request(username, payload):
@@ -72,7 +71,7 @@ class Adapter(object):
         payload = payload.replace('<metadata>', '')
         payload = payload.replace('</metadata>', '')
 
-        protocol, device, fmt, rpc = Adapter.parse_request(payload)
+        protocol, device, fmt, lock, rpc = Adapter.parse_request(payload)
         if device.get('host', None) is None:
             reply = ET.Element('reply')
             reply.text = 'Device info missing'
@@ -86,7 +85,7 @@ class Adapter(object):
                       (protocol, device['host'], device['port'], device['user']))
 
         if protocol == 'netconf':
-            return Adapter.run_netconf(username, device, rpc)
+            return Adapter.run_netconf(username, device, rpc, lock)
         elif protocol == 'restconf':
             return Adapter.run_restconf(username, device, rpc)
 
@@ -95,7 +94,7 @@ class Adapter(object):
         return reply
 
     @staticmethod
-    def run_netconf(username, device, rpc):
+    def run_netconf(username, device, rpc, lock=False):
         """ Execute Netconf request """
 
         plat = device.get('platform', None)
@@ -110,7 +109,7 @@ class Adapter(object):
         # If rpc is not provided, return capabilities
         if rpc is None or rpc == '':
             return session.get_capability()
-        return session.run(rpc)
+        return session.run(rpc, lock)
 
     @staticmethod
     def run_restconf(username, device, msg):
@@ -168,7 +167,7 @@ class Adapter(object):
         payload = payload.replace('<metadata>', '')
         payload = payload.replace('</metadata>', '')
 
-        _, device, fmt, rpc = Adapter.parse_request(payload)
+        _, device, fmt, lock, rpc = Adapter.parse_request(payload)
         if fmt == 'xpath' and rpc == '':
             rpc = Adapter.gen_rpc(username, payload)
 
@@ -208,7 +207,12 @@ class Adapter(object):
         elif op == 'get-config':
             args['nccall'] = "m.get_config(source='%s', filter=payload).xml" % datastore
         elif op == 'edit-config':
-            args['nccall'] = "m.edit_config(target='%s', config=payload).xml" % datastore
+            e_opt = parser.get_error_option()
+            if e_opt is None or e_opt == '':
+                args['nccall'] = "m.edit_config(target='%s', config=payload).xml" % datastore
+            else:
+                args['nccall'] = "m.edit_config(target='%s', error_option='%s', config=payload).xml" % (datastore, e_opt)
+            args['lock'] = lock
         else:
             args['nccall'] = "m.dispatch(ET.fromstring(payload)).xml"
 

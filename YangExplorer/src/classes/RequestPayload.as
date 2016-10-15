@@ -41,7 +41,9 @@ package classes
         private var nc_passwd : String;
         private var profile : String;
         private var format : String;
-        
+        private var lock_option : String;
+        private var err_option : String;
+
         public static const FMT_XPATH:String = "xpath";
         public static const FMT_RAW:String = "raw";
         
@@ -76,10 +78,11 @@ package classes
         
         private function optionString(option:String): String
         {
+            var str : String = ''
             if (option != '') {
-                return ' option="' + option + '"';
+                str += ' option="' + option + '"';
             }
-            return '';
+            return str;
         }
         
         public function toCapString() : String {
@@ -88,6 +91,18 @@ package classes
             str += _toDeviceString();
             str += '<keyvalue/>\n';
             str += '</payload>'
+            return str;
+        }
+        
+        private function toOptionString() : String {
+            var str : String = '';
+            if (err_option != '') {
+                str += ' err-option="' + err_option + '"';
+            }
+            
+            if (lock_option != '') {
+                str += ' lock-option="' + lock_option + '"';
+            }
             return str;
         }
         
@@ -161,6 +176,8 @@ package classes
             if (target != '') {
                 str += ' target="' + target.toLowerCase() + '"'
             }
+            
+            str += toOptionString();
             str+= '>\n';
 
             str += _toDeviceString();
@@ -200,6 +217,8 @@ package classes
             this.passwd = this.nc_passwd = ''
             this.profile = '';
             this.format = FMT_XPATH;
+            this.err_option = '';
+            this.lock_option = '';
             removeAll();
         }
         
@@ -239,6 +258,14 @@ package classes
             this.target = tgt;
         }
         
+        public function setErrorOption(option:String) : void {
+            this.err_option = option;
+        }
+
+        public function setLockOption(option:Boolean) : void {
+            this.lock_option = option ? 'True' : 'False';
+        }
+
         public function setFormat(fmt : String) : void {
             this.format = fmt;
         }

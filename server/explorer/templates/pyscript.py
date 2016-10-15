@@ -43,8 +43,10 @@ if __name__ == '__main__':
 
         # execute netconf operation
         try:
-            response = {{nccall|safe}}{% if datastore == 'candidate' %}
-            m.commit(){% endif %}
+            {% if lock %}with m.locked('{{datastore}}'):
+                response = {{nccall|safe}}{% if datastore == 'candidate' %}
+                m.commit(){% endif %}{% else %}response = {{nccall|safe}}{% if datastore == 'candidate' %}
+            m.commit(){% endif %}{% endif %}
             data = ET.fromstring(response)
         except RPCError as e:
             data = e._raw
