@@ -146,7 +146,7 @@ class NCClient(object):
         if self.handle.server_capabilities:
             caps = sorted(self.handle.server_capabilities)
             reply.text = '\n'.join((c for c in caps if c.startswith('urn:ietf:params:netconf:')))
-            reply.text += '\n'
+            reply.text += '\n\n'
             reply.text += '\n'.join((c for c in caps if not c.startswith('urn:ietf:params:netconf:')))
             logging.info('Received device capabilities ..')
         return reply
