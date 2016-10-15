@@ -207,6 +207,7 @@ limitations under the License.
       - Use **Reset** button on top-right bar to reset data in the model tree
 
    - Update netconf operations for edit-config (optional advance option)
+
     ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/netconf-operations.png)
       - Select **Operations** tab
       - Select error-option
