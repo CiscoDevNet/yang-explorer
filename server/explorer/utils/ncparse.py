@@ -23,7 +23,7 @@ class NetconfParser(object):
     """ Netconf Utility Class """
     def __init__(self, rpc):
         if isinstance(rpc, str):
-            self.rpc = ET.fromstring(rpc)
+            self.rpc = ET.fromstring(rpc, parser=ET.XMLParser(remove_blank_text=True))
         else:
             self.rpc = rpc
 

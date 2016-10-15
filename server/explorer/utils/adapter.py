@@ -157,7 +157,7 @@ class Adapter(object):
 
         logging.info('gen_rpc: Generated : ' + rpc)
         ''' returns xml '''
-        return ET.fromstring(rpc)
+        return ET.fromstring(rpc, parser=ET.XMLParser(remove_blank_text=True))
 
     @staticmethod
     def gen_script(username, payload):
