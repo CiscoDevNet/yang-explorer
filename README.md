@@ -25,6 +25,8 @@ limitations under the License.
    - Build dependency graph for models
    - Browse data model tree and inspect yang properties
    
+   Restconf support is **experimental**
+ 
    This application is under Beta mode, contributions / suggestions are welcome !!
 
 #####Screenshots:
