@@ -118,7 +118,7 @@ class NCClient(object):
                                                 config=data).xml
             else:
                 response = self.handle.dispatch(ET.fromstring(data)).xml
-
+            """
             reply = 'NETCONF REQUEST:\n'
             reply += '================\n\n'
             if op == 'edit-config':
@@ -127,6 +127,8 @@ class NCClient(object):
             reply += 'NETCONF RESPONSE:\n'
             reply += '================\n\n'
             reply += ET.tostring(ET.fromstring(response), pretty_print=True)
+            """
+            reply.append(ET.fromstring(response))
             logging.debug("RECEIVE: \n=====\n%s\n=====\n" % response)
         except RPCError as e:
             reply.append(e._raw)

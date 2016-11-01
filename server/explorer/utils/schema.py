@@ -62,7 +62,7 @@ def get_schema(request, req, all=True):
     req = req.replace('<metadata>', '')
     req = req.replace('</metadata>', '')
 
-    protocol, device, fmt, payload = Adapter.parse_request(req)
+    protocol, device, fmt, _, payload = Adapter.parse_request(req)
     if device.get('host', None) is None:
         return HttpResponse(Response.error('get', 'no host info'))
 
@@ -137,7 +137,7 @@ def download_yang(request, req):
     req = req.replace('<metadata>', '')
     req = req.replace('</metadata>', '')
 
-    protocol, device, fmt, payload = Adapter.parse_request(req)
+    protocol, device, fmt, _, payload = Adapter.parse_request(req)
     if device.get('host', None) is None:
         return HttpResponse(Response.error('download', 'Netconf agent address missing!!'))
 
