@@ -3,7 +3,6 @@
         <platforms>
             <name>csr</name>
             <name>iosxr</name>
-            <name>iosxe</name>
             <name>nexus</name>
             <name>junos</name>
             <name>other</name>

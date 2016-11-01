@@ -9,5 +9,5 @@ django-debug-toolbar==1.4
 markupsafe
 lxml==3.4.4
 graphviz==0.4.9
-ncclient==0.4.7
+ncclient==0.5.2
 pyang==1.6.0
