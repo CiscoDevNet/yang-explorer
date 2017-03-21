@@ -173,7 +173,7 @@ class Adapter(object):
 
         ydk_def_names = ""
         for m in re.finditer(r"def \w+()", python_ydk_defs):
-            logging.error('get_ydk_def_names: m.group(0): \n' + m.group(0))
+            logging.debug('get_ydk_def_names: m.group(0): \n' + m.group(0))
             tmp_str = m.group(0).replace('def ', '')
             ydk_def_names = ydk_def_names + tmp_str + " "
 
