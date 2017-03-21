@@ -80,7 +80,25 @@ if [[ $NOVENV != 1 ]]; then
 fi
 
 echo "Installing dependencies .."
+pip install --upgrade pip
 pip install -r requirements.txt
+cd ../; \
+git clone https://github.com/CiscoDevNet/ydk-py.git -b yam; \
+cd ydk-py; \
+cd core; \
+python setup.py sdist; \
+pip install dist/ydk*.gz; \
+cd ../ietf; \
+python setup.py sdist; \
+pip install dist/ydk*.gz; \
+cd ../openconfig; \
+python setup.py sdist; \
+pip install dist/ydk*.gz; \
+cd ../cisco-ios-xr; \
+python setup.py sdist; \
+pip install dist/ydk*.gz; \
+cd ../../yang-explorer; \
+echo "Installing dependencies .. done"
 
 rc=$?
 if [[ $rc != 0 ]]; then
