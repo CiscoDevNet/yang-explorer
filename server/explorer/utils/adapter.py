@@ -27,6 +27,7 @@ from explorer.utils.restconf import gen_restconf
 from explorer.utils.runner import NCClient, RestClient
 from explorer.utils.ncparse import NetconfParser
 
+from ydk.app_maker import YdkAppMaker
 
 class Adapter(object):
     """ Class adapter for NCClient """
@@ -140,7 +141,7 @@ class Adapter(object):
             logging.debug('gen_rpc: Rcvd: ' + 'None')
             return None
 
-        logging.debug('gen_rpc: Rcvd: ' + payload)
+        logging.debug('gen_rpc: Rcvd: \n' + payload)
 
         request = ET.fromstring(payload)
         protocol = request.get('protocol', None)
@@ -155,12 +156,120 @@ class Adapter(object):
         else:
             rpc = Adapter._gen_rpc(username, request)
 
-        logging.info('gen_rpc: Generated : ' + rpc)
+        logging.debug('gen_rpc: Generated : \n' + rpc)
+
         ''' returns xml '''
         return ET.fromstring(rpc, parser=ET.XMLParser(remove_blank_text=True))
 
     @staticmethod
+    def get_ydk_def_names(python_ydk_defs):
+        """
+        Get the Python YDK definition names
+        """
+
+        logging.debug('get_ydk_def_names: python_ydk_defs : \n' + python_ydk_defs)
+
+        import re
+
+        ydk_def_names = ""
+        for m in re.finditer(r"def \w+()", python_ydk_defs):
+            logging.debug('get_ydk_def_names: m.group(0): \n' + m.group(0))
+            tmp_str = m.group(0).replace('def ', '')
+            ydk_def_names = ydk_def_names + tmp_str + " "
+
+        logging.debug('get_ydk_def_names: ydk_def_names : \n' + ydk_def_names)
+
+        return ydk_def_names
+
+    @staticmethod
     def gen_script(username, payload):
+        """
+        Generate YDK python script that uses Netconf provider and Netconf/CRUD services 
+        """
+
+        logging.debug('gen_script: payload : \n' + payload)
+
+        payload = payload.replace('<metadata>', '')
+        payload = payload.replace('</metadata>', '')
+
+        _, device, fmt, lock, rpc = Adapter.parse_request(payload)
+        if fmt == 'xpath' and rpc == '':
+            request = ET.fromstring(payload)
+            logging.debug('gen_script: request etree string : \n' + 
+                          ET.tostring(request, pretty_print=True))
+
+            rpc = Adapter._gen_rpc(username, request)
+
+        if rpc is None:
+            logging.error('gen_script: Invalid RPC Generated')
+            return None
+
+        logging.debug('gen_script: generated rpc : \n' + rpc)
+
+        # currently we only support Netconf service provider and CRUD services
+        parser = NetconfParser(rpc)
+        op = parser.get_operation()
+        datastore = parser.get_datastore()
+
+        python_ydk_defs = ""
+        for child in parser.get_data():
+            logging.debug('gen_script: child element : \n' + ET.tostring(child, pretty_print=True))
+
+            # generate ydk script snippet for child element
+            yam = YdkAppMaker(type='xml')
+            python_ydk_defs = python_ydk_defs + yam.payload2python(ET.tostring(child))
+
+        # TBD: auto-discover service type, currently hardcoded to 'netconf'
+        #      change to 'crud' if you want to use crud
+        service_type = 'netconf'
+
+        # setup template args
+        args = dict()
+
+        args['service_type'] = service_type
+        args['ydk_obj_defs'] = python_ydk_defs
+        args['datastore'] = datastore
+
+        if op == 'edit-config':
+            # TBD: currently hardcoded to 'create' (to handle create or merge operation)
+            #      Need to parse xc operations to set to other options such as 
+            #      'replace' or 'delete' based on values of xc operations. This would
+            #      have to be done on a per-node basis. 
+            args['service'] = 'create'
+        elif op == "get":
+            args['service'] = 'get'
+        elif op == "get-config":
+            args['service'] = 'get_config'
+        else:
+            args['service'] = 'unsupported'
+
+        args['host'] = device.get('host', '')
+        args['port'] = device.get('port', '830')
+        args['user'] = device.get('user', '')
+        args['passwd'] = device.get('passwd', '')
+
+        if not args['host']:
+            args['host'] = '<address>'
+
+        if not args['port']:
+            args['port'] = '830'
+
+        if not args['user']:
+            args['user'] = '<username>'
+
+        if not args['passwd']:
+            args['passwd'] = '<password>'
+
+        args['ydk_obj_names'] = Adapter.get_ydk_def_names(python_ydk_defs)
+
+        # generate script
+        rendered = render_to_string('ydkscript.py', args)
+        script = ET.Element('script')
+        script.text = ET.CDATA(rendered)
+        return script
+
+    @staticmethod
+    def gen_script_w_xml_payload(username, payload):
         """
         Generate Netconf / Restconf RPC
         """
