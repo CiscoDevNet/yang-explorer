@@ -232,7 +232,8 @@ def request_handler(request):
             return HttpResponse(Response.success(mode, reply_xml))
     elif mode == 'gen-script':
         req = request.GET.get('payload', '')
-        reply_xml = Adapter.gen_script(request.user.username, req)
+        target = request.GET.get('target', 'ncclient')
+        reply_xml = Adapter.gen_script(request.user.username, req, target)
         if isinstance(reply_xml, str):
             return HttpResponse(Response.success(mode, reply_xml))
     elif mode in ['get-cap', 'run-rpc', 'run-edit-commit', 'run-commit']:

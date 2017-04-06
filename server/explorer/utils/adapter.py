@@ -182,7 +182,19 @@ class Adapter(object):
         return ydk_def_names
 
     @staticmethod
-    def gen_script(username, payload):
+    def gen_script(username, payload, target='ncclient'):
+        if target == 'ydk':
+            return Adapter.gen_ydk_script(username, payload)
+
+        if target == 'ncclient':
+            return Adapter.gen_ncclient_script(username, payload)
+
+        logging.debug('gen_script: Invalid target %s\n' % str(target))
+        return 'Invalid target %s for script gen' % str(target)
+
+
+    @staticmethod
+    def gen_ydk_script(username, payload):
         """
         Generate YDK python script that uses Netconf provider and Netconf/CRUD services 
         """
@@ -269,7 +281,7 @@ class Adapter(object):
         return script
 
     @staticmethod
-    def gen_script_w_xml_payload(username, payload):
+    def gen_ncclient_script(username, payload):
         """
         Generate Netconf / Restconf RPC
         """

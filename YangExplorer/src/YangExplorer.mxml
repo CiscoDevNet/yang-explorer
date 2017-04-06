@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Copyright 2015, Cisco Systems, Inc
-    
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-    
+
     http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,907 +42,1043 @@
     </fx:Declarations>
     <fx:Script>
         <![CDATA[
-            import flash.net.navigateToURL;
-            
-            import mx.collections.ArrayCollection;
-            import mx.core.FlexGlobals;
-            import mx.events.IndexChangedEvent;
-            import mx.events.ItemClickEvent;
-            import mx.managers.PopUpManager;
-            import mx.rpc.events.FaultEvent;
-            import mx.rpc.events.ResultEvent;
-            
-            import spark.components.Alert;
-            import spark.events.IndexChangeEvent;
-            
-            import classes.Globals;
-            import classes.RequestPayload;
-            import classes.Response;
-            import classes.YangUtil;
-            
-            import flatspark.enums.BrandColorEnum;
-            import flatspark.enums.ButtonSizeEnum;
-            import flatspark.enums.TextInputSizeEnum;
-            import flatspark.skins.CheckBoxSkin;
-            import flatspark.utils.AwesomeUtils;
-            
-            import modules.LoginWindow;
-            import modules.SaveWindow;
-            import modules.SearchWindow;
+        import flash.net.navigateToURL;
 
-            
-            public var YTOOL_HOST:String = 'localhost:8088';
-            
-            /* Tab navigator views for workflow */
-            public static const TAB_BUILD_VIEW:int = 0;
-            public static const TAB_EXECUTE_VIEW:int = 1;
-            public static const TAB_MANAGE_VIEW:int = 2;
-            public static const TAB_SCHEMA_VIEW:int = 3;
-            
-            /* Tab navigator views for test builder */
-            public static const TAB_OPERATION_VIEW:int = 0;
-            public static const TAB_SETTING_VIEW:int = 1;
-            
-            /* Tab navigator views for encoding & result windows */
-            public static const TAB_SCRIPT_VIEW:int = 0;
-            public static const TAB_CONSOLE_VIEW:int = 1;
-            
-            /* Default ports */
-            public static const SSH_PORT:String = '22';
-            public static const NETCONF_PORT:String = '830';
-            public static const RESTCONF_PORT:String = '80';
-            public static const HELP_URL:String = "https://github.com/CiscoDevNet/yang-explorer";
+        import mx.collections.ArrayCollection;
+        import mx.core.FlexGlobals;
+        import mx.events.IndexChangedEvent;
+        import mx.events.ItemClickEvent;
+        import mx.managers.PopUpManager;
+        import mx.rpc.events.FaultEvent;
+        import mx.rpc.events.ResultEvent;
 
-            /* Global settings */
-            public var global : Globals;
+        import spark.components.Alert;
+        import spark.events.IndexChangeEvent;
 
-            /* Base URLs for HTTP services */
-            public var TREE_URL:String;
-            public var NC_URL:String;
-            public var DEVICE_URL:String; 
-            public var LOGIN_URL:String;
-            public var ADMIN_URL:String;
-            public var BASE_URL:String;
-            
-            /* Components */
-            public var loginWindow:LoginWindow;
-            public var saveWindow:SaveWindow;
-            
-            /* Version string */
-            [Bindable]
-            public var VERSION : String = '0.6.0 (Beta)';
-            
-            /* Version string */
-            [Bindable]
-            public var LOGIN_INFO:ArrayCollection = new ArrayCollection(["Login",""]);
+        import classes.Globals;
+        import classes.RequestPayload;
+        import classes.Response;
+        import classes.YangUtil;
 
-            [Bindable]
-            public var netconfEditOp:ArrayCollection = new ArrayCollection(
-                ["", "merge","create","replace","delete", "remove"]);
-            
-            [Bindable]
-            public var netconfDataSrc:ArrayCollection = new ArrayCollection
-                (["Running","Startup","Candidate"]);
+        import flatspark.enums.BrandColorEnum;
+        import flatspark.enums.ButtonSizeEnum;
+        import flatspark.enums.TextInputSizeEnum;
+        import flatspark.skins.CheckBoxSkin;
+        import flatspark.utils.AwesomeUtils;
 
-            [Bindable]
-            public var netconfErrOpt:ArrayCollection = new ArrayCollection
-                (["", "stop-on-error","continue-on-error","rollback-on-error"]);
+        import modules.LoginWindow;
+        import modules.SaveWindow;
+        import modules.SearchWindow;
 
-            [Bindable]
-            public var netconfEditLock:Boolean = false;
 
-            [Bindable]
-            public var deviceProfiles:ArrayCollection =  new ArrayCollection([]);
-            
-            [Bindable]
-            public var devicePlatforms : ArrayCollection = new ArrayCollection([]);
+        public var YTOOL_HOST:String = 'localhost:8088';
 
-            private var ncReq : RequestPayload
-            private var selectedNode:XML;
-            private var deviceProfilesXML:XML = null;
-            
-            [Bindable]                
-            private var dpCollection:XML;
-            
-            /* HTTP response handler */
-            private function httpService_fault(evt:FaultEvent):void {
-                tnResults.selectedIndex = 1
-                txtConsole.text = evt.fault.faultString;
-                updateStatus("Error : Recieved HTTP fault " + evt.fault.faultString);
+        /* Tab navigator views for workflow */
+        public static const TAB_BUILD_VIEW:int = 0;
+        public static const TAB_EXECUTE_VIEW:int = 1;
+        public static const TAB_MANAGE_VIEW:int = 2;
+        public static const TAB_SCHEMA_VIEW:int = 3;
+
+        /* Tab navigator views for test builder */
+        public static const TAB_OPERATION_VIEW:int = 0;
+        public static const TAB_SETTING_VIEW:int = 1;
+
+        /* Tab navigator views for encoding & result windows */
+        public static const TAB_SCRIPT_VIEW:int = 0;
+        public static const TAB_CONSOLE_VIEW:int = 1;
+
+        /* Default ports */
+        public static const SSH_PORT:String = '22';
+        public static const NETCONF_PORT:String = '830';
+        public static const RESTCONF_PORT:String = '80';
+        public static const HELP_URL:String = "https://github.com/CiscoDevNet/yang-explorer";
+
+        /* Global settings */
+        public var global:Globals;
+
+        /* Base URLs for HTTP services */
+        public var TREE_URL:String;
+        public var NC_URL:String;
+        public var DEVICE_URL:String;
+        public var LOGIN_URL:String;
+        public var ADMIN_URL:String;
+        public var BASE_URL:String;
+
+        /* Components */
+        public var loginWindow:LoginWindow;
+        public var saveWindow:SaveWindow;
+
+        /* Version string */
+        [Bindable]
+        public var VERSION:String = '0.7.0 (Beta)';
+
+        /* Version string */
+        [Bindable]
+        public var LOGIN_INFO:ArrayCollection = new ArrayCollection(["Login", ""]);
+
+        [Bindable]
+        public var netconfEditOp:ArrayCollection = new ArrayCollection(["", "merge", "create", "replace", "delete", "remove"]);
+
+        [Bindable]
+        public var netconfDataSrc:ArrayCollection = new ArrayCollection(["Running", "Startup", "Candidate"]);
+
+        [Bindable]
+        public var netconfErrOpt:ArrayCollection = new ArrayCollection(["", "stop-on-error", "continue-on-error", "rollback-on-error"]);
+
+        [Bindable]
+        public var netconfEditLock:Boolean = false;
+
+        [Bindable]
+        public var deviceProfiles:ArrayCollection = new ArrayCollection([]);
+
+        [Bindable]
+        public var devicePlatforms:ArrayCollection = new ArrayCollection([]);
+
+        private var ncReq:RequestPayload
+        private var selectedNode:XML;
+        private var deviceProfilesXML:XML = null;
+
+        [Bindable]
+        private var dpCollection:XML;
+
+        /* HTTP response handler */
+        private function httpService_fault(evt:FaultEvent):void
+        {
+            tnResults.selectedIndex = 1
+            txtConsole.text = evt.fault.faultString;
+            updateStatus("Error : Recieved HTTP fault " + evt.fault.faultString);
+        }
+
+        private function onScriptServiceResult(event:ResultEvent):void
+        {
+            txtScript.text = event.result.toString()
+            updateStatus('Recieved HTTP Result for netconf script')
+        }
+
+        private function onRunServiceResult(event:ResultEvent):void
+        {
+            tnResults.selectedIndex = 1
+            var response:Response = new Response(XML(event.result));
+            if (response.errored)
+            {
+                txtConsole.text = 'Errored';
+                return;
             }
-            
-            private function onScriptServiceResult(event:ResultEvent):void {
-                txtScript.text = event.result.toString()
-                updateStatus('Recieved HTTP Result for netconf script')
+
+            if (response.type == 'rpc')
+            {
+                txtScript.text = response.msg;
+                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
             }
-            
-            private function onRunServiceResult(event:ResultEvent):void {
-                tnResults.selectedIndex = 1
-                var response : Response = new Response(XML(event.result));
-                if (response.errored) {
-                    txtConsole.text = 'Errored';
-                    return;
+            else
+            {
+                if (response.xml)
+                {
+                    txtConsole.text = response.xml.children()[0].toXMLString();
                 }
+                else
+                {
+                    txtConsole.text = response.msg;
+                }
+                tnResults.selectedIndex = TAB_CONSOLE_VIEW;
+                txtConsole.scroller.verticalScrollBar.value = txtConsole.scroller.verticalScrollBar.maximum;
+                txtConsole.scroller.verticalScrollBar.validateNow();
+            }
+            updateStatus('Recieved HTTP Result for request: ' + response.type)
+        }
 
-                if (response.type == 'rpc') {
-                    txtScript.text = response.msg;
-                    tnResults.selectedIndex = TAB_SCRIPT_VIEW;
-                } else {
-                    if (response.xml) {
-                        txtConsole.text = response.xml.children()[0].toXMLString();
-                    } else {
-                        txtConsole.text = response.msg;
+        private function handleEditCommitResponse(response:Response):void
+        {
+            var text:String = response.xml.children()[0].toXMLString();
+
+            if (text.indexOf("<ok/>") > 0)
+            {
+                txtConsole.text = '\n===== EDIT-CONFIG =====:\n\n'
+                txtConsole.text += text;
+                txtConsole.scroller.verticalScrollBar.maximum;
+                callLater(runCommit, null);
+            }
+            else
+            {
+                txtConsole.text = text;
+                txtConsole.scroller.verticalScrollBar.maximum;
+            }
+        }
+
+        private function onServiceResult(event:ResultEvent):void
+        {
+            var response:Response = new Response(XML(event.result));
+            updateStatus('Recieved HTTP Result for request type ' + response.type);
+            switch (response.type)
+            {
+                case 'rpc':
+                    if (!response.errored)
+                    {
+                        if (response.xml)
+                        {
+                            txtScript.text = response.xml.toString();
+                        }
+                        else
+                        {
+                            txtScript.text = response.msg;
+                        }
+                        tnResults.selectedIndex = TAB_SCRIPT_VIEW;
                     }
-                    tnResults.selectedIndex = TAB_CONSOLE_VIEW;
-                    txtConsole.scroller.verticalScrollBar.value = txtConsole.scroller.verticalScrollBar.maximum;
-                    txtConsole.scroller.verticalScrollBar.validateNow();
-                }
-                updateStatus('Recieved HTTP Result for request: ' + response.type)
-            }
-            
-            private function handleEditCommitResponse(response : Response) : void {
-                var text : String = response.xml.children()[0].toXMLString();
-
-                if (text.indexOf("<ok/>") > 0) {
-                    txtConsole.text = '\n===== EDIT-CONFIG =====:\n\n'
-                    txtConsole.text += text;
-                    txtConsole.scroller.verticalScrollBar.maximum;
-                    callLater(runCommit, null);
-                } else {
-                    txtConsole.text = text;
-                    txtConsole.scroller.verticalScrollBar.maximum;
-                }
-            }
-            
-            private function onServiceResult(event:ResultEvent):void
-            {
-                var response : Response = new Response(XML(event.result));
-                updateStatus('Recieved HTTP Result for request type ' + response.type);
-                switch(response.type) {
-                    case 'rpc':
-                        if (!response.errored) {
-                            if (response.xml) {
-                                txtScript.text = response.xml.toString();
-                            } else {
-                                txtScript.text = response.msg
-                                    ;
-                            }
-                            tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+                    break;
+                case 'run-rpc':
+                case 'get-cap':
+                case 'gen-script':
+                    if (!response.errored)
+                    {
+                        if (response.xml)
+                        {
+                            txtConsole.text = response.xml.toString();
                         }
-                        break;
-                    case 'run-rpc':
-                    case 'get-cap':
-                    case 'gen-script':
-                        if (!response.errored) {
-                            if (response.xml) {
-                                txtConsole.text = response.xml.toString();
-                            } else {
-                                txtConsole.text = response.msg;
-                            }
-                            tnResults.selectedIndex = TAB_CONSOLE_VIEW;
+                        else
+                        {
+                            txtConsole.text = response.msg;
                         }
-                        break;
-                    case 'session':
-                        if (!response.errored) {
-                            if (response.type == 'session') {
-                                setUserSession(response);
-                            }
-                        }
-                        break;
-                    case 'profile':
-                        updateUserProfiles(response.xml)
-                        break;
-
-                    default:
-                        updateStatus('Recieved HTTP Result for unknown netconf: ' + response.type);
-                        break;
-                }
-            }
-            
-            public function updateUserProfiles(profiles:XML) : void
-            {
-                deviceProfiles.removeAll();
-                
-                if (profiles) {
-                    deviceProfiles.addItem("");
-                    for each (var item : XML in profiles.profile) {
-                        if (item.@type == 'device') {
-                            deviceProfiles.addItem(String(item.@name));
+                        tnResults.selectedIndex = TAB_CONSOLE_VIEW;
+                    }
+                    break;
+                case 'session':
+                    if (!response.errored)
+                    {
+                        if (response.type == 'session')
+                        {
+                            setUserSession(response);
                         }
                     }
-                    deviceProfiles.refresh();
-                    deviceProfilesXML = profiles;
-                }
+                    break;
+                case 'profile':
+                    updateUserProfiles(response.xml)
+                    break;
+
+                default:
+                    updateStatus('Recieved HTTP Result for unknown netconf: ' + response.type);
+                    break;
             }
-            
-            public function updateForm():void
+        }
+
+        public function updateUserProfiles(profiles:XML):void
+        {
+            deviceProfiles.removeAll();
+
+            if (profiles)
             {
-                switch(adg.getMode()) {
-                    case YangUtil.EDIT_CONFIG:
-                        cbSrcDs.enabled = false;
-                        cbSrcDs.selectedIndex = -1;
-                        cbTgtDs.enabled = true;
-                        adgOp.editable = true;
-                        // for ios-xe default target datastore is 'running'
-                        if (lstDevPlatform.selectedIndex == 3) {
-                            cbTgtDs.selectedIndex = 2;
-                        } else {
-                            cbTgtDs.selectedIndex = 0;
-                        }
-                        rbtnOper.selected = false;
-                        rbtnConfig.selected = true;
-                        break;
-                    case YangUtil.GET_CONFIG:
-                        cbSrcDs.enabled = true;
-                        cbSrcDs.selectedIndex = 0;
-                        cbTgtDs.enabled = false;
-                        cbTgtDs.selectedIndex = -1;
-                        adgOp.editable = false;
-                        rbtnOper.selected = true;
-                        rbtnConfig.selected = false;
-                        break;
-                    default:
-                        cbSrcDs.enabled = false;
-                        cbSrcDs.selectedIndex = -1;
-                        cbTgtDs.enabled = false;
-                        cbTgtDs.selectedIndex = -1;
-                        adgOp.editable = false;
-                        rbtnOper.selected = false;
-                        rbtnConfig.selected = false;
-                }
-                updateNetconfOptions(lstDevProfile.selectedIndex);
-            }
-            
-            public function updateProperty(node:XML) : void {
-                adgProp.updateProperty(node)
-            }
-            
-            private function updateDevicePlatform(plat : String) : void {
-                for (var i:int = 0; i < devicePlatforms.length; i++) {
-                    if (plat == devicePlatforms.getItemAt(i) as String) {
-                        lstDevPlatform.setSelectedIndex(i)
-                        updateForm()
-                        break;
+                deviceProfiles.addItem("");
+                for each (var item:XML in profiles.profile)
+                {
+                    if (item.@type == 'device')
+                    {
+                        deviceProfiles.addItem(String(item.@name));
                     }
                 }
+                deviceProfiles.refresh();
+                deviceProfilesXML = profiles;
             }
-            
-            public function loadTestCasePayload(payload:XML) : void
+        }
+
+        public function updateForm():void
+        {
+            switch (adg.getMode())
             {
-                resetTreeView();
-                for each (var child : XML in payload.children()) {
-                    /* Restore config from saved testcase payload */
-                    switch (child.localName() as String) {
-                        case 'device-auth':
-                            if (child.hasOwnProperty('@platform')) {
-                                updateDevicePlatform(child.@platform)
-                            }
-                            break
-                        
-                        case 'netconf-auth':
-                            if (child.hasOwnProperty('@user')) {
-                                txtNCUser.text = child.@user
-                                if (txtNCUser.text != '') {
-                                    reset_netconfSettings(false)
-                                }
-                            }
-                            
-                            if (child.hasOwnProperty('@passwd')) {
-                                txtNCPwd.text = child.@passwd
-                            }
-                            
-                            if (child.hasOwnProperty('@port')) {
-                                txtNCPort.text = child.@port
-                            }
-                            
-                            if (child.hasOwnProperty('@host')) {
-                                txtNCIpAddr.text = child.@host
-                            }
-                            break
-                        
-                        case 'module-tree':
-                            // Load test case tree
-                            adg.treeXml = XML(child.module.toString())
-                            adg.setOpenNodes(null)
-                            adg.processXML(null)
-                            updateForm()
-                            break
-                        
-                        case 'keyvalue':
-                            tnWorkflow.selectedIndex = 0
-                            break
+                case YangUtil.EDIT_CONFIG:
+                    cbSrcDs.enabled = false;
+                    cbSrcDs.selectedIndex = -1;
+                    cbTgtDs.enabled = true;
+                    adgOp.editable = true;
+                    // for ios-xe default target datastore is 'running'
+                    if (lstDevPlatform.selectedIndex == 3)
+                    {
+                        cbTgtDs.selectedIndex = 2;
                     }
+                    else
+                    {
+                        cbTgtDs.selectedIndex = 0;
+                    }
+                    rbtnOper.selected = false;
+                    rbtnConfig.selected = true;
+                    break;
+                case YangUtil.GET_CONFIG:
+                    cbSrcDs.enabled = true;
+                    cbSrcDs.selectedIndex = 0;
+                    cbTgtDs.enabled = false;
+                    cbTgtDs.selectedIndex = -1;
+                    adgOp.editable = false;
+                    rbtnOper.selected = true;
+                    rbtnConfig.selected = false;
+                    break;
+                default:
+                    cbSrcDs.enabled = false;
+                    cbSrcDs.selectedIndex = -1;
+                    cbTgtDs.enabled = false;
+                    cbTgtDs.selectedIndex = -1;
+                    adgOp.editable = false;
+                    rbtnOper.selected = false;
+                    rbtnConfig.selected = false;
+            }
+            updateNetconfOptions(lstDevProfile.selectedIndex);
+        }
+
+        public function updateProperty(node:XML):void
+        {
+            adgProp.updateProperty(node)
+        }
+
+        private function updateDevicePlatform(plat:String):void
+        {
+            for (var i:int = 0; i < devicePlatforms.length; i++)
+            {
+                if (plat == devicePlatforms.getItemAt(i) as String)
+                {
+                    lstDevPlatform.setSelectedIndex(i)
+                    updateForm()
+                    break;
                 }
             }
-            
-            private function updateTreeNode(tree:XMLList, path:Array, value:String) : void 
+        }
+
+        public function loadTestCasePayload(payload:XML):void
+        {
+            resetTreeView();
+            for each (var child:XML in payload.children())
             {
-                var tag:String = path.shift()
-                var terminal:Boolean = (path.length == 0)
-                statusBar.text = ''
-                for each (var node:XML in tree) {
-                    if (node.@name == tag) {
-                        if (terminal) {
-                            if (value == 'get' || value == 'get-config') {
-                                node.@value = '<' + value + '>'
-                            } else {
-                                node.@value = value
-                            }
-                            
-                            Alert.show(node.toString())
-                            return
+                /* Restore config from saved testcase payload */
+                switch (child.localName() as String)
+                {
+                    case 'device-auth':
+                        if (child.hasOwnProperty('@platform'))
+                        {
+                            updateDevicePlatform(child.@platform)
                         }
-                        statusBar.text += 'Compare ' + node.@name + ':' + tag
-                        updateTreeNode(node.children(), path, value)
                         break
+
+                    case 'netconf-auth':
+                        if (child.hasOwnProperty('@user'))
+                        {
+                            txtNCUser.text = child.@user
+                            if (txtNCUser.text != '')
+                            {
+                                reset_netconfSettings(false)
+                            }
+                        }
+
+                        if (child.hasOwnProperty('@passwd'))
+                        {
+                            txtNCPwd.text = child.@passwd
+                        }
+
+                        if (child.hasOwnProperty('@port'))
+                        {
+                            txtNCPort.text = child.@port
+                        }
+
+                        if (child.hasOwnProperty('@host'))
+                        {
+                            txtNCIpAddr.text = child.@host
+                        }
+                        break
+
+                    case 'module-tree':
+                        // Load test case tree
+                        adg.treeXml = XML(child.module.toString())
+                        adg.setOpenNodes(null)
+                        adg.processXML(null)
+                        updateForm()
+                        break
+
+                    case 'keyvalue':
+                        tnWorkflow.selectedIndex = 0
+                        break
+                }
+            }
+        }
+
+        private function updateTreeNode(tree:XMLList, path:Array, value:String):void
+        {
+            var tag:String = path.shift()
+            var terminal:Boolean = (path.length == 0)
+            statusBar.text = ''
+            for each (var node:XML in tree)
+            {
+                if (node.@name == tag)
+                {
+                    if (terminal)
+                    {
+                        if (value == 'get' || value == 'get-config')
+                        {
+                            node.@value = '<' + value + '>'
+                        }
+                        else
+                        {
+                            node.@value = value
+                        }
+
+                        Alert.show(node.toString())
+                        return
                     }
                     statusBar.text += 'Compare ' + node.@name + ':' + tag
+                    updateTreeNode(node.children(), path, value)
+                    break
+                }
+                statusBar.text += 'Compare ' + node.@name + ':' + tag
+            }
+        }
+
+        private function setDeviceSettings(runnable:Boolean):Boolean
+        {
+            if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '')
+            {
+                if (runnable)
+                {
+                    Alert.show('Server credentials are not provided', 'Error');
+                    return false;
+                }
+            }
+            else
+            {
+                ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
+                ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text, txtNCUser.text, txtNCPwd.text)
+            }
+            return true
+        }
+
+        public function getRequestCapPayload():XML
+        {
+            if (!setDeviceSettings(true))
+            {
+                tnSettings.selectedIndex = 1;
+                return null;
+            }
+            ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+            var strPayload:String = ncReq.toCapString();
+            if (strPayload == '')
+            {
+                return null;
+            }
+            return new XML(strPayload);
+        }
+
+        public function getRequestCommitPayload():XML
+        {
+            if (!setDeviceSettings(true))
+            {
+                tnSettings.selectedIndex = 1;
+                return null;
+            }
+            ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+            var strPayload:String = ncReq.toCommitString();
+            if (strPayload == '')
+            {
+                return null;
+            }
+            return new XML(strPayload);
+        }
+
+        public function getRequestSchemaPayload(schemas:String):XML
+        {
+            if (!setDeviceSettings(true))
+            {
+                return null;
+            }
+            ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+            var strPayload:String = ncReq.toSchemaString(schemas);
+            if (strPayload == '')
+            {
+                return null;
+            }
+            return new XML(strPayload);
+        }
+
+        public function getRequestPayload(runnable:Boolean):XML
+        {
+            ncReq.reset()
+            var src:String = (cbSrcDs.selectedIndex >= 0) ? netconfDataSrc[cbSrcDs.selectedIndex] : '';
+            var tgt:String = (cbTgtDs.selectedIndex >= 0) ? netconfDataSrc[cbTgtDs.selectedIndex] : '';
+            var strPayload:String = '';
+
+            ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
+
+            if (cbErrOpt.selectedIndex >= 0)
+            {
+                ncReq.setErrorOption(cbErrOpt.selectedItem);
+            }
+            ncReq.setLockOption(cbEditLock.selected);
+            if (cbEdit.selected)
+            {
+                if (txtScript.text != '')
+                {
+                    strPayload = txtScript.text;
+                    ncReq.setFormat(RequestPayload.FMT_RAW);
+                }
+                else
+                {
+                    Alert.show('Custom RPC text is empty !!', 'RPC');
+                    return null;
+                }
+            }
+            else
+            {
+                ncReq.setMode(adg.getModeString())
+                ncReq.setDatastore(src, tgt)
+                ncReq.removeAll()
+                adg.processXML(ncReq.kvpairs)
+                if (ncReq.kvpairs.length <= 0)
+                {
+                    Alert.show('Tree is empty, please polulate tree to generate RPC !!', 'RPC');
                 }
             }
 
-            private function setDeviceSettings(runnable : Boolean) : Boolean 
+            /* Include device info only if script is runnable */
+            if (!setDeviceSettings(runnable))
             {
-                if (txtNCIpAddr.text == '' || txtNCUser.text == '' || txtNCPwd.text == '') {
-                    if (runnable) {
-                        Alert.show('Server credentials are not provided', 'Error');
-                        return false;
+                tnSettings.selectedIndex = 1;
+                return null
+            }
+
+            try
+            {
+                var xml:XML = XML(strPayload);
+            }
+            catch (e:Object)
+            {
+                Alert.show('Invalid custom RPC', 'RPC');
+                return null;
+            }
+
+            strPayload = ncReq.toString(strPayload);
+            if (strPayload == '')
+            {
+                updateStatus('No Data to process!!')
+                return null;
+            }
+
+            return XML(strPayload);
+        }
+
+        public function runCommit():void
+        {
+            runScript('run-commit');
+        }
+
+        private function runScript(mode:String):void
+        {
+            var req:XML = null;
+
+            switch (mode)
+            {
+                case 'get-cap':
+                    txtConsole.text = 'Waiting for result ... '
+                    req = getRequestCapPayload();
+                    break;
+
+                case 'run-rpc':
+                    req = getRequestPayload(true);
+                    if (!req)
+                    {
+                        return
                     }
-                } else {
-                    ncReq.setDeviceSettings(lstDevPlatform.selectedItem as String, '', '', '', '', '');
-                    ncReq.setNetconfSettings(txtNCIpAddr.text, txtNCPort.text,
-                                             txtNCUser.text, txtNCPwd.text)
-                }
-                return true
+                    txtConsole.text = 'Waiting for result ... '
             }
 
-            public function getRequestCapPayload() : XML
+            if (req != null)
             {
-                if (!setDeviceSettings(true)) {
-                    tnSettings.selectedIndex = 1;
-                    return null;
-                }
-                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
-                var strPayload: String = ncReq.toCapString();
-                if (strPayload == '') {
-                    return null;
-                }
-                return new XML(strPayload);
+                runService.url = NC_URL
+                runService.send({payload: req, mode: mode})
+                tnResults.selectedIndex = TAB_CONSOLE_VIEW;
+                updateStatus('Run request sent to server. please wait ..')
             }
-            
-            public function getRequestCommitPayload() : XML
+        }
+
+        protected function btnGenRPC_clickHandler():void
+        {
+            if (cbEdit.selected)
             {
-                if (!setDeviceSettings(true)) {
-                    tnSettings.selectedIndex = 1;
-                    return null;
-                }
-                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
-                var strPayload: String = ncReq.toCommitString();
-                if (strPayload == '') {
-                    return null;
-                }
-                return new XML(strPayload);
-            }
-            
-            public function getRequestSchemaPayload(schemas: String) : XML
-            {
-                if (!setDeviceSettings(true)) {
-                    return null;
-                }
-                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
-                var strPayload: String = ncReq.toSchemaString(schemas);
-                if (strPayload == '') {
-                    return null;
-                }
-                return new XML(strPayload);
+                Alert.show('Please uncheck Custom RPC checkbox to use generated RPCs', 'RPC');
+                return;
             }
 
-            public function getRequestPayload(runnable : Boolean) : XML
+            var req:XML = getRequestPayload(false)
+            if (req != null)
             {
-                ncReq.reset()
-                var src:String =  (cbSrcDs.selectedIndex >= 0) ? netconfDataSrc[cbSrcDs.selectedIndex] : '';
-                var tgt:String =  (cbTgtDs.selectedIndex >= 0) ? netconfDataSrc[cbTgtDs.selectedIndex] : '';
-                var strPayload : String = '';
-                
-                ncReq.setProtocol(rbtnNetConf.selected ? "netconf" : "restconf");
-                
-                if (cbErrOpt.selectedIndex >= 0) {
-                    ncReq.setErrorOption(cbErrOpt.selectedItem);
-                }
-                ncReq.setLockOption(cbEditLock.selected);
-                if (cbEdit.selected) {
-                    if (txtScript.text != '') {
-                        strPayload = txtScript.text;
-                        ncReq.setFormat(RequestPayload.FMT_RAW);
-                    } else {
-                        Alert.show('Custom RPC text is empty !!', 'RPC');
-                        return null;
-                    }
-                } else {
-                    ncReq.setMode(adg.getModeString())
-                    ncReq.setDatastore(src, tgt)
-                    ncReq.removeAll()
-                    adg.processXML(ncReq.kvpairs)
-                    if (ncReq.kvpairs.length <= 0) {
-                        Alert.show('Tree is empty, please polulate tree to generate RPC !!', 'RPC');
-                    }
-                }
-                
-                /* Include device info only if script is runnable */
-                if (!setDeviceSettings(runnable)) {
-                    tnSettings.selectedIndex = 1;
-                    return null
-                }
-
-                try { 
-                    var xml : XML = XML(strPayload);
-                } catch (e : Object) {
-                    Alert.show('Invalid custom RPC', 'RPC');
-                    return null;
-                }
-                
-                strPayload = ncReq.toString(strPayload);
-                if (strPayload == '') {
-                    updateStatus('No Data to process!!')
-                    return null;
-                }
-                
-                return  XML(strPayload);
+                moduleService.url = NC_URL
+                moduleService.send({payload: req, mode: 'rpc'})
+                updateStatus('Request for rpc encoding sent to server')
             }
-            
-            public function runCommit() : void {
-                runScript('run-commit');
-            }
+            tnResults.selectedIndex = TAB_SCRIPT_VIEW
+        }
 
-            private function runScript(mode:String) : void {
-                var req : XML = null;
+        public function get_dev_profiles():ArrayCollection
+        {
+            return deviceProfiles;
+        }
 
-                switch (mode) {
-                    case 'get-cap':
-                        txtConsole.text = 'Waiting for result ... '
-                        req = getRequestCapPayload();
-                        break;
+        public function loadUserSession():void
+        {
+            profileService.url = 'http://' + YTOOL_HOST + '/explorer/session';
+            profileService.send();
+        }
 
-                    case 'run-rpc':
-                        req = getRequestPayload(true);
-                        if (!req) {
-                            return
-                        }
-                        txtConsole.text = 'Waiting for result ... '
-                }
+        public function refresh_explorerArea():void
+        {
+            adg.refresh();
+        }
 
-                if (req != null) {
-                    runService.url = NC_URL
-                    runService.send({payload:req, mode:mode})
-                    tnResults.selectedIndex = TAB_CONSOLE_VIEW;
-                    updateStatus('Run request sent to server. please wait ..')
-                } 
-            }
+        public function refresh_collectionArea():void
+        {
+            collections.update(BASE_URL)
+            collections.refresh()
+        }
 
-            protected function btnGenRPC_clickHandler():void
+        public function refresh_mgmtArea():void
+        {
+            mgmt.update(BASE_URL)
+            mgmt.refresh()
+        }
+
+        public function refresh_schemaArea(force:Boolean = false):void
+        {
+            schema.update(BASE_URL)
+            if (tnWorkflow.selectedIndex == TAB_SCHEMA_VIEW)
             {
-                if (cbEdit.selected) {
-                    Alert.show('Please uncheck Custom RPC checkbox to use generated RPCs', 'RPC');
-                    return;
-                }
-                
-                var req : XML = getRequestPayload(false)
-                if (req != null) {
-                    moduleService.url = NC_URL
-                    moduleService.send({payload:req, mode:'rpc'})
-                    updateStatus('Request for rpc encoding sent to server')
-                }
-                tnResults.selectedIndex = TAB_SCRIPT_VIEW
+                schema.reset();
             }
-            
-            public function get_dev_profiles() : ArrayCollection {
-                return deviceProfiles;
-            }
+        }
 
-            public function loadUserSession() : void
+        public function setUserSession(response:Response):void
+        {
+            if (response && response.xml.username.toString() != '')
             {
-                profileService.url = 'http://' + YTOOL_HOST + '/explorer/session';
-                profileService.send();
+                global.user = response.xml.username.toString();
+                btnLogin.label = global.user;
+                updateDevicePlatforms(response.xml.global[0]);
             }
-            
-            public function refresh_explorerArea() : void {
-                adg.refresh();
-            }
-            
-            public function refresh_collectionArea() : void
+            else
             {
-                collections.update(BASE_URL)
-                collections.refresh()
-            }
-            
-            public function refresh_mgmtArea() : void
-            {
-                mgmt.update(BASE_URL)
-                mgmt.refresh()
-            }
-            
-            public function refresh_schemaArea(force : Boolean = false) : void
-            {
-                schema.update(BASE_URL)
-                if (tnWorkflow.selectedIndex == TAB_SCHEMA_VIEW) {
-                    schema.reset();
-                }
-            }
-            
-            public function setUserSession(response : Response) : void {
-                if (response && response.xml.username.toString() != '') {
-                    global.user = response.xml.username.toString();
-                    btnLogin.label = global.user;
-                    updateDevicePlatforms(response.xml.global[0]);
-                } else {
-                    btnLogin.label = 'Login';
-                    global.user = '';
-                    updateDevicePlatforms(null);
-                    updateUserProfiles(null);
-                }
-                loadUserProfile();
-            }
-            
-            private function updateDevicePlatforms(config : XML) : void {
-                devicePlatforms.removeAll();
-                if (!config) {
-                    return;
-                }
-                for each (var item : XML in config.ncclient.platforms.name) {
-                    devicePlatforms.addItem(item.toString());
-                }
-            }
-
-            public function loadUserProfile() : void
-            {
-                adg.url = TREE_URL;
-                resetTreeView();
-                if (global.user != '') {
-                    btnLogin.label = global.user;
-                    btnLogin.toolTip = 'Click to Logout'
-                    profileService.url = DEVICE_URL
-                    profileService.send()
-                    refresh_explorerArea();
-                    refresh_collectionArea();
-                    refresh_mgmtArea();
-                    refresh_schemaArea();
-                    enableAllButtons(true)
-                } else {
-                    adg.reset()
-                    mgmt.reset()
-                    schema.reset()
-                    collections.reset()
-                    enableAllButtons(false)
-                }
-                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
-                tnSettings.selectedIndex = TAB_SETTING_VIEW;
-            }
-            
-            public function logout() : void {
                 btnLogin.label = 'Login';
-                btnLogin.toolTip = 'Click to login';
-                devicePlatforms.removeAll();
-                reset_netconfSettings(true);
-                btnClear_clickHandler(null);
-                resetTreeView();
+                global.user = '';
+                updateDevicePlatforms(null);
+                updateUserProfiles(null);
+            }
+            loadUserProfile();
+        }
+
+        private function updateDevicePlatforms(config:XML):void
+        {
+            devicePlatforms.removeAll();
+            if (!config)
+            {
+                return;
+            }
+            for each (var item:XML in config.ncclient.platforms.name)
+            {
+                devicePlatforms.addItem(item.toString());
+            }
+        }
+
+        public function loadUserProfile():void
+        {
+            adg.url = TREE_URL;
+            resetTreeView();
+            if (global.user != '')
+            {
+                btnLogin.label = global.user;
+                btnLogin.toolTip = 'Click to Logout'
+                profileService.url = DEVICE_URL
+                profileService.send()
+                refresh_explorerArea();
+                refresh_collectionArea();
+                refresh_mgmtArea();
+                refresh_schemaArea();
+                enableAllButtons(true)
+            }
+            else
+            {
+                adg.reset()
+                mgmt.reset()
+                schema.reset()
+                collections.reset()
                 enableAllButtons(false)
             }
-            
-            public function session_expired(r : Response) : Boolean {
-                if (r.type == 'session-expired') {
-                    Alert.show(r.msg, 'Session Expired');
-                    logout();
-                    return true;
-                }
-                return false;
-            }
-            
-            public function onCreationComplete():void {
-                var host:String = FlexGlobals.topLevelApplication.parameters.host;
-                var port:String = FlexGlobals.topLevelApplication.parameters.port;
-                
-                global = new Globals();
-                
-                if (host && port) {
-                    global.host = host
-                    global.port = port
-                    YTOOL_HOST = host + ':' + port
-                }
-                
-                TREE_URL = 'http://' + YTOOL_HOST + '/explorer/modules?';
-                NC_URL = 'http://' + YTOOL_HOST + '/explorer/netconf?';
-                DEVICE_URL = 'http://' + YTOOL_HOST + '/explorer/userprofiles';
-                LOGIN_URL = 'http://' + YTOOL_HOST + '/explorer/login'
-                ADMIN_URL = 'http://' + YTOOL_HOST + '/admin'
-                BASE_URL = 'http://' + YTOOL_HOST + '/explorer'
-                loadUserSession()
-            }
-            
-            public function init(): void 
+            tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+            tnSettings.selectedIndex = TAB_SETTING_VIEW;
+        }
+
+        public function logout():void
+        {
+            btnLogin.label = 'Login';
+            btnLogin.toolTip = 'Click to login';
+            devicePlatforms.removeAll();
+            reset_netconfSettings(true);
+            btnClear_clickHandler(null);
+            resetTreeView();
+            enableAllButtons(false)
+        }
+
+        public function session_expired(r:Response):Boolean
+        {
+            if (r.type == 'session-expired')
             {
-                ncReq = new RequestPayload()
+                Alert.show(r.msg, 'Session Expired');
+                logout();
+                return true;
             }
-            
-            private function enableAllButtons(enable:Boolean) : void
+            return false;
+        }
+
+        public function onCreationComplete():void
+        {
+            var host:String = FlexGlobals.topLevelApplication.parameters.host;
+            var port:String = FlexGlobals.topLevelApplication.parameters.port;
+
+            global = new Globals();
+
+            if (host && port)
             {
-                btnGenRPC.enabled = enable
-                btnRefresh.enabled = enable
-                btnReset.enabled = enable
-                btnSave.enabled = enable
-                btnCap.enabled = enable
-                btnRPC.enabled = enable
-                btnGenScript.enabled = enable
-            }
-            
-            public function updateStatus(msg : String) : void
-            {
-                statusBar.text = 'Status : ' + msg
+                global.host = host
+                global.port = port
+                YTOOL_HOST = host + ':' + port
             }
 
-            private function reset_netconfSettings(default_settings: Boolean):void
+            TREE_URL = 'http://' + YTOOL_HOST + '/explorer/modules?';
+            NC_URL = 'http://' + YTOOL_HOST + '/explorer/netconf?';
+            DEVICE_URL = 'http://' + YTOOL_HOST + '/explorer/userprofiles';
+            LOGIN_URL = 'http://' + YTOOL_HOST + '/explorer/login'
+            ADMIN_URL = 'http://' + YTOOL_HOST + '/admin'
+            BASE_URL = 'http://' + YTOOL_HOST + '/explorer'
+            loadUserSession()
+        }
+
+        public function init():void
+        {
+            ncReq = new RequestPayload()
+        }
+
+        private function enableAllButtons(enable:Boolean):void
+        {
+            btnGenRPC.enabled = enable
+            btnRefresh.enabled = enable
+            btnReset.enabled = enable
+            btnSave.enabled = enable
+            btnCap.enabled = enable
+            btnRPC.enabled = enable
+            btnGenScript.enabled = enable
+        }
+
+        public function updateStatus(msg:String):void
+        {
+            statusBar.text = 'Status : ' + msg
+        }
+
+        private function reset_netconfSettings(default_settings:Boolean):void
+        {
+            txtNCIpAddr.text = '';
+            txtNCUser.text = '';
+            txtNCPwd.text = '';
+            txtNCPort.text = rbtnNetConf.selected ? NETCONF_PORT : RESTCONF_PORT;
+            cbEditLock.selected = false;
+            cbErrOpt.selectedIndex = 0;
+        }
+
+        protected function btnGenScript_clickHandler(target:String):void
+        {
+            var req:XML;
+
+            if (!rbtnNetConf.selected)
             {
-                txtNCIpAddr.text = '';
-                txtNCUser.text = '';
-                txtNCPwd.text = '';
-                txtNCPort.text = rbtnNetConf.selected ? NETCONF_PORT : RESTCONF_PORT;
-                cbEditLock.selected = false;
-                cbErrOpt.selectedIndex = 0;
+                Alert.show('Script option is only supported for netconf protocol', 'Invalid Request');
+                return;
             }
 
-            protected function btnGenScript_clickHandler():void
+            req = getRequestPayload(false);
+            if (req != null) {
+                moduleService.url = NC_URL;
+                moduleService.send({payload: req, mode: 'gen-script', target: target})
+                updateStatus('Request for rpc encoding sent to server')
+            }
+            tnResults.selectedIndex = TAB_SCRIPT_VIEW
+        }
+
+        protected function btnClear_clickHandler(event:MouseEvent):void
+        {
+            txtScript.text = '';
+            txtConsole.text = '';
+            cbEdit.selected = false;
+            txtScript.editable = false;
+            txtConsole.editable = false;
+            updateStatus('Clear completed')
+        }
+
+        protected function btnCopy_clickHandler(event:MouseEvent):void
+        {
+            if (tnResults.selectedIndex == TAB_SCRIPT_VIEW)
             {
-                var req : XML; 
-                
-                if (!rbtnNetConf.selected) {
-                    Alert.show('Script option is only supported for netconf protocol', 'Invalid Request');
-                    return;
+                System.setClipboard(txtScript.text);
+                updateStatus('Netconf encoding / script copied to clipboard')
+            }
+            else
+            {
+                System.setClipboard(txtConsole.text);
+                updateStatus('Console log copied to clipboard')
+            }
+        }
+
+        protected function btnSave_clickHandler(event:MouseEvent):void
+        {
+            saveWindow = SaveWindow(PopUpManager.createPopUp(this, SaveWindow, true))
+            /* ArrayList with data for the custom control ComboBox control. */
+            var collection:ArrayCollection = new ArrayCollection();
+
+            for each (var item:XML in deviceProfilesXML.profile)
+            {
+                if (item.@type == 'collection')
+                {
+                    collection.addItem(String(item.@name))
                 }
-                req = getRequestPayload(false);
-                if (req != null) {
-                    moduleService.url = NC_URL
-                    moduleService.send({payload:req, mode:'gen-script'})
-                    updateStatus('Request for rpc encoding sent to server')
-                }
-                tnResults.selectedIndex = TAB_SCRIPT_VIEW
             }
 
-            protected function btnClear_clickHandler(event:MouseEvent):void
+            collection.refresh()
+            saveWindow.cbCollection.dataProvider = collection
+            saveWindow.txtOwner.text = btnLogin.label
+            PopUpManager.centerPopUp(saveWindow)
+        }
+
+        protected function btnLogin_clickHandler(event:MouseEvent):void
+        {
+            // Create a non-modal TitleWindow container.
+            var user:String = btnLogin.label
+
+            loginWindow = LoginWindow(PopUpManager.createPopUp(this, LoginWindow, true));
+            loginWindow.targetComponent = btnLogin;
+            PopUpManager.centerPopUp(loginWindow);
+
+            if (user == 'Login')
             {
-                txtScript.text = '';
-                txtConsole.text = '';
-                cbEdit.selected = false;
-                txtScript.editable = false;
-                txtConsole.editable = false;
-                updateStatus('Clear completed')
+                loginWindow.title = 'Login'
+                loginWindow.currentState = 'Login'
             }
-            
-            protected function btnCopy_clickHandler(event:MouseEvent):void
+            else
             {
-                if (tnResults.selectedIndex == TAB_SCRIPT_VIEW) {
-                    System.setClipboard(txtScript.text);
-                    updateStatus('Netconf encoding / script copied to clipboard')
-                } else {
-                    System.setClipboard(txtConsole.text);
-                    updateStatus('Console log copied to clipboard')
-                }
+                loginWindow.title = user
+                loginWindow.currentState = 'Logout'
+                loginWindow.x = btnLogin.x - 70
+                loginWindow.y = btnLogin.y + 30
+            }
+        }
+
+        public function set_devProfile(index:int):void
+        {
+            populate_devProfile(index)
+        }
+
+        protected function lstDevProfile_changeHandler():void
+        {
+            populate_devProfile(lstDevProfile.selectedIndex);
+            updateNetconfOptions(lstDevProfile.selectedIndex);
+        }
+
+        private function updateNetconfOptions(index:int):void
+        {
+            if (rbtnRestConf.selected)
+            {
+                cbErrOpt.enabled = false;
+                cbEditLock.enabled = false;
+                return;
             }
 
-            protected function btnSave_clickHandler(event:MouseEvent):void
+            cbEditLock.enabled = cbErrOpt.enabled = (adg.getMode() == YangUtil.EDIT_CONFIG || adg.getMode() == YangUtil.DEFAULT);
+            if (deviceProfilesXML == null || index < 0)
             {
-                saveWindow = SaveWindow(PopUpManager.createPopUp(this, SaveWindow, true)) 
-                /* ArrayList with data for the custom control ComboBox control. */
-                var collection:ArrayCollection = new ArrayCollection();
-                
-                for each (var item : XML in deviceProfilesXML.profile) {
-                    if (item.@type == 'collection') {
-                        collection.addItem(String(item.@name))
-                    }
-                }
-                
-                collection.refresh()
-                saveWindow.cbCollection.dataProvider = collection
-                saveWindow.txtOwner.text = btnLogin.label
-                PopUpManager.centerPopUp(saveWindow)
-            }
-            
-            protected function btnLogin_clickHandler(event:MouseEvent):void
-            {
-                // Create a non-modal TitleWindow container.
-                var user : String = btnLogin.label
-                
-                loginWindow = LoginWindow(PopUpManager.createPopUp(this, LoginWindow, true));
-                loginWindow.targetComponent = btnLogin;
-                PopUpManager.centerPopUp(loginWindow);
-                
-                if (user == 'Login') {
-                    loginWindow.title = 'Login'
-                    loginWindow.currentState = 'Login'
-                } else {
-                    loginWindow.title = user
-                    loginWindow.currentState ='Logout'
-                    loginWindow.x = btnLogin.x - 70
-                    loginWindow.y = btnLogin.y + 30
-                }
-            }
-            
-            public function set_devProfile(index : int) : void {
-                populate_devProfile(index)
+                return
             }
 
-            protected function lstDevProfile_changeHandler():void
+            var profilename:String = deviceProfiles.getItemAt(index).toString()
+            for each (var item:XML in deviceProfilesXML.profile)
             {
-                populate_devProfile(lstDevProfile.selectedIndex);
-                updateNetconfOptions(lstDevProfile.selectedIndex);
-            }
-            
-            private function updateNetconfOptions(index : int) : void {
-                if (rbtnRestConf.selected) {
-                    cbErrOpt.enabled = false;
-                    cbEditLock.enabled = false;
-                    return;
-                }
-
-                cbEditLock.enabled = cbErrOpt.enabled = (adg.getMode() == YangUtil.EDIT_CONFIG || adg.getMode() == YangUtil.DEFAULT);
-                if (deviceProfilesXML == null || index < 0) {
-                    return
-                }
-
-                var profilename:String = deviceProfiles.getItemAt(index).toString()
-                for each (var item : XML in deviceProfilesXML.profile) {
-                    if (item.@type == 'device' && profilename == item.@name) {
-                        for each (var t : XML in item.options.option) {
-                            switch (String(t.@type)) {
+                if (item.@type == 'device' && profilename == item.@name)
+                {
+                    for each (var t:XML in item.options.option)
+                    {
+                        switch (String(t.@type))
+                        {
                             case "err-option":
-                                if (t.toString() == "continue-on-error") {
+                                if (t.toString() == "continue-on-error")
+                                {
                                     cbErrOpt.selectedIndex = 2;
-                                } else if (t.toString() == "rollback-on-error") {
+                                }
+                                else if (t.toString() == "rollback-on-error")
+                                {
                                     cbErrOpt.selectedIndex = 3;
                                 }
                                 break;
                             case "lock-option":
                                 cbEditLock.selected = (t.toString() == "True");
                                 break;
-                            }
                         }
                     }
                 }
             }
+        }
 
-            private function populate_devProfile(index : int):void
+        private function populate_devProfile(index:int):void
+        {
+            if (deviceProfilesXML == null)
             {
-                if (deviceProfilesXML == null) {
-                    return
-                }
-                
-                if (index <= 0) {
-                    reset_netconfSettings(true)
-                    return
-                }
+                return
+            }
 
-                var profilename:String = deviceProfiles.getItemAt(index).toString()
-                for each (var item : XML in deviceProfilesXML.profile) {
-                    if (item.@type == 'device' && profilename == item.@name) {
-                        updateDevicePlatform(item.platform.toString())
-                        for each (var t : XML in item.transports.transport) {
-                           switch (String(t.@type)) {
+            if (index <= 0)
+            {
+                reset_netconfSettings(true)
+                return
+            }
+
+            var profilename:String = deviceProfiles.getItemAt(index).toString()
+            for each (var item:XML in deviceProfilesXML.profile)
+            {
+                if (item.@type == 'device' && profilename == item.@name)
+                {
+                    updateDevicePlatform(item.platform.toString())
+                    for each (var t:XML in item.transports.transport)
+                    {
+                        switch (String(t.@type))
+                        {
                             case "netconf":
-                                if (rbtnNetConf.selected) {
+                                if (rbtnNetConf.selected)
+                                {
                                     txtNCIpAddr.text = t.address.toString();
                                     txtNCPort.text = t.port.toString();
                                     txtNCUser.text = t.username.toString();
-                                    txtNCPwd.text  = t.password.toString();
+                                    txtNCPwd.text = t.password.toString();
                                 }
                                 break;
                             case "restconf":
-                                if (rbtnRestConf.selected) {
+                                if (rbtnRestConf.selected)
+                                {
                                     txtNCIpAddr.text = t.address.toString();
                                     txtNCPort.text = t.port.toString();
                                     txtNCUser.text = t.username.toString();
-                                    txtNCPwd.text  = t.password.toString();
+                                    txtNCPwd.text = t.password.toString();
                                 }
                                 break;
-                            }
                         }
                     }
                 }
             }
-            
-            protected function btnRefresh_clickHandler(event:MouseEvent):void
-            {
-                loadUserProfile()
-                updateStatus('Request to refresh content sent to server')
-            }
+        }
 
-            public function resetTreeView():void
-            {
-                adg.resetTree();
-                updateForm();
-                updateStatus('Reset completed')
-            }
-            
-            public function setEncodingText(text : String, xml : Boolean) : void {
-                resetTreeView();
-                txtScript.text = text;
-                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
-                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
-                if (text && text != '') {
-                    cbEdit.selected = true;
-                }
-                rbtnNetConf.selected = xml;
-                rbtnRestConf.selected = !xml
-                protocolType_itemClickHandler();
-            }
-            
-            protected function cbEdit_changeHandler(event:Event):void
-            {
-                txtScript.editable = cbEdit.selected;
-                tnResults.selectedIndex = TAB_SCRIPT_VIEW;
-            }
+        protected function btnRefresh_clickHandler(event:MouseEvent):void
+        {
+            loadUserProfile()
+            updateStatus('Request to refresh content sent to server')
+        }
 
-            protected function tnWorkflow_changeHandler(event:IndexChangedEvent):void
-            {
-                switch (tnWorkflow.selectedIndex) {
-                    case TAB_EXECUTE_VIEW:
-                        refresh_collectionArea();
-                        break;
-                    case TAB_MANAGE_VIEW:
-                        mgmt.refresh_if_required();
-                        break;
-                    case TAB_SCHEMA_VIEW:
-                        schema.refresh_if_required();
-                        break;
-                }
-            }
+        public function resetTreeView():void
+        {
+            adg.resetTree();
+            updateForm();
+            updateStatus('Reset completed')
+        }
 
-            protected function netconfOpType_itemClickHandler():void
+        public function setEncodingText(text:String, xml:Boolean):void
+        {
+            resetTreeView();
+            txtScript.text = text;
+            tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+            tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+            if (text && text != '')
             {
-                if (rbtnConfig.selected) {
-                    adg.changeMode(YangUtil.EDIT_CONFIG)
-                } else {
-                    adg.changeMode(YangUtil.DEFAULT)
+                cbEdit.selected = true;
+            }
+            rbtnNetConf.selected = xml;
+            rbtnRestConf.selected = !xml
+            protocolType_itemClickHandler();
+        }
+
+        protected function cbEdit_changeHandler(event:Event):void
+        {
+            txtScript.editable = cbEdit.selected;
+            tnResults.selectedIndex = TAB_SCRIPT_VIEW;
+        }
+
+        protected function tnWorkflow_changeHandler(event:IndexChangedEvent):void
+        {
+            switch (tnWorkflow.selectedIndex)
+            {
+                case TAB_EXECUTE_VIEW:
+                    refresh_collectionArea();
+                    break;
+                case TAB_MANAGE_VIEW:
+                    mgmt.refresh_if_required();
+                    break;
+                case TAB_SCHEMA_VIEW:
+                    schema.refresh_if_required();
+                    break;
+            }
+        }
+
+        protected function netconfOpType_itemClickHandler():void
+        {
+            if (rbtnConfig.selected)
+            {
+                adg.changeMode(YangUtil.EDIT_CONFIG)
+            }
+            else
+            {
+                adg.changeMode(YangUtil.DEFAULT)
+            }
+        }
+
+        public function enableMultiInstance(enable:Boolean):void
+        {
+            btnIAdd.enabled = btnIDelete.enabled = enable;
+        }
+
+        protected function protocolType_itemClickHandler():void
+        {
+            lstDevProfile_changeHandler()
+            if (rbtnRestConf.selected)
+            {
+                if (txtNCPort.text == '830' || txtNCPort.text == '2022')
+                {
+                    txtNCPort.text = RESTCONF_PORT;
                 }
             }
-            
-            public function enableMultiInstance(enable : Boolean) : void {
-                btnIAdd.enabled = btnIDelete.enabled = enable;
-            }
-            
-            protected function protocolType_itemClickHandler():void
+            else
             {
-                lstDevProfile_changeHandler()
-                if (rbtnRestConf.selected) {
-                    if (txtNCPort.text == '830' || txtNCPort.text == '2022') {
-                        txtNCPort.text = RESTCONF_PORT;
-                    }
-                } else {
-                    if (txtNCPort.text == '80') {
-                        txtNCPort.text = NETCONF_PORT;
-                    }
+                if (txtNCPort.text == '80')
+                {
+                    txtNCPort.text = NETCONF_PORT;
                 }
             }
-            
-            public function create_profile() : void {
-                navigateToURL(new URLRequest(ADMIN_URL + '/explorer/deviceprofile/add/'));
-            }
-            
-            // Search Window
-            public var searchWindow:SearchWindow;
-            public function searchHandler(query : String) : void {
-                searchWindow = SearchWindow(PopUpManager.createPopUp(this, SearchWindow, true))
-                searchWindow.open_callback = adg.loadXpath;
-                PopUpManager.centerPopUp(searchWindow);
-                searchWindow.search(query);
-                adg.setFocus();
-            }
-            
-            protected function adg_focusInHandler(event:FocusEvent):void
-            {
-                tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
-            }
-            
+        }
+
+        public function create_profile():void
+        {
+            navigateToURL(new URLRequest(ADMIN_URL + '/explorer/deviceprofile/add/'));
+        }
+
+        // Search Window
+        public var searchWindow:SearchWindow;
+
+        public function searchHandler(query:String):void
+        {
+            searchWindow = SearchWindow(PopUpManager.createPopUp(this, SearchWindow, true))
+            searchWindow.open_callback = adg.loadXpath;
+            PopUpManager.centerPopUp(searchWindow);
+            searchWindow.search(query);
+            adg.setFocus();
+        }
+
+        protected function adg_focusInHandler(event:FocusEvent):void
+        {
+            tnWorkflow.selectedIndex = TAB_BUILD_VIEW;
+        }
         ]]>
     </fx:Script>
-    
-    <mx:Canvas width="100%" height="100%">	
+
+    <mx:Canvas width="100%" height="100%">
         <s:VGroup width="100%" height="100%">
             <mx:ApplicationControlBar width="100%">
                 <components:ButtonIcon width="200" label="Yang Explorer {VERSION}"
@@ -961,7 +1097,7 @@
                                        label="Refresh" brand="{BrandColorEnum.Primary}"
                                        click="btnRefresh_clickHandler(event)"
                                        iconFont="{AwesomeUtils.fa_refresh}"
-                                       toolTip="Reload content from server"/>	
+                                       toolTip="Reload content from server"/>
                 <components:ButtonIcon id="btnLogin" width="100" height="{ButtonSizeEnum.Small}"
                                        label="Login" brand="{BrandColorEnum.Primary}"
                                        click="btnLogin_clickHandler(event)"
@@ -1030,7 +1166,7 @@
                     </s:VGroup>
                 </mx:Canvas>
                 <mx:Canvas id="cnvNetconf" width="40%" height="100%" label="Canvas 3">
-                    <mx:TabNavigator id="tnWorkflow" width="100%" height="100%" 
+                    <mx:TabNavigator id="tnWorkflow" width="100%" height="100%"
                                      creationPolicy="all"
                                      change="tnWorkflow_changeHandler(event)"
                                      fontFamily="Avenir">
@@ -1042,7 +1178,7 @@
                                             fontFamily="Avenir">
                                         <s:layout>
                                             <s:FormLayout gap="-6"/>
-                                        </s:layout> 
+                                        </s:layout>
                                         <s:FormItem label="Source Datastore">
                                             <s:DropDownList id="cbSrcDs" width="175"
                                                             height="{TextInputSizeEnum.Small}"
@@ -1074,7 +1210,7 @@
                                             fontFamily="Avenir">
                                         <s:layout>
                                             <s:FormLayout gap="-10"/>
-                                        </s:layout> 
+                                        </s:layout>
                                         <s:FormItem label="Profile">
                                             <s:HGroup>
                                                 <s:DropDownList id="lstDevProfile" width="150"
@@ -1130,10 +1266,16 @@
                                                            toolTip="Generate RPC encoding"/>
                                     <components:ButtonIcon id="btnGenScript" width="80"
                                                            height="{ButtonSizeEnum.Small}"
-                                                           label="Script"
+                                                           label="Python"
                                                            brand="{BrandColorEnum.Primary}"
-                                                           click="btnGenScript_clickHandler()"
-                                                           toolTip="Generate python script"/>
+                                                           click="btnGenScript_clickHandler('ncclient')"
+                                                           toolTip="Generate ncclient python script"/>
+                                    <components:ButtonIcon id="btnYDKScript" width="80"
+                                                           height="{ButtonSizeEnum.Small}"
+                                                           label="YDK"
+                                                           brand="{BrandColorEnum.Primary}"
+                                                           click="btnGenScript_clickHandler('ydk')"
+                                                           toolTip="Generate YDK python script"/>
                                     <components:ButtonIcon id="btnCap" width="80"
                                                            height="{ButtonSizeEnum.Small}"
                                                            label="Capabilities"
@@ -1182,7 +1324,7 @@
                                                            click="btnCopy_clickHandler(event)"/>
                                 </s:HGroup>
                             </mx:VBox>
-                        </mx:VBox>	
+                        </mx:VBox>
                         <mx:VBox width="100%" height="100%" label=" Collections ">
                             <modules:Collections id="collections" width="100%" height="100%"/>
                         </mx:VBox>
