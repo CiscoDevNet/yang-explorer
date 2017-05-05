@@ -39,6 +39,7 @@
                 {Property:'Default', Value:''},
                 {Property:'Path', Value:''},
                 {Property:'Description', Value:''}, 
+                {Property:'XPath Filter', Value:''},
             ];
 
             public function updateProperty(node:XML): void
@@ -55,6 +56,7 @@
                     dpDgProperty[7].Value = node.attribute('default');
                     dpDgProperty[8].Value = node.attribute('path');
                     dpDgProperty[9].Value = node.attribute('description');
+                    dpDgProperty[10].Value = node.attribute('xpath_filter');
                 } else {
                     for (var i : int = 0; i < dpDgProperty.length; i++) {
                         dpDgProperty[i].Value = '';

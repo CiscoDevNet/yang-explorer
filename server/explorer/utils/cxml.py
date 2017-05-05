@@ -49,7 +49,23 @@ class Cxml:
             xpath = '/'
         return xpath
 
-    def get_lazy_node_internal(self, cxml_element, base=''):
+    def toxpath_filter(self, path, prefix):
+        """
+        Returns an xpath filter that is used in RPCs.
+
+        For example: module/node1/node2 -> /module_prefix:node1/node2
+        YANG-Push subscribers use it to specify
+        data of interest in establish-subscription RPCs.
+        """
+        if path and prefix:
+            path_elems = path.split('/')
+            xpath = path.replace(path_elems[0] + '/',
+                                 '/' + prefix + ':', 1)
+        else:
+            xpath = ''
+        return xpath
+
+    def get_lazy_node_internal(self, cxml_element, base='', module_prefix=''):
         node = ET.Element('node')
         add_placeholder = True
 
@@ -72,6 +88,11 @@ class Cxml:
         else:
             base += '/'
             node.set('path', base + cxml_element.get('name'))
+
+        if base != '' and module_prefix != '':
+            xpath_filter = self.toxpath_filter(base + cxml_element.get('name'),
+                                               module_prefix)
+            node.set('xpath_filter', xpath_filter)
 
         if add_placeholder:
             pnode = ET.Element('node')
@@ -103,6 +124,8 @@ class Cxml:
             root.append(node)
             return root
 
+        module_prefix = cxml_root.get('prefix', '')
+
         # move root node to requested node
         elements = path.split('/')
         for name in elements[1:]:
@@ -113,7 +136,7 @@ class Cxml:
 
         for child in cxml_root:
             if child.tag == 'node':
-                node = self.get_lazy_node_internal(child, path)
+                node = self.get_lazy_node_internal(child, path, module_prefix)
                 root.append(node)
 
             if child.tag == 'namespace' and add_ns:

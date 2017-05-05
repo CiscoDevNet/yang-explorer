@@ -110,7 +110,7 @@
 
         /* Version string */
         [Bindable]
-        public var VERSION:String = '0.7.0 (Beta)';
+        public var VERSION:String = '0.8.0 (Beta)';
 
         /* Version string */
         [Bindable]
