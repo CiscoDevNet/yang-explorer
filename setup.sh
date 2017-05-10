@@ -74,7 +74,9 @@ if [[ $NOVENV != 1 ]]; then
     if [ -f "v/bin/activate" ]; then
         source v/bin/activate
     else
-        virtualenv v
+	python_prog=$(type -a python2.7 | cut -d" " -f3)
+	echo "Using Python Program: ${python_prog}"
+        virtualenv --python=${python_prog} v
         source v/bin/activate
     fi
 fi
