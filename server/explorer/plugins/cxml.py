@@ -407,7 +407,7 @@ class Cxml:
                 ids = value.split(':')
                 value_stmts.append(self.module_prefixes[ids[0]][0] + ':' + ids[1])
             if stmts:
-                return '|'.join(value_stmts)
+                return '|'.join(sorted(value_stmts))
         return ''
 
     def type_choice_values(self, s):
