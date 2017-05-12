@@ -278,7 +278,7 @@ class Cxml:
         description = self.get_description(s)
         if description != '':
             desc = description.replace('<', '&lt')
-            desc += description.replace('>', '&gt')
+            desc = desc.replace('>', '&gt')
             cdata = ET.Element('![CDATA[')
             cdata.text = desc
             desc_node = ET.Element('description')
