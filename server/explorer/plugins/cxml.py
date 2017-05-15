@@ -278,7 +278,7 @@ class Cxml:
         description = self.get_description(s)
         if description != '':
             desc = description.replace('<', '&lt')
-            desc += description.replace('>', '&gt')
+            desc = desc.replace('>', '&gt')
             cdata = ET.Element('![CDATA[')
             cdata.text = desc
             desc_node = ET.Element('description')
@@ -407,7 +407,7 @@ class Cxml:
                 ids = value.split(':')
                 value_stmts.append(self.module_prefixes[ids[0]][0] + ':' + ids[1])
             if stmts:
-                return '|'.join(value_stmts)
+                return '|'.join(sorted(value_stmts))
         return ''
 
     def type_choice_values(self, s):
