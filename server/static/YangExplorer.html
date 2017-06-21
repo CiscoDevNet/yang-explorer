@@ -57,7 +57,7 @@
             // To use express install, set to playerProductInstall.swf, otherwise the empty string. 
             var xiSwfUrlStr = "expressInstall.swf";
             var flashvars = {};
-            flashvars.host = window.location.host.slice(0, window.location.host.indexOf(":"));
+            flashvars.host = window.location.hostname;
             flashvars.port = window.location.port;
             var params = {};
             params.quality = "high";
