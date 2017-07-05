@@ -199,7 +199,7 @@ class Adapter(object):
         Generate YDK python script that uses Netconf provider and Netconf/CRUD services 
         """
 
-        logging.debug('gen_script: payload : \n' + payload)
+        logging.debug('gen_ydk_script: payload : \n' + payload)
 
         payload = payload.replace('<metadata>', '')
         payload = payload.replace('</metadata>', '')
@@ -207,25 +207,30 @@ class Adapter(object):
         _, device, fmt, lock, rpc = Adapter.parse_request(payload)
         if fmt == 'xpath' and rpc == '':
             request = ET.fromstring(payload)
-            logging.debug('gen_script: request etree string : \n' + 
+            logging.debug('gen_ydk_script: request etree string : \n' +
                           ET.tostring(request, pretty_print=True))
 
             rpc = Adapter._gen_rpc(username, request)
 
         if rpc is None:
-            logging.error('gen_script: Invalid RPC Generated')
+            logging.error('gen_ydk_script: Invalid RPC Generated')
             return None
 
-        logging.debug('gen_script: generated rpc : \n' + rpc)
+        logging.debug('gen_ydk_script: generated rpc : \n' + rpc)
 
         # currently we only support Netconf service provider and CRUD services
         parser = NetconfParser(rpc)
         op = parser.get_operation()
         datastore = parser.get_datastore()
 
+        if datastore == None:
+            datastore = ""
+
+        logging.error('gen_ydk_script: datastore : \n' + datastore)
+
         python_ydk_defs = ""
         for child in parser.get_data():
-            logging.debug('gen_script: child element : \n' + ET.tostring(child, pretty_print=True))
+            logging.debug('gen_ydk_script: child element : \n' + ET.tostring(child, pretty_print=True))
 
             # generate ydk script snippet for child element
             yam = YdkAppMaker(type='xml')
