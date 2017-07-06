@@ -61,25 +61,25 @@ def crud_get_config(crud_service, provider, ydk_obj):
     crud_service.read(provider, ydk_obj, only_config)
 {% endif %}
 {% if service_type == 'netconf' %}
-def netconf_create(netconf_service, provider, ydk_obj, 
-                   datastore=Datastore.candidate, default_operation=None, 
+def netconf_create(netconf_service, provider, datastore, ydk_obj,
+                   default_operation=None,
                    error_option=None, test_option=None):
     print('==============\NETCONF CREATE SERVICE\n==============')
 
-    netconf_service.edit_config(provider, ydk_obj, 
-                                datastore, default_operation, 
+    netconf_service.edit_config(provider, datastore, ydk_obj,
+                                default_operation,
                                 error_option, test_option)
 
-def netconf_replace(netconf_service, provider, ydk_obj,
-                   datastore=Datastore.candidate, default_operation=REPLACE,
-                   error_option=None, test_option=None):
+def netconf_replace(netconf_service, provider, datastore, ydk_obj,
+                    default_operation="replace",
+                    error_option=None, test_option=None):
     print('==============\nNETCONF REPLACE SERVICE\n==============')
 
-    netconf_service.edit_config(provider, ydk_obj, 
-                                datastore, default_operation, 
+    netconf_service.edit_config(provider, datastore, ydk_obj,
+                                default_operation,
                                 error_option, test_option)
 
-def netconf_delete(netconf_service, provider, datastore=Datastore.candidate):
+def netconf_delete(netconf_service, provider, datastore):
     print('==============\nNETCONF DELETE SERVICE\n==============')
 
     netconf_service.delete_config(provider, datastore)
@@ -90,8 +90,8 @@ def netconf_get(netconf_service, provider, ydk_obj,
 
     netconf_service.read(provider, ydk_obj, only_config)
 
-def netconf_get_config(netconf_service, provider, ydk_obj,
-                       datastore=Datastore.candidate, with_defaults_option=None):
+def netconf_get_config(netconf_service, provider, datastore, ydk_obj,
+                       with_defaults_option=None):
     print('==============\nNETCONF GET CONFIG SERVICE\n==============')
 
     netconf_service.get_config(provider, datastore, ydk_obj, with_defaults_option)
@@ -129,25 +129,25 @@ if __name__ == "__main__":
     {% endfor %}{% endif %}{% endif %}
 
     {% if service_type == 'netconf' %}netconf_service = NetconfService()
+    {% if datastore == 'candidate' %}datastore = Datastore.candidate
+    {% elif datastore == 'running' %}datastore = Datastore.running{% endif %}
     {% if service == 'create' %}{% for i in ydk_obj_names.split %}
     ydk_obj = {{i}}()
-    netconf_create(netconf_service, provider, ydk_obj)
-    {% endfor %}{% endif %}
-    {% if service == 'update' %}{% for i in ydk_obj_names.split %}
+    netconf_create(netconf_service, provider, datastore, ydk_obj)
+    {% endfor %}
+    {% elif service == 'update' %}{% for i in ydk_obj_names.split %}
     ydk_obj = {{i}}()
-    netconf_replace(netconf_service, provider, ydk_obj)
-    {% endfor %}{% endif %}
-    {% if service == 'delete' %}{% for i in ydk_obj_names.split %}
-    ydk_obj = {{i}}()
-    netconf_delete(netconf_service, provider, ydk_obj)
-    {% endfor %}{% endif %}
-    {% if service == 'get' %}{% for i in ydk_obj_names.split %}
+    netconf_replace(netconf_service, provider, datastore, ydk_obj)
+    {% endfor %}
+    {% elif service == 'delete' %}
+    netconf_delete(netconf_service, provider, datastore)
+    {% elif service == 'get' %}{% for i in ydk_obj_names.split %}
     ydk_obj = {{i}}()
     netconf_get(netconf_service, provider, ydk_obj)
-    {% endfor %}{% endif %}
-    {% if service == 'get_config' %}{% for i in ydk_obj_names.split %}
+    {% endfor %}
+    {% elif service == 'get_config' %}{% for i in ydk_obj_names.split %}
     ydk_obj = {{i}}()
-    netconf_get_config(netconf_service, provider, ydk_obj)
+    netconf_get_config(netconf_service, provider, datastore, ydk_obj)
     {% endfor %}{% endif %}{% endif %}
     {% endspaceless %}
 
