@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-###1. Description
+# 1. Description
    An open-source Yang Browser and RPC Builder Application to experiment with Yang Data Models
    
    **Features**
@@ -29,15 +29,15 @@ limitations under the License.
  
    This application is under Beta mode, contributions / suggestions are welcome !!
 
-#####Screenshots:
+## Screenshots:
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/graph.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/script.png)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/netconf-operations.png)
 
-###2. Installation
-####2.1 First time installation
-#####Prerequisite:
+# 2. Installation
+## 2.1 First time installation
+### Prerequisite:
    - MAC, Linux (not supported on Windows)
    - python 2.7
    - pip package manager (https://pip.pypa.io/en/stable/installing/)
@@ -62,7 +62,7 @@ limitations under the License.
 ```
    - Browser with latest flash plugin (tested with google chrome)
 
-#####Download and install:
+### Download and install:
 ```bash
    git clone https://github.com/CiscoDevNet/yang-explorer.git
    cd yang-explorer
@@ -78,7 +78,7 @@ limitations under the License.
    Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev zlib1g-dev
    Fedora: sudo dnf install libxml2-devel libxslt-devel python-devel zlib-devel
 ```
-####2.2 Update exising installation
+## 2.2 Update exising installation
 
 ```bash
   cd <install-root>/yang-explorer
@@ -87,7 +87,7 @@ limitations under the License.
   git stash apply (if you have local changes)
   bash setup.sh
 ```
-####2.3 Backing up data
+## 2.3 Backing up data
 
    YangExplorer data can be backed up from data directory and it is portable to new servers -
 ```bash
@@ -105,9 +105,9 @@ limitations under the License.
    cp -r <backup-location>/data data
 ```
 
-###3. Running YangExplorer
-####3.1 Running with localhost
-#####Start Server:
+## 3. Running YangExplorer
+### 3.1 Running with localhost
+#### Start Server:
 ```bash
    cd <install-root>/yang-explorer
    [sudo] ./start.sh &
@@ -115,12 +115,12 @@ limitations under the License.
    Note: sudo may be required if you did not use virtualenv during installation.
 ```
 
-#####Start Explorer:
+#### Start Explorer:
 ```bash
    http://localhost:8088/static/YangExplorer.html
 ```
-####3.2 Running with ip-address (Shared server)
-#####Start Server:
+### 3.2 Running with ip-address (Shared server)
+#### Start Server:
 ```bash
    # Determine <ip-address> using if-config
    
@@ -144,27 +144,27 @@ limitations under the License.
    Note: sudo may be required if you did not use virtualenv during installation.
 ```
 
-#####Start Explorer:
+#### Start Explorer:
 ```bash
    http://<ip-address>:8088/static/YangExplorer.html
 ```
 
-###4. Caveats
+## 4. Caveats
    - Yang Model upload fails, Workaround: Use Google Chrome.
    - See section 6 Troubleshooting for more:
 
-###5. User Guide (TBD)
+## 5. User Guide (TBD)
 
-####5.1 Work Flow
+### 5.1 Work Flow
 
-#####5.2.1 Login:
+### 5.2.1 Login:
    YangExplorer uses user accounts to manage workspaces. You can create a user account using admin page (See 5.3.1 Creating User Account) or use the predefined login (guest/guest). You must login (click on the Login button on top right corner)
 
    You can use guest login **(guest/guest)** or newly created account.
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/YangExplorer.png)
 
-#####5.2.2 Adding/Deleing Yang Models:
-###### Upload using yang-explorer user interface (TBD: screen shot is out-of-date)
+### 5.2.2 Adding/Deleing Yang Models:
+#### Upload using yang-explorer user interface (TBD: screen shot is out-of-date)
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/manage.png)
    - Click **Manage Models** tab
    - Click **Workspace** tab
@@ -175,7 +175,7 @@ limitations under the License.
    - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in explorer area
    - Click Delete button to delete selected models from user account
 
-###### Sync from Device
+#### Sync from Device
    - Click **Manage Models** tab
    - Click **Device** tab
       - Select a device from profile list
@@ -189,7 +189,7 @@ limitations under the License.
    - Click Subscribe & Un-subscribe buttons to make selected models visible/invisible in explorer area
    - Click Delete button to delete selected models from user account
 
-###### Upload models using server console
+#### Upload models using server console
 
 ```bash
    cd <install-root>/yang-explorer
@@ -205,14 +205,14 @@ limitations under the License.
 ```
    All models must be compiled successfully, in case of any error none of the models will be uploaded to yang-explorer.
    
-#####5.2.3 Generating the model dependency graph:
+#### 5.2.3 Generating the model dependency graph:
    - Click **Manage Models** tab
    - Click **Workspace** tab
       - Select one or more model name to get dependency graph
       - If no models are selected, all subscribed model will be used to generate graph
    - Click Graph buttons to generate graph
 
-#####5.2.4 Creating RPCs:
+### 5.2.4 Creating RPCs:
    You can explore yang models in explorer area (left pane) using tree navigation:
    ![alt tag](https://github.com/CiscoDevNet/yang-explorer/blob/master/docs/images/explorer.png)
    
@@ -233,7 +233,7 @@ limitations under the License.
       - Check / Uncheck lock option
    - Click **RPC** button under **Build** tab
 
-#####5.2.5 Executing RPCs:
+### 5.2.5 Executing RPCs:
    - Create RPC using *5.2.4*
    - Populate Device info in Device Settings Tab
    - Click **Run** button under **Build** tab
@@ -245,7 +245,7 @@ limitations under the License.
    export NCCLIENT_TIMEOUT=120
 ```
 
-##### 5.2.6 Generating Python example:
+### 5.2.6 Generating Python example:
    - Create a netconf / xml RPC
     - Create RPC using *5.2.4*
     - (OR) Provide custom netconf XML (Click custom RPC Checkbox)
@@ -255,17 +255,17 @@ limitations under the License.
    - Save content as a python script (say example.py)
    - Run python script from command line using given instruction in script header comments.
  
-##### 5.2.7 Saving RPCs to Collection:
+### 5.2.7 Saving RPCs to Collection:
    - Create RPC using *5.2.4*
    - Click **Save** button under **Build** tab
 
-#####5.2.7 Loading saved RPC:
+### 5.2.8 Loading saved RPC:
    - Click **Collections** Tab
    - Double click on the RPCs title you want to load.
 
-####5.3 Admin Tasks 
+## 5.3 Admin Tasks 
 
-#####5.3.1 Creating User Account (optional):
+### 5.3.1 Creating User Account (optional):
 
    Creating user account is optional as you can use default guest/guest login, however creating user account can be userful
    if you have a shared yang-explorer installation.
@@ -276,7 +276,7 @@ limitations under the License.
    - On User Profiles page, click **Add user** link (top-right)
    - Add user account info and click **Save** (Warning: passwords are transmitted in plaintext)
 
-#####5.3.2 Creating Device Profiles:
+### 5.3.2 Creating Device Profiles:
 
 Device profiles can be created to quickly populate device info from drop-down list in yang-explorer.
 
@@ -307,8 +307,8 @@ Collections can be used to save user generated RPCs on the server so that saved 
       - Provide description for this collection
    - click **Save**
 
-###6 Misc Features
-####6.1 UI Model Tree annotations
+## 6 Misc Features
+### 6.1 UI Model Tree annotations
 Targeted content in YangExplorer UI tree can be annotated in different color, usually to represent additional information about of the Yang model node.
 
 Installation:
@@ -325,16 +325,16 @@ Uninstall:
   bash setup.sh -r
 ```
 
-###7 Troubleshooting
-####7.1 Installation
-#####7.1.1 error for missing python.h or xmlversion.h
+## 7 Troubleshooting
+### 7.1 Installation
+#### 7.1.1 error for missing python.h or xmlversion.h
    - Ubuntu: sudo apt-get install libxml2-dev libxslt1-dev python-dev
    - Mac : xcode-select --install
 
-#####7.1.2 django.db.utils.OperationalError: near "񐁂򐁇N": syntax error
+#### 7.1.2 django.db.utils.OperationalError: near "񐁂򐁇N": syntax error
    - http://stackoverflow.com/questions/33270297/django-db-utils-operationalerror-near-n-syntax-error
 
-#####7.1.3 After install if you are not able to login using guest/guest try one of the following
+#### 7.1.3 After install if you are not able to login using guest/guest try one of the following
    - mv server/data/db.sqlite3 server/data/db.sqlite3_backup
    - bash setup.sh
    In end of setup.sh script log you should see something like this -
@@ -347,7 +347,7 @@ Uninstall:
       Use start.sh to start yang-explorer server
 ```
 
-#####7.1.4 Installation failed due to python 3 not supported
+#### 7.1.4 Installation failed due to python 3 not supported
    Python 3 is not supported by ncclient. Please install python 2.7 before proceeding futher. If python 2.7 is already installed on your system along with python 3, virtualenv may try to create python 3 environment. You can do following -
    ```bash
    cd YangExplorer
@@ -364,11 +364,7 @@ Uninstall:
    setup.sh
    ```
 
-####7.2 Yang Model Upload
-#####7.2.1 Failure during upload of yang model
+### 7.2 Yang Model Upload
+#### 7.2.1 Failure during upload of yang model
    - Chrome browser is required currently to upload models using User Interface
    - Please see failure message, if dependent models are missing you will see specific error in message window.
-
-   
-
-
