@@ -1,5 +1,5 @@
 Django==1.8.3
-ecdsa==0.13
+ecdsa==0.13.3
 paramiko>=1.15.1,<=1.15.2
 pycrypto==2.6.1
 requests==2.7.0
