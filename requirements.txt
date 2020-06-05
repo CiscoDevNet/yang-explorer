@@ -1,4 +1,4 @@
-Django==1.8.3
+Django==1.11.29
 ecdsa==0.13
 paramiko>=1.15.1,<=1.15.2
 pycrypto==2.6.1
