@@ -12,6 +12,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+# END OF SUPPORT
+
+As of **18th August 2020** this application is no longer maintained. Developers are free to use the code as-is, including forking, but no more updates will be forthcoming from the project maintainers and any new or outstanding issues will neither be tracked nor responded to.
+
+
 ### 1. Description
    An open-source Yang Browser and RPC Builder Application to experiment with Yang Data Models
    
