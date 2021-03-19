@@ -3,7 +3,7 @@ ecdsa==0.13
 paramiko>=1.15.1,<=1.15.2
 pycrypto==2.6.1
 requests==2.7.0
-Jinja2==2.7.3
+Jinja2==2.11.3
 python-slugify
 django-debug-toolbar==1.4
 markupsafe
